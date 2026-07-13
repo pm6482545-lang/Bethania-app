@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,46 +8,57 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-base-200 min-h-screen text-base-content font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
-    <!-- Top Navbar Bar -->
-    <div class="navbar bg-primary text-primary-content shadow-lg px-4 sticky top-0 z-50">
+    <!-- Premium Navigation Bar (Matched to Admin Portal) -->
+    <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 sticky top-0 z-50 border-b border-amber-500/30">
         <div class="flex-1">
-            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
-                🏫 Bethania Teacher Hub <span class="text-xs badge badge-secondary font-mono">v2.0 Portal</span>
-            </h1>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <span class="text-xl sm:text-2xl">👩‍🏫</span>
+                <div>
+                    <h1 class="text-sm sm:text-md font-black tracking-wider uppercase text-amber-400">Bethania Teacher Hub</h1>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-widest uppercase">CBA Academic Workstation</p>
+                </div>
+            </div>
         </div>
-        <div class="flex-none">
-            <div id="active-session-banner" class="badge badge-neutral font-bold p-3 text-xs text-white">Fetching Exam Target...</div>
+        <div class="flex-none gap-2">
+            <span id="active-session-banner" class="text-[10px] sm:text-xs font-mono bg-slate-800 border border-slate-700 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Fetching Exam Target...
+            </span>
         </div>
     </div>
 
-    <main class="container mx-auto p-4 max-w-5xl space-y-6">
+    <main class="container mx-auto p-3 sm:p-4 max-w-5xl space-y-6 mt-4">
 
-        <!-- Nav tabs -->
-        <div class="tabs tabs-boxed justify-center bg-base-100 p-2 shadow-sm rounded-xl">
-            <button class="tab tab-active font-medium" id="tab-roster">Student Roster</button>
-            <button class="tab font-medium" id="tab-marks">Marks Entry Ledger</button>
+        <!-- Navigation tabs -->
+        <div class="tabs tabs-boxed justify-center bg-white border border-slate-200 p-1.5 shadow-sm rounded-xl max-w-md mx-auto">
+            <button class="tab tab-active font-bold text-xs sm:text-sm w-1/2 py-2 transition" id="tab-roster">👤 Student Roster</button>
+            <button class="tab font-bold text-xs sm:text-sm w-1/2 py-2 transition" id="tab-marks">📝 Marks Entry Ledger</button>
         </div>
 
         <!-- DEADLINE PASS WARNING STATUS -->
-        <div id="portal-lock-alert" class="alert alert-error shadow-md hidden rounded-xl font-semibold">
-            <span>⚠️ Entry Blocked: Submission window closed. Contact the administration to alter marks entries.</span>
+        <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border border-rose-200 shadow-md hidden rounded-xl py-3 px-4 text-xs sm:text-sm font-semibold text-rose-800 flex items-center gap-2">
+            <span>⚠️ Entry Blocked: Submission window closed. Please contact administration to alter marks entries.</span>
         </div>
 
         <!-- SCREEN 1: STUDENT ROSTER -->
         <div id="screen-roster" class="space-y-6">
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <h2 class="card-title text-lg font-bold text-primary mb-2 flex items-center gap-1">👤 Register New Student Profile</h2>
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xl">👤</span>
+                        <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Register New Student Profile</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Add a new learner profile to the cloud database to enable continuous assessment tracking.</p>
+                    
                     <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Student's Full Name</span></label>
-                            <input type="text" id="stud-name" placeholder="e.g. Peter Musau" class="input input-bordered w-full" required />
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Student's Full Name</label>
+                            <input type="text" id="stud-name" placeholder="e.g. Peter Musau" class="input input-bordered input-sm sm:input-md w-full" required />
                         </div>
                         <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Class / Grade Level</span></label>
-                            <select id="stud-grade" class="select select-bordered w-full" required>
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class / Grade Level</label>
+                            <select id="stud-grade" class="select select-bordered select-sm sm:select-md w-full" required>
                                 <option value="" disabled selected>Select Grade...</option>
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
                                 <option value="1">Grade 1</option><option value="2">Grade 2</option>
@@ -57,37 +68,46 @@
                             </select>
                         </div>
                         <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Stream / Arm</span></label>
-                            <input type="text" id="stud-stream" value="A" class="input input-bordered w-full" required />
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Stream / Arm</label>
+                            <input type="text" id="stud-stream" value="A" class="input input-bordered input-sm sm:input-md w-full" required />
                         </div>
                         <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Maths Club Family</span></label>
-                            <select id="stud-family" class="select select-bordered w-full">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Maths Club Family</label>
+                            <select id="stud-family" class="select select-bordered select-sm sm:select-md w-full">
                                 <option value="" selected>None</option>
                                 <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
                             </select>
                         </div>
                         <div class="form-control md:col-span-2 mt-2">
-                            <button type="submit" class="btn btn-primary btn-block text-white font-bold">Admit & Register Student</button>
+                            <button type="submit" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold w-full shadow-md">Admit & Register Student</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <!-- Table database tracker -->
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                        <h2 class="card-title text-lg font-bold">Active Student Database</h2>
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🗂️</span>
+                            <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Active Student Database</h2>
+                        </div>
                         <input type="text" id="search-bar" placeholder="🔍 Search name..." class="input input-bordered input-sm w-full sm:w-64" />
                     </div>
-                    <div class="overflow-x-auto rounded-lg border border-base-200">
-                        <table class="table table-zebra w-full">
-                            <thead class="bg-base-300 text-xs uppercase font-bold">
-                                <tr><th>Login ID</th><th>Full Name</th><th>Grade</th><th>Stream</th><th>Maths Club Family</th></tr>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                            <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3 text-left">Login ID</th>
+                                    <th class="p-3 text-left">Full Name</th>
+                                    <th class="p-3 text-center">Grade</th>
+                                    <th class="p-3 text-center">Stream</th>
+                                    <th class="p-3 text-center">Maths Club Family</th>
+                                </tr>
                             </thead>
-                            <tbody id="student-list-rows">
-                                <tr><td colspan="5" class="text-center py-6 text-base-content/50 italic">Pulling records...</td></tr>
+                            <tbody id="student-list-rows" class="font-mono text-xs">
+                                <tr><td colspan="5" class="text-center py-6 text-slate-400 italic">Pulling records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -97,14 +117,18 @@
 
         <!-- SCREEN 2: MARKS LEDGER INPUTS -->
         <div id="screen-marks" class="space-y-6 hidden">
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <h2 class="card-title text-lg font-bold text-secondary mb-2">📝 Batch Enter Marks</h2>
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xl">📝</span>
+                        <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Select the class cohort, subject learning area, and sub-paper component to load your student roster sheets.</p>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-base-200 p-4 rounded-xl mb-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 mb-4">
                         <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Class/Grade Target</label>
-                            <select id="filter-grade" class="select select-bordered select-sm w-full">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class/Grade Target</label>
+                            <select id="filter-grade" class="select select-bordered select-sm w-full font-medium">
                                 <option value="" disabled selected>Choose Grade...</option>
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
                                 <option value="1">Grade 1</option><option value="2">Grade 2</option>
@@ -114,27 +138,35 @@
                             </select>
                         </div>
                         <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Subject Selection</label>
-                            <select id="filter-subject" class="select select-bordered select-sm w-full" disabled><option disabled selected>Pick Grade First</option></select>
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Subject Selection</label>
+                            <select id="filter-subject" class="select select-bordered select-sm w-full font-medium" disabled>
+                                <option disabled selected>Pick Grade First</option>
+                            </select>
                         </div>
                         <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Paper Component</label>
-                            <select id="filter-paper" class="select select-bordered select-sm w-full" disabled><option disabled selected>Pick Subject First</option></select>
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Paper Component</label>
+                            <select id="filter-paper" class="select select-bordered select-sm w-full font-medium" disabled>
+                                <option disabled selected>Pick Subject First</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto rounded-lg border border-base-200">
-                        <table class="table table-zebra w-full">
-                            <thead class="bg-base-300 text-xs font-bold uppercase">
-                                <tr><th>Student Name</th><th>Stream</th><th id="paper-max-header">Score Input Box</th></tr>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                            <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3 text-left">Student Name</th>
+                                    <th class="p-3 text-center">Stream</th>
+                                    <th id="paper-max-header" class="p-3 text-center">Score Input Box</th>
+                                </tr>
                             </thead>
-                            <tbody id="marks-entry-rows">
-                                <tr><td colspan="3" class="text-center py-8 text-base-content/50 italic">Select options above to pull the active ledger lists.</td></tr>
+                            <tbody id="marks-entry-rows" class="text-xs">
+                                <tr><td colspan="3" class="text-center py-8 text-slate-400 italic">Select options above to pull the active ledger lists.</td></tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="flex justify-end mt-4">
-                        <button id="save-marks-btn" class="btn btn-secondary text-white font-bold px-8 shadow-md" disabled>💾 Save All Marks</button>
+                        <button id="save-marks-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-8 shadow-md w-full sm:w-auto" disabled>💾 Save All Marks</button>
                     </div>
                 </div>
             </div>
@@ -171,6 +203,51 @@
         const paperMaxHeader = document.getElementById('paper-max-header');
         const saveMarksBtn = document.getElementById('save-marks-btn');
 
+        const CBC_SUBJECT_TIERS = {
+            lower_primary: [
+                "Language Activities",
+                "Mathematical Activities",
+                "Environmental Activities",
+                "Psychomotor Activities",
+                "Religious Education Activities",
+                "Indigenous Language Activities",
+                "Kiswahili Language Activities"
+            ],
+            upper_primary: [
+                "English",
+                "Kiswahili",
+                "Mathematics",
+                "Science and Technology",
+                "Agriculture and Nutrition",
+                "Creative Arts",
+                "Social Studies",
+                "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
+            ],
+            junior_school: [
+                "English",
+                "Kiswahili",
+                "Mathematics",
+                "Integrated Science",
+                "Pre-Technical Studies",
+                "Social Studies",
+                "Agriculture and Nutrition",
+                "Creative Arts and Sports",
+                "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
+            ]
+        };
+
+        function getGradeTier(grade) {
+            const g = parseInt(grade);
+            if (g <= 3) return "lower_primary";
+            if (g >= 4 && g <= 6) return "upper_primary";
+            if (g >= 7 && g <= 9) return "junior_school";
+            return "upper_primary"; 
+        }
+
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
         tabRoster.addEventListener('click', () => { tabRoster.classList.add('tab-active'); tabMarks.classList.remove('tab-active'); screenRoster.classList.remove('hidden'); screenMarks.classList.add('hidden'); });
@@ -186,13 +263,13 @@
 
                 if (!session.is_active || now > deadline) {
                     systemIsLocked = true;
-                    activeSessionBanner.innerText = `🔴 PORTAL LOCKED (${activeExamContextName})`;
-                    activeSessionBanner.className = "badge badge-error text-white text-xs font-bold p-3 animate-pulse";
+                    activeSessionBanner.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> Locked: ${activeExamContextName}`;
+                    activeSessionBanner.className = "text-[10px] sm:text-xs font-mono bg-slate-800 border border-rose-500/30 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2 text-rose-400 font-bold";
                     portalLockAlert.classList.remove('hidden');
                 } else {
                     systemIsLocked = false;
-                    activeSessionBanner.innerText = `🟢 ACTIVE EXAM CYCLE: ${activeExamContextName}`;
-                    activeSessionBanner.className = "badge badge-success text-white text-xs font-bold p-3";
+                    activeSessionBanner.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${activeExamContextName}`;
+                    activeSessionBanner.className = "text-[10px] sm:text-xs font-mono bg-slate-800 border border-slate-700 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2 text-white font-bold";
                     portalLockAlert.classList.add('hidden');
                 }
             }
@@ -206,12 +283,14 @@
         }
 
         function renderTable(students) {
-            if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-base-content/40">No entries.</td></tr>`; return; }
+            if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">No entries.</td></tr>`; return; }
             studentListRows.innerHTML = students.map(s => `
                 <tr class="hover">
-                    <td class="font-mono text-xs font-bold text-primary">${s.id.substring(0, 8).toUpperCase()}</td>
-                    <td class="font-medium">${s.name}</td><td>${gradeMap[s.grade] || s.grade}</td>
-                    <td><span class="badge font-mono">${s.stream}</span></td><td><span class="badge font-bold text-xs">${s.maths_club_family || 'None'}</span></td>
+                    <td class="font-mono text-xs font-bold text-slate-500 py-2.5 px-3">${s.id.substring(0, 8).toUpperCase()}</td>
+                    <td class="font-bold text-slate-800 py-2.5 px-3">${s.name}</td>
+                    <td class="text-center py-2.5 px-3">${gradeMap[s.grade] || s.grade}</td>
+                    <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
+                    <td class="text-center py-2.5 px-3"><span class="badge font-bold text-xs">${s.maths_club_family || 'None'}</span></td>
                 </tr>
             `).join('');
         }
@@ -236,12 +315,25 @@
             } else {
                 subjectsCache = data || [];
             }
-            filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade Level...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
+            filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
 
         filterGrade.addEventListener('change', () => {
-            filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Component...</option>' + subjectsCache.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
-            filterSubject.disabled = false; 
+            const selectedGrade = filterGrade.value;
+            const tier = getGradeTier(selectedGrade);
+            const allowedSubjects = CBC_SUBJECT_TIERS[tier];
+
+            // Filter cache based on allowed subject definitions for this grade level
+            const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
+
+            if (filteredSubjects.length === 0) {
+                filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No subjects matches this grade tier</option>';
+                filterSubject.disabled = true;
+            } else {
+                filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Component...</option>' + 
+                    filteredSubjects.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                filterSubject.disabled = false; 
+            }
             filterPaper.disabled = true;
             filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
         });
@@ -258,7 +350,7 @@
             }
 
             if (!data || data.length === 0) {
-                filterPaper.innerHTML = '<option value="" disabled selected>⚠️ No papers found for this subject</option>';
+                filterPaper.innerHTML = '<option value="" disabled selected>⚠️ No papers configured under this subject</option>';
                 filterPaper.disabled = true;
             } else {
                 filterPaper.innerHTML = '<option value="" disabled selected>Select Component...</option>' + 
@@ -274,15 +366,20 @@
             const filtered = localStudentsCache.filter(s => s.grade === parseInt(filterGrade.value));
             
             if (filtered.length === 0) {
-                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-warning italic">No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
+                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-warning italic font-semibold">No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
                 saveMarksBtn.disabled = true;
                 return;
             }
 
             marksEntryRows.innerHTML = filtered.map(s => `
-                <tr><td>${s.name}</td><td><span class="badge font-mono">${s.stream}</span></td>
-                <td><input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
-                    class="input input-bordered input-sm w-full score-field font-mono" placeholder="0-${maxMarks}" ${systemIsLocked ? 'disabled' : ''}/></td></tr>
+                <tr class="hover">
+                    <td class="font-bold text-slate-800 py-2.5 px-3">${s.name}</td>
+                    <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
+                    <td class="py-2 px-3">
+                        <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
+                            class="input input-bordered input-sm w-full score-field font-mono text-center" placeholder="0-${maxMarks}" ${systemIsLocked ? 'disabled' : ''}/>
+                    </td>
+                </tr>
             `).join('');
             
             saveMarksBtn.disabled = systemIsLocked;
