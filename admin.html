@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bethania Academy - Admin Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-base-300 min-h-screen text-base-content font-sans">
+
+    <div class="navbar bg-neutral text-neutral-content shadow-lg px-6 sticky top-0 z-50">
+        <div class="flex-1">
+            <h1 class="text-xl font-black tracking-wider flex items-center gap-2 text-warning">
+                🛠️ Bethania Command Center <span class="text-xs badge badge-warning font-mono">v2.0</span>
+            </h1>
+        </div>
+        <div>
+            <span class="text-xs font-mono bg-base-100/20 py-1 px-3 rounded-full" id="db-status">Connecting Engine...</span>
+        </div>
+    </div>
+
+    <main class="container mx-auto p-4 max-w-6xl space-y-6 mt-4">
+
+        <div class="card bg-base-100 shadow-2xl border-2 border-primary">
+            <div class="card-body p-6">
+                <h2 class="card-title text-xl font-black text-primary flex items-center gap-2">
+                    🚀 Launch New Assessment Cycle
+                </h2>
+                <p class="text-xs text-base-content/60">Select an assessment configuration type below. Starting a cycle updates the teacher workspace automatically.</p>
+
+                <div class="divider my-1"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                    <div class="form-control bg-base-200 p-4 rounded-xl space-y-3">
+                        <label class="label-text font-bold">1. Select Assessment Classification Type</label>
+                        <div class="flex gap-4">
+                            <label class="label cursor-pointer gap-2 bg-base-100 px-4 py-2 rounded-lg border w-1/2">
+                                <input type="radio" name="exam_class" value="main" class="radio radio-primary" checked id="radio-main" />
+                                <span class="label-text font-bold">🏫 Main Exam</span>
+                            </label>
+                            <label class="label cursor-pointer gap-2 bg-base-100 px-4 py-2 rounded-lg border w-1/2">
+                                <input type="radio" name="exam_class" value="contest" class="radio radio-secondary" id="radio-contest" />
+                                <span class="label-text font-bold">🧮 Maths Contest</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <div class="form-control">
+                                <label class="label-text text-xs font-bold mb-1">Calendar Year</label>
+                                <select id="cycle-year" class="select select-bordered select-sm">
+                                    <option value="2026">2026</option><option value="2027">2027</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text text-xs font-bold mb-1">Target Term</label>
+                                <select id="cycle-term" class="select select-bordered select-sm">
+                                    <option value="Term 1">Term 1</option><option value="Term 2" selected>Term 2</option><option value="Term 3">Term 3</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-base-200 p-4 rounded-xl space-y-3 flex flex-col justify-between">
+                        <div id="main-exam-options" class="space-y-2">
+                            <label class="label-text font-bold block">2. Main Exam Type Series</label>
+                            <select id="main-series" class="select select-bordered select-sm w-full">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid Term Exam" selected>Mid Term Exam</option>
+                                <option value="End Term Exam">End Term Exam</option>
+                            </select>
+                        </div>
+
+                        <div id="contest-options" class="space-y-2 hidden">
+                            <label class="label-text font-bold block">2. Contest Identifier Series</label>
+                            <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School Challenge" class="input input-bordered input-sm w-full" value="Series A" />
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs mb-1">3. Teacher Mark Submission Closing Deadline</label>
+                            <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end mt-4">
+                    <button id="start-cycle-btn" class="btn btn-primary text-white font-bold px-8 shadow-md btn-md">⚡ Deploy Active Portal Context</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-6">
+                <h2 class="card-title text-lg font-bold text-success">📊 Broad Sheet Metrics & Progress Monitor</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-base-200 p-4 rounded-xl mt-2 items-end">
+                    <div class="form-control">
+                        <label class="label-text font-bold text-xs mb-1">Select Analysis Class Level</label>
+                        <select id="report-grade" class="select select-bordered select-sm w-full">
+                            <option value="" disabled selected>Choose Class...</option>
+                            <option value="-2">PP1</option><option value="-1">PP2</option>
+                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                        </select>
+                    </div>
+                    <button id="load-broadsheet-btn" class="btn btn-success text-white btn-sm font-bold shadow-md">Compile Sheet Matrix</button>
+                </div>
+
+                <div class="mt-4 p-4 bg-base-200 rounded-xl">
+                    <h3 class="text-xs uppercase font-black text-base-content/70 mb-2">Live Teacher Tracking Status Matrix</h3>
+                    <div id="subject-status-pills" class="flex flex-wrap gap-2">
+                        <span class="text-xs italic text-base-content/50">Select parameters to compute metrics...</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-base-200 mt-4">
+                    <table class="table table-zebra table-sm w-full">
+                        <thead class="bg-base-300 text-xs font-bold uppercase" id="broadsheet-header">
+                            <tr><th>Student Name</th><th>Stream</th><th>Select Data Targets</th></tr>
+                        </thead>
+                        <tbody id="broadsheet-rows">
+                            <tr><td colspan="3" class="text-center py-6 text-base-content/40 italic">Broad sheet entries load here...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button id="download-csv-btn" class="btn btn-outline btn-success btn-sm font-bold" disabled>📥 Extract Ledger Data (.CSV)</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // State Cache
+        let currentActiveExamName = "";
+        let isContestMode = false;
+        let globalPapersList = [];
+        let localStudentsCache = [];
+
+        // DOM Handles
+        const radioMain = document.getElementById('radio-main');
+        const radioContest = document.getElementById('radio-contest');
+        const mainExamOptions = document.getElementById('main-exam-options');
+        const contestOptions = document.getElementById('contest-options');
+        const startCycleBtn = document.getElementById('start-cycle-btn');
+        const dbStatus = document.getElementById('db-status');
+
+        const cycleYear = document.getElementById('cycle-year');
+        const cycleTerm = document.getElementById('cycle-term');
+        const mainSeries = document.getElementById('main-series');
+        const contestSeries = document.getElementById('contest-series');
+        const cycleDeadline = document.getElementById('cycle-deadline');
+
+        const reportGrade = document.getElementById('report-grade');
+        const loadBroadsheetBtn = document.getElementById('load-broadsheet-btn');
+        const subjectStatusPills = document.getElementById('subject-status-pills');
+        const broadsheetHeader = document.getElementById('broadsheet-header');
+        const broadsheetRows = document.getElementById('broadsheet-rows');
+        const downloadCsvBtn = document.getElementById('download-csv-btn');
+
+        const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
+
+        // Radio Form Toggles
+        radioMain.addEventListener('change', () => { mainExamOptions.classList.remove('hidden'); contestOptions.classList.add('hidden'); });
+        radioContest.addEventListener('change', () => { contestOptions.classList.remove('hidden'); mainExamOptions.classList.add('hidden'); });
+
+        async function initAdminEngine() {
+            // Fetch initial configuration framework setup elements
+            const { data: students } = await _supabase.from('students').select('*');
+            localStudentsCache = students || [];
+            const { data: papers } = await _supabase.from('subject_papers').select('*');
+            globalPapersList = papers || [];
+
+            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
+            if(sessions && sessions.length > 0) {
+                currentActiveExamName = sessions[0].exam_name;
+                dbStatus.innerText = `Active Cycle: ${currentActiveExamName}`;
+                dbStatus.className = "text-xs font-mono bg-success/20 text-success py-1 px-3 rounded-full border border-success/30";
+            }
+        }
+
+        startCycleBtn.addEventListener('click', async () => {
+            if(!cycleDeadline.value) return alert("You must specify a valid lock deadline time configuration!");
+            
+            let constructedName = "";
+            let assessmentType = "main";
+            if(radioMain.checked) {
+                constructedName = `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}`;
+            } else {
+                constructedName = `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
+                assessmentType = "contest";
+            }
+
+            const deadlineIso = new Date(cycleDeadline.value).toISOString();
+
+            const { error } = await _supabase.from('exam_sessions').insert([{
+                exam_name: constructedName,
+                deadline_at: deadlineIso,
+                is_active: true
+            }]);
+
+            if(error) {
+                alert("Database collision fault error: " + error.message);
+            } else {
+                alert(`✨ Assessment cycle successfully initialized:\n"${constructedName}" has been synchronized to teacher systems.`);
+                currentActiveExamName = constructedName;
+                dbStatus.innerText = `Active Cycle: ${currentActiveExamName}`;
+            }
+        });
+
+        // SHEET COMPILER
+        let activeBroadSheetCsvData = "";
+        loadBroadsheetBtn.addEventListener('click', async () => {
+            const grade = parseInt(reportGrade.value);
+            if (!grade) return alert("Select target standard grade profile!");
+
+            const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+            if(targetStudents.length === 0) { broadsheetRows.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-warning">No student datasets assigned here.</td></tr>`; return; }
+
+            const studentIds = targetStudents.map(s => s.id);
+            const { data: marksData } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studentIds);
+
+            // Filter columns if contest contains specific string pattern triggers
+            let activeColumns = globalPapersList;
+            if(currentActiveExamName.toLowerCase().includes('maths contest')) {
+                activeColumns = globalPapersList.filter(p => p.paper_name.toLowerCase().includes('math'));
+            }
+
+            subjectStatusPills.innerHTML = activeColumns.map(paper => {
+                const marksForPaper = (marksData || []).filter(m => m.paper_id === paper.id);
+                let badgeColor = "badge-error"; let statusTxt = "Pending";
+                if(marksForPaper.length >= targetStudents.length) { badgeColor = "badge-success"; statusTxt = "Completed"; }
+                else if(marksForPaper.length > 0) { badgeColor = "badge-warning"; statusTxt = "In Progress"; }
+                return `<div class="badge ${badgeColor} text-white font-bold gap-1 p-3">${paper.paper_name}: ${statusTxt}</div>`;
+            }).join('');
+
+            let headerHtml = `<tr><th>Student Name</th><th>Stream</th>`;
+            activeColumns.forEach(p => { headerHtml += `<th>${p.paper_name}</th>`; });
+            headerHtml += `<th>Total Marks</th></tr>`;
+            broadsheetHeader.innerHTML = headerHtml;
+
+            let csvRows = [["Student Name", "Stream", ...activeColumns.map(p => p.paper_name), "Total Marks"]];
+            broadsheetRows.innerHTML = targetStudents.map(student => {
+                let total = 0; let rowCsv = [student.name, student.stream];
+                let cells = `<td>${student.name}</td><td><span class="badge font-mono">${student.stream}</span></td>`;
+                
+                activeColumns.forEach(p => {
+                    const match = (marksData || []).find(m => m.student_id === student.id && m.paper_id === p.id);
+                    const score = match ? parseFloat(match.raw_score) : 0;
+                    total += score; rowCsv.push(score); cells += `<td class="font-mono">${match ? score : '-'}</td>`;
+                });
+                cells += `<td class="font-bold text-success font-mono">${total.toFixed(2)}</td>`;
+                rowCsv.push(total.toFixed(2)); csvRows.push(rowCsv); return `<tr>${cells}</tr>`;
+            }).join('');
+
+            activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+            downloadCsvBtn.disabled = false;
+        });
+
+        downloadCsvBtn.addEventListener('click', () => {
+            const encodedUri = encodeURI(activeBroadSheetCsvData);
+            const link = document.createElement("a"); link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `BroadSheet_Compilation.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        });
+
+        window.addEventListener('DOMContentLoaded', initAdminEngine);
+    </script>
+</body>
+</html>
