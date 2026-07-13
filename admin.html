@@ -1,71 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethania Academy - Admin Console</title>
+    <title>Bethania Academy - Executive Admin Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-base-300 min-h-screen text-base-content font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
-    <div class="navbar bg-neutral text-neutral-content shadow-lg px-6 sticky top-0 z-50">
+    <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 sticky top-0 z-50 border-b border-amber-500/30">
         <div class="flex-1">
-            <h1 class="text-xl font-black tracking-wider flex items-center gap-2 text-warning">
-                🛠️ Bethania Command Center <span class="text-xs badge badge-warning font-mono">v2.0</span>
-            </h1>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <span class="text-xl sm:text-2xl">🛡️</span>
+                <div>
+                    <h1 class="text-sm sm:text-md font-black tracking-wider uppercase text-amber-400">Bethania Command Center</h1>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-widest uppercase">Executive CBA Management Portal</p>
+                </div>
+            </div>
         </div>
-        <div>
-            <span class="text-xs font-mono bg-base-100/20 py-1 px-3 rounded-full" id="db-status">Connecting Engine...</span>
+        <div class="flex-none gap-2">
+            <span class="text-[10px] sm:text-xs font-mono bg-slate-800 border border-slate-700 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Syncing Server...
+            </span>
         </div>
     </div>
 
-    <main class="container mx-auto p-4 max-w-6xl space-y-6 mt-4">
+    <main class="container mx-auto p-3 sm:p-4 max-w-6xl space-y-6 mt-4">
 
-        <div class="card bg-base-100 shadow-2xl border-2 border-primary">
-            <div class="card-body p-6">
-                <h2 class="card-title text-xl font-black text-primary flex items-center gap-2">
-                    🚀 Launch New Assessment Cycle
-                </h2>
-                <p class="text-xs text-base-content/60">Select an assessment configuration type below. Starting a cycle updates the teacher workspace automatically.</p>
+        <div class="card bg-white shadow-xl border border-slate-200">
+            <div class="card-body p-4 sm:p-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xl">🚀</span>
+                    <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
+                </div>
+                <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts and targets only the specified evaluation model.</p>
 
-                <div class="divider my-1"></div>
+                <div class="divider my-2"></div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                    <div class="form-control bg-base-200 p-4 rounded-xl space-y-3">
-                        <label class="label-text font-bold">1. Select Assessment Classification Type</label>
-                        <div class="flex gap-4">
-                            <label class="label cursor-pointer gap-2 bg-base-100 px-4 py-2 rounded-lg border w-1/2">
-                                <input type="radio" name="exam_class" value="main" class="radio radio-primary" checked id="radio-main" />
-                                <span class="label-text font-bold">🏫 Main Exam</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-2">
+                    <div class="form-control bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4">
+                        <label class="label-text font-bold text-slate-700">1. Select Assessment Classification Type</label>
+                        <div class="flex gap-2 sm:gap-4">
+                            <label class="label cursor-pointer gap-2 bg-white px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm w-1/2 hover:bg-slate-100 transition">
+                                <input type="radio" name="exam_class" value="main" class="radio radio-xs sm:radio-sm radio-primary" checked id="radio-main" />
+                                <span class="label-text text-xs sm:text-sm font-bold text-slate-700">🏫 Main Exam</span>
                             </label>
-                            <label class="label cursor-pointer gap-2 bg-base-100 px-4 py-2 rounded-lg border w-1/2">
-                                <input type="radio" name="exam_class" value="contest" class="radio radio-secondary" id="radio-contest" />
-                                <span class="label-text font-bold">🧮 Maths Contest</span>
+                            <label class="label cursor-pointer gap-2 bg-white px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm w-1/2 hover:bg-slate-100 transition">
+                                <input type="radio" name="exam_class" value="contest" class="radio radio-xs sm:radio-sm radio-secondary" id="radio-contest" />
+                                <span class="label-text text-xs sm:text-sm font-bold text-slate-700">🧮 Contest</span>
                             </label>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 pt-2">
+                        <div class="grid grid-cols-2 gap-2">
                             <div class="form-control">
-                                <label class="label-text text-xs font-bold mb-1">Calendar Year</label>
-                                <select id="cycle-year" class="select select-bordered select-sm">
-                                    <option value="2026">2026</option><option value="2027">2027</option>
+                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Calendar Year</label>
+                                <select id="cycle-year" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
                                 </select>
                             </div>
                             <div class="form-control">
-                                <label class="label-text text-xs font-bold mb-1">Target Term</label>
-                                <select id="cycle-term" class="select select-bordered select-sm">
-                                    <option value="Term 1">Term 1</option><option value="Term 2" selected>Term 2</option><option value="Term 3">Term 3</option>
+                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Target Term</label>
+                                <select id="cycle-term" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="Term 1">Term 1</option>
+                                    <option value="Term 2" selected>Term 2</option>
+                                    <option value="Term 3">Term 3</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-base-200 p-4 rounded-xl space-y-3 flex flex-col justify-between">
+                    <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4 flex flex-col justify-between">
                         <div id="main-exam-options" class="space-y-2">
-                            <label class="label-text font-bold block">2. Main Exam Type Series</label>
-                            <select id="main-series" class="select select-bordered select-sm w-full">
+                            <label class="label-text font-bold text-slate-700 block">2. Main Exam Series</label>
+                            <select id="main-series" class="select select-bordered select-sm w-full font-medium">
                                 <option value="Opener Exam">Opener Exam</option>
                                 <option value="Mid Term Exam" selected>Mid Term Exam</option>
                                 <option value="End Term Exam">End Term Exam</option>
@@ -73,64 +83,183 @@
                         </div>
 
                         <div id="contest-options" class="space-y-2 hidden">
-                            <label class="label-text font-bold block">2. Contest Identifier Series</label>
-                            <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School Challenge" class="input input-bordered input-sm w-full" value="Series A" />
+                            <label class="label-text font-bold text-slate-700 block">2. Contest Identifier Series</label>
+                            <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
                         </div>
 
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs mb-1">3. Teacher Mark Submission Closing Deadline</label>
-                            <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full" required />
+                            <label class="label-text font-bold text-slate-700 text-xs mb-1">3. Closing Submission Deadline</label>
+                            <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
                         </div>
                     </div>
                 </div>
 
                 <div class="card-actions justify-end mt-4">
-                    <button id="start-cycle-btn" class="btn btn-primary text-white font-bold px-8 shadow-md btn-md">⚡ Deploy Active Portal Context</button>
+                    <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto">
+                        ⚡ Publish Active Exam Context
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="card bg-base-100 shadow-xl border border-base-300">
-            <div class="card-body p-6">
-                <h2 class="card-title text-lg font-bold text-success">📊 Broad Sheet Metrics & Progress Monitor</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <div class="space-y-6 lg:col-span-1">
                 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-base-200 p-4 rounded-xl mt-2 items-end">
-                    <div class="form-control">
-                        <label class="label-text font-bold text-xs mb-1">Select Analysis Class Level</label>
-                        <select id="report-grade" class="select select-bordered select-sm w-full">
-                            <option value="" disabled selected>Choose Class...</option>
-                            <option value="-2">PP1</option><option value="-1">PP2</option>
-                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                            <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                        </select>
+                <div class="card bg-white shadow-xl border border-slate-200">
+                    <div class="card-body p-4 sm:p-5 space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">📡</span>
+                            <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Submission Tracker</h3>
+                        </div>
+                        <p class="text-xs text-slate-500">Analyze real-time data uploads across streams. Live records will display with scores or highlight missing inputs instantly.</p>
+
+                        <div class="divider my-1"></div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Level</label>
+                            <select id="tracker-grade" class="select select-bordered select-sm w-full">
+                                <option value="" disabled selected>Choose Class...</option>
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Subject Component</label>
+                            <select id="tracker-subject" class="select select-bordered select-sm w-full" disabled>
+                                <option value="" disabled selected>Choose class level first...</option>
+                            </select>
+                        </div>
+
+                        <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
+
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                            <div class="bg-slate-100 p-2 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600">
+                                <span>Learner Name</span>
+                                <span>Upload Status</span>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
+                                <p class="text-center py-6 text-xs italic text-slate-400">Select parameters to audit...</p>
+                            </div>
+                        </div>
                     </div>
-                    <button id="load-broadsheet-btn" class="btn btn-success text-white btn-sm font-bold shadow-md">Compile Sheet Matrix</button>
                 </div>
 
-                <div class="mt-4 p-4 bg-base-200 rounded-xl">
-                    <h3 class="text-xs uppercase font-black text-base-content/70 mb-2">Live Teacher Tracking Status Matrix</h3>
-                    <div id="subject-status-pills" class="flex flex-wrap gap-2">
-                        <span class="text-xs italic text-base-content/50">Select parameters to compute metrics...</span>
+                <div class="card bg-white shadow-xl border border-slate-200">
+                    <div class="card-body p-4 sm:p-5 space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🛠️</span>
+                            <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Manage Learning Areas</h3>
+                        </div>
+                        <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam papers/components, or remove outdated selections from the portals.</p>
+
+                        <div class="divider my-1"></div>
+
+                        <div class="tabs tabs-boxed bg-slate-100 p-1 mb-2">
+                            <button class="tab tab-active tab-xs w-1/2 font-bold" id="tab-add-sub">Add Content</button>
+                            <button class="tab tab-xs w-1/2 font-bold" id="tab-del-sub">Remove Content</button>
+                        </div>
+
+                        <div id="sub-panel-add" class="space-y-3">
+                            <div class="form-control">
+                                <label class="label-text text-[11px] font-bold text-slate-700 mb-1">1. Subject / Learning Area Title</label>
+                                <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
+                            </div>
+
+                            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-2">
+                                <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500">Optional Component Paper Setup</span>
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    <input type="text" id="cfg-paper-name" placeholder="Paper/Part name" class="input input-bordered input-xs w-full" />
+                                    <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
+                                </div>
+                            </div>
+                            <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold">✨ Save Subjects & Components</button>
+                        </div>
+
+                        <div id="sub-panel-del" class="space-y-3 hidden">
+                            <div class="form-control">
+                                <label class="label-text text-[11px] font-bold text-slate-700 mb-1">Target Subject to Delete</label>
+                                <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="" disabled selected>Select from database...</option>
+                                </select>
+                            </div>
+                            <p class="text-[10px] text-red-600 font-semibold italic">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
+                            <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold">🗑️ Delete Selected Subject</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto rounded-lg border border-base-200 mt-4">
-                    <table class="table table-zebra table-sm w-full">
-                        <thead class="bg-base-300 text-xs font-bold uppercase" id="broadsheet-header">
-                            <tr><th>Student Name</th><th>Stream</th><th>Select Data Targets</th></tr>
-                        </thead>
-                        <tbody id="broadsheet-rows">
-                            <tr><td colspan="3" class="text-center py-6 text-base-content/40 italic">Broad sheet entries load here...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            </div>
 
-                <div class="flex justify-end mt-4">
-                    <button id="download-csv-btn" class="btn btn-outline btn-success btn-sm font-bold" disabled>📥 Extract Ledger Data (.CSV)</button>
+            <div class="card bg-white shadow-xl border border-slate-200 lg:col-span-2">
+                <div class="card-body p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">📊</span>
+                            <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                        </div>
+                        <span class="badge badge-warning text-[9px] sm:text-[10px] font-black uppercase text-slate-900" id="detected-active-label">No Deployed Exam Series Found</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
+
+                    <div class="divider my-1"></div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 items-end">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Cohort</label>
+                            <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
+                                <option value="" disabled selected>Choose Grade...</option>
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Analysis Model</label>
+                            <select id="analysis-model" class="select select-bordered select-sm w-full font-medium">
+                                <option value="marks">Performance Score Ledger (Marks)</option>
+                                <option value="rubric">CBA Competency Descriptor (Levels)</option>
+                            </select>
+                        </div>
+
+                        <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full">
+                            📊 Compile Broad Sheet
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 mt-4">
+                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                            <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
+                                <tr>
+                                    <th>Learner Name</th>
+                                    <th>Stream / Arm</th>
+                                    <th>Database Record Profiles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="broadsheet-rows" class="font-mono text-xs">
+                                <tr>
+                                    <td colspan="3" class="text-center py-10 text-slate-400 italic">Configure constraints and click "Compile Broad Sheet" above...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+                        <div id="analytical-summary-badges" class="flex flex-wrap gap-1.5 justify-center sm:justify-start"></div>
+                        <button id="download-csv-btn" class="btn btn-success text-white btn-sm font-bold w-full sm:w-auto" disabled>
+                            📥 Export Ledger (.CSV)
+                        </button>
+                    </div>
                 </div>
             </div>
+
         </div>
     </main>
 
@@ -139,19 +268,19 @@
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // State Cache
         let currentActiveExamName = "";
-        let isContestMode = false;
         let globalPapersList = [];
         let localStudentsCache = [];
+        let activeBroadSheetCsvData = "";
 
-        // DOM Handles
+        // Elements
+        const dbStatus = document.getElementById('db-status');
+        const detectedActiveLabel = document.getElementById('detected-active-label');
         const radioMain = document.getElementById('radio-main');
         const radioContest = document.getElementById('radio-contest');
         const mainExamOptions = document.getElementById('main-exam-options');
         const contestOptions = document.getElementById('contest-options');
         const startCycleBtn = document.getElementById('start-cycle-btn');
-        const dbStatus = document.getElementById('db-status');
 
         const cycleYear = document.getElementById('cycle-year');
         const cycleTerm = document.getElementById('cycle-term');
@@ -159,44 +288,131 @@
         const contestSeries = document.getElementById('contest-series');
         const cycleDeadline = document.getElementById('cycle-deadline');
 
+        const trackerGrade = document.getElementById('tracker-grade');
+        const trackerSubject = document.getElementById('tracker-subject');
+        const checkUploadsBtn = document.getElementById('check-uploads-btn');
+        const trackerOutput = document.getElementById('tracker-output');
+
         const reportGrade = document.getElementById('report-grade');
-        const loadBroadsheetBtn = document.getElementById('load-broadsheet-btn');
-        const subjectStatusPills = document.getElementById('subject-status-pills');
+        const analysisModel = document.getElementById('analysis-model');
+        const compileReportsBtn = document.getElementById('compile-reports-btn');
         const broadsheetHeader = document.getElementById('broadsheet-header');
         const broadsheetRows = document.getElementById('broadsheet-rows');
         const downloadCsvBtn = document.getElementById('download-csv-btn');
+        const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
+
+        // Configuration Panel Elements
+        const tabAddSub = document.getElementById('tab-add-sub');
+        const tabDelSub = document.getElementById('tab-del-sub');
+        const subPanelAdd = document.getElementById('sub-panel-add');
+        const subPanelDel = document.getElementById('sub-panel-del');
+        const cfgSubName = document.getElementById('cfg-sub-name');
+        const cfgPaperName = document.getElementById('cfg-paper-name');
+        const cfgPaperMax = document.getElementById('cfg-paper-max');
+        const cfgBtnSave = document.getElementById('cfg-btn-save');
+        const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
+        const cfgBtnDelete = document.getElementById('cfg-btn-delete');
 
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
-        // Radio Form Toggles
+        // Configuration panel toggles
+        tabAddSub.addEventListener('click', () => { tabAddSub.classList.add('tab-active'); tabDelSub.classList.remove('tab-active'); subPanelAdd.classList.remove('hidden'); subPanelDel.classList.add('hidden'); });
+        tabDelSub.addEventListener('click', () => { tabDelSub.classList.add('tab-active'); tabAddSub.classList.remove('tab-active'); subPanelDel.classList.remove('hidden'); subPanelAdd.classList.add('hidden'); fetchRemovalSubjects(); });
+
+        // UI Forms Configuration Toggles
         radioMain.addEventListener('change', () => { mainExamOptions.classList.remove('hidden'); contestOptions.classList.add('hidden'); });
         radioContest.addEventListener('change', () => { contestOptions.classList.remove('hidden'); mainExamOptions.classList.add('hidden'); });
 
         async function initAdminEngine() {
-            // Fetch initial configuration framework setup elements
+            // Cache Student Database & Subject Papers structure
             const { data: students } = await _supabase.from('students').select('*');
             localStudentsCache = students || [];
             const { data: papers } = await _supabase.from('subject_papers').select('*');
             globalPapersList = papers || [];
 
+            // Detect current deployed cycle context
             const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
             if(sessions && sessions.length > 0) {
                 currentActiveExamName = sessions[0].exam_name;
-                dbStatus.innerText = `Active Cycle: ${currentActiveExamName}`;
-                dbStatus.className = "text-xs font-mono bg-success/20 text-success py-1 px-3 rounded-full border border-success/30";
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
+                detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
             }
         }
 
+        // Add Subjects & Custom Component Papers Form Controller
+        cfgBtnSave.addEventListener('click', async () => {
+            const subjectTitle = cfgSubName.value.trim();
+            if(!subjectTitle) return alert("You must provide an assessment subject title!");
+
+            // 1. Insert/ensure parent subject exists
+            const { data: subData, error: subErr } = await _supabase
+                .from('subjects')
+                .insert([{ subject_name: subjectTitle }])
+                .select();
+
+            if(subErr) return alert("Save Error: " + subErr.message);
+
+            const savedSubject = subData[0];
+            const paperTitle = cfgPaperName.value.trim();
+            const maxVal = parseFloat(cfgPaperMax.value) || 100;
+
+            // 2. Insert mapped sub-component if configured by user
+            if(paperTitle) {
+                const { error: papErr } = await _supabase
+                    .from('subject_papers')
+                    .insert([{
+                        subject_id: savedSubject.id,
+                        paper_name: paperTitle,
+                        max_marks: maxVal
+                    }]);
+                if(papErr) return alert("Added subject successfully, but component paper failed: " + papErr.message);
+            }
+
+            alert(`"${subjectTitle}" has been configured successfully as a learning area!`);
+            cfgSubName.value = "";
+            cfgPaperName.value = "";
+            cfgPaperMax.value = "";
+            await initAdminEngine();
+        });
+
+        // Load subjects dynamically into deletion select field
+        async function fetchRemovalSubjects() {
+            cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Loading records...</option>';
+            const { data } = await _supabase.from('subjects').select('*').order('subject_name');
+            if(data) {
+                cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select from database...</option>' + 
+                    data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+            }
+        }
+
+        // Delete Selected Subjects Control
+        cfgBtnDelete.addEventListener('click', async () => {
+            const selectedId = cfgDelSubDropdown.value;
+            if(!selectedId) return alert("Please select a target subject to remove!");
+
+            if(!confirm("Are you absolutely sure you want to delete this learning area? This clears out all linked paper components!")) return;
+
+            // Cascading wipes on components first
+            await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
+            const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
+
+            if(error) {
+                alert("Database deletion block error: " + error.message);
+            } else {
+                alert("Subject successfully scrubbed from database records.");
+                fetchRemovalSubjects();
+                await initAdminEngine();
+            }
+        });
+
+        // Publish Context 
         startCycleBtn.addEventListener('click', async () => {
-            if(!cycleDeadline.value) return alert("You must specify a valid lock deadline time configuration!");
-            
+            if(!cycleDeadline.value) return alert("Choose a valid closing deadline date first!");
             let constructedName = "";
-            let assessmentType = "main";
             if(radioMain.checked) {
                 constructedName = `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}`;
             } else {
                 constructedName = `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
-                assessmentType = "contest";
             }
 
             const deadlineIso = new Date(cycleDeadline.value).toISOString();
@@ -208,68 +424,177 @@
             }]);
 
             if(error) {
-                alert("Database collision fault error: " + error.message);
+                alert("Database insertion failure: " + error.message);
             } else {
-                alert(`✨ Assessment cycle successfully initialized:\n"${constructedName}" has been synchronized to teacher systems.`);
+                alert(`Assessment Context "${constructedName}" was successfully broadcast to the server.`);
                 currentActiveExamName = constructedName;
-                dbStatus.innerText = `Active Cycle: ${currentActiveExamName}`;
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
+                detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
             }
         });
 
-        // SHEET COMPILER
-        let activeBroadSheetCsvData = "";
-        loadBroadsheetBtn.addEventListener('click', async () => {
-            const grade = parseInt(reportGrade.value);
-            if (!grade) return alert("Select target standard grade profile!");
+        // TRACKING AND SUBMISSION AUDITING
+        trackerGrade.addEventListener('change', async () => {
+            trackerSubject.innerHTML = '<option value="" disabled selected>Loading Subject components...</option>';
+            const { data } = await _supabase.from('subjects').select('*').order('subject_name');
+            if(data) {
+                trackerSubject.innerHTML = '<option value="" disabled selected>Choose Component Subject...</option>' + 
+                    data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                trackerSubject.disabled = false;
+            }
+        });
+
+        checkUploadsBtn.addEventListener('click', async () => {
+            const grade = parseInt(trackerGrade.value);
+            const subId = trackerSubject.value;
+            if(!grade || !subId) return alert("Select grade and subject parameters to track uploads!");
 
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
-            if(targetStudents.length === 0) { broadsheetRows.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-warning">No student datasets assigned here.</td></tr>`; return; }
+            if(targetStudents.length === 0) {
+                trackerOutput.innerHTML = `<p class="p-4 text-center text-xs text-error font-semibold">No students in grade profile.</p>`;
+                return;
+            }
 
-            const studentIds = targetStudents.map(s => s.id);
-            const { data: marksData } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studentIds);
+            const targetPapers = globalPapersList.filter(p => p.subject_id === subId);
+            if(targetPapers.length === 0) {
+                trackerOutput.innerHTML = `<p class="p-4 text-center text-xs text-amber-600 font-semibold">No assessment components mapped to this learning area.</p>`;
+                return;
+            }
 
-            // Filter columns if contest contains specific string pattern triggers
+            const studIds = targetStudents.map(s => s.id);
+            const { data: uploadedMarks } = await _supabase.from('marks_entry')
+                .select('*')
+                .eq('test_name', currentActiveExamName)
+                .in('student_id', studIds)
+                .in('paper_id', targetPapers.map(p => p.id));
+
+            trackerOutput.innerHTML = targetStudents.map(s => {
+                const marksForStudent = (uploadedMarks || []).filter(m => m.student_id === s.id);
+                const hasUploaded = marksForStudent.length >= targetPapers.length;
+                
+                let scoreDetails = marksForStudent.map(m => {
+                    const pap = targetPapers.find(tp => tp.id === m.paper_id);
+                    return pap ? `${pap.paper_name}: ${m.raw_score}` : `Score: ${m.raw_score}`;
+                }).join(', ');
+
+                return `
+                    <div class="flex items-center justify-between p-2.5 text-xs">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-800 text-[11px] sm:text-xs">${s.name}</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
+                        </div>
+                        <div>
+                            ${hasUploaded ? 
+                                `<span class="badge badge-success text-white font-bold text-[9px] sm:text-[10px] py-1 px-2">Uploaded</span>` : 
+                                `<span class="badge badge-error text-white font-bold text-[9px] sm:text-[10px] py-1 px-2">Missing</span>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        });
+
+        // KNEC CBA METRICS ENGINE
+        function getCompetencyLevel(score, max) {
+            const percentage = (score / max) * 100;
+            if(percentage >= 80) return { term: 'Exceeding Expectation (EE)', code: 'EE', class: 'bg-emerald-100 text-emerald-800' };
+            if(percentage >= 60) return { term: 'Meeting Expectation (ME)', code: 'ME', class: 'bg-sky-100 text-sky-800' };
+            if(percentage >= 40) return { term: 'Approaching Expectation (AE)', code: 'AE', class: 'bg-amber-100 text-amber-800' };
+            return { term: 'Emerging (EM)', code: 'EM', class: 'bg-rose-100 text-rose-800' };
+        }
+
+        compileReportsBtn.addEventListener('click', async () => {
+            const grade = parseInt(reportGrade.value);
+            const mode = analysisModel.value;
+            if(!grade) return alert("Select target standard grade cohort!");
+
+            const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+            if(targetStudents.length === 0) {
+                broadsheetRows.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-rose-500 italic">No student profiles admitted under this grade.</td></tr>`;
+                return;
+            }
+
+            const studIds = targetStudents.map(s => s.id);
+            const { data: marks } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studIds);
+
+            // Filter columns to isolate maths papers automatically if it's a Maths Contest active session
             let activeColumns = globalPapersList;
             if(currentActiveExamName.toLowerCase().includes('maths contest')) {
                 activeColumns = globalPapersList.filter(p => p.paper_name.toLowerCase().includes('math'));
             }
 
-            subjectStatusPills.innerHTML = activeColumns.map(paper => {
-                const marksForPaper = (marksData || []).filter(m => m.paper_id === paper.id);
-                let badgeColor = "badge-error"; let statusTxt = "Pending";
-                if(marksForPaper.length >= targetStudents.length) { badgeColor = "badge-success"; statusTxt = "Completed"; }
-                else if(marksForPaper.length > 0) { badgeColor = "badge-warning"; statusTxt = "In Progress"; }
-                return `<div class="badge ${badgeColor} text-white font-bold gap-1 p-3">${paper.paper_name}: ${statusTxt}</div>`;
-            }).join('');
-
-            let headerHtml = `<tr><th>Student Name</th><th>Stream</th>`;
-            activeColumns.forEach(p => { headerHtml += `<th>${p.paper_name}</th>`; });
-            headerHtml += `<th>Total Marks</th></tr>`;
+            // Write Broad Sheet Header Row
+            let headerHtml = `<tr><th class="text-left font-bold text-xs p-3">Learner Name</th><th class="text-center font-bold text-xs p-3">Stream</th>`;
+            activeColumns.forEach(p => {
+                headerHtml += `<th class="text-center font-bold text-xs p-3">${p.paper_name}</th>`;
+            });
+            headerHtml += `<th class="text-center font-bold text-xs p-3">${mode === 'marks' ? 'Cumulative Score' : 'Competency Level'}</th></tr>`;
             broadsheetHeader.innerHTML = headerHtml;
 
-            let csvRows = [["Student Name", "Stream", ...activeColumns.map(p => p.paper_name), "Total Marks"]];
-            broadsheetRows.innerHTML = targetStudents.map(student => {
-                let total = 0; let rowCsv = [student.name, student.stream];
-                let cells = `<td>${student.name}</td><td><span class="badge font-mono">${student.stream}</span></td>`;
+            let csvRows = [["Learner Name", "Stream", ...activeColumns.map(p => p.paper_name), mode === 'marks' ? "Cumulative Score" : "Competency Descriptor"]];
+
+            // Setup tracking counters for summary badges
+            let countEE = 0, countME = 0, countAE = 0, countEM = 0;
+
+            // Render Rows Dynamically
+            broadsheetRows.innerHTML = targetStudents.map(s => {
+                let totalScore = 0;
+                let maxPossible = 0;
+                let rowCsv = [s.name, s.stream];
+                
+                let cells = `<td class="text-left py-2.5 px-3 font-semibold text-slate-900">${s.name}</td><td class="text-center py-2.5 px-3"><span class="badge font-mono">${s.stream}</span></td>`;
                 
                 activeColumns.forEach(p => {
-                    const match = (marksData || []).find(m => m.student_id === student.id && m.paper_id === p.id);
-                    const score = match ? parseFloat(match.raw_score) : 0;
-                    total += score; rowCsv.push(score); cells += `<td class="font-mono">${match ? score : '-'}</td>`;
+                    const scoreRecord = (marks || []).find(m => m.student_id === s.id && m.paper_id === p.id);
+                    const score = scoreRecord ? parseFloat(scoreRecord.raw_score) : 0;
+                    totalScore += score;
+                    maxPossible += parseFloat(p.max_marks || p.max_score || 50);
+                    rowCsv.push(scoreRecord ? score : '-');
+                    cells += `<td class="text-center py-2.5 px-3 text-slate-600 font-mono">${scoreRecord ? score : '-'}</td>`;
                 });
-                cells += `<td class="font-bold text-success font-mono">${total.toFixed(2)}</td>`;
-                rowCsv.push(total.toFixed(2)); csvRows.push(rowCsv); return `<tr>${cells}</tr>`;
+
+                if(mode === 'marks') {
+                    cells += `<td class="text-center font-bold text-slate-900 py-2.5 px-3">${totalScore.toFixed(2)}</td>`;
+                    rowCsv.push(totalScore.toFixed(2));
+                } else {
+                    const level = getCompetencyLevel(totalScore, maxPossible || 100);
+                    if(level.code === 'EE') countEE++;
+                    if(level.code === 'ME') countME++;
+                    if(level.code === 'AE') countAE++;
+                    if(level.code === 'EM') countEM++;
+
+                    cells += `<td class="text-center py-2.5 px-3"><span class="badge font-bold py-1 px-3 ${level.class}">${level.term}</span></td>`;
+                    rowCsv.push(level.term);
+                }
+
+                csvRows.push(rowCsv);
+                return `<tr>${cells}</tr>`;
             }).join('');
+
+            // Display Competency Analytics summary badges if in Rubric mode
+            if(mode === 'rubric') {
+                analyticalSummaryBadges.innerHTML = `
+                    <span class="badge bg-emerald-100 text-emerald-800 font-bold text-[10px] p-2">EE: ${countEE}</span>
+                    <span class="badge bg-sky-100 text-sky-800 font-bold text-[10px] p-2">ME: ${countME}</span>
+                    <span class="badge bg-amber-100 text-amber-800 font-bold text-[10px] p-2">AE: ${countAE}</span>
+                    <span class="badge bg-rose-100 text-rose-800 font-bold text-[10px] p-2">EM: ${countEM}</span>
+                `;
+            } else {
+                analyticalSummaryBadges.innerHTML = "";
+            }
 
             activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
             downloadCsvBtn.disabled = false;
         });
 
+        // Trigger Broad Sheet Export download flow
         downloadCsvBtn.addEventListener('click', () => {
             const encodedUri = encodeURI(activeBroadSheetCsvData);
-            const link = document.createElement("a"); link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `BroadSheet_Compilation.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `CBA_Assessment_BroadSheet_${reportGrade.value}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
 
         window.addEventListener('DOMContentLoaded', initAdminEngine);
