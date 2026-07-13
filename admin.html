@@ -26,7 +26,36 @@
             </span>
         </div>
     </div>
-
+<!-- Manage Learners Panel -->
+<div class="card bg-white shadow-xl border border-blue-100 mb-6">
+    <div class="card-body p-4 sm:p-6">
+        <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">👥 Manage Learners</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="label-text font-bold text-xs text-slate-700 mb-1 block">Select Grade to Edit</label>
+                <select id="manage-grade-select" class="select select-bordered select-sm w-full">
+                    <option value="" disabled selected>Choose Grade...</option>
+                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option>
+                </select>
+                <div id="manage-learner-list" class="mt-3 max-h-60 overflow-y-auto border rounded-lg p-2 bg-slate-50 space-y-1">
+                    <p class="text-xs text-slate-400 text-center py-4">Select a grade to load learners...</p>
+                </div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label class="label-text font-bold text-xs text-slate-700 mb-2 block">Register New Learner</label>
+                <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full mb-2" />
+                <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full mb-3" />
+                <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold">✨ Save Learner</button>
+            </div>
+        </div>
+    </div>
+</div>
+    
     <main class="container mx-auto p-3 sm:p-4 max-w-6xl space-y-6 mt-4">
 
         <div class="card bg-white shadow-xl border border-slate-200">
@@ -264,6 +293,46 @@
     </main>
 
     <script>
+        // --- NEW: Manage Learners Logic ---
+const manageGradeSelect = document.getElementById('manage-grade-select');
+const manageList = document.getElementById('manage-learner-list');
+const addLearnerBtn = document.getElementById('add-learner-btn');
+
+async function fetchManageList() {
+    const grade = parseInt(manageGradeSelect.value);
+    if (!grade) return;
+    manageList.innerHTML = '<p class="text-xs text-center py-2">Loading...</p>';
+    const { data } = await _supabase.from('students').select('*').eq('grade', grade);
+    manageList.innerHTML = (data || []).map(s => `
+        <div class="flex justify-between items-center text-xs p-2 bg-white border-b border-slate-100">
+            <span class="font-medium">${s.name} <span class="text-slate-400 font-mono">(${s.stream})</span></span>
+            <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white">Delete</button>
+        </div>
+    `).join('');
+}
+
+async function removeLearner(id) {
+    if(!confirm("Are you sure? This will delete the learner permanently.")) return;
+    await _supabase.from('students').delete().eq('id', id);
+    fetchManageList();
+}
+
+manageGradeSelect.addEventListener('change', fetchManageList);
+
+addLearnerBtn.addEventListener('click', async () => {
+    const grade = manageGradeSelect.value;
+    const name = document.getElementById('new-name').value;
+    const stream = document.getElementById('new-stream').value;
+    if(!grade || !name) return alert("Select a grade and enter a name.");
+    const { error } = await _supabase.from('students').insert([{ name, stream, grade: parseInt(grade) }]);
+    if (error) alert("Error: " + error.message);
+    else {
+        alert("Learner added!");
+        document.getElementById('new-name').value = "";
+        fetchManageList();
+    }
+});
+
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
