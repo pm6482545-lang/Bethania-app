@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethania Academy - Exam Manager</title>
+    <title>Bethania Academy - Teacher Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://tailwindcss.com"></script>
 </head>
 <body class="bg-base-200 min-h-screen text-base-content font-sans">
 
     <div class="navbar bg-primary text-primary-content shadow-lg px-4 sticky top-0 z-50">
         <div class="flex-1">
             <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
-                🏫 Bethania Admin <span class="text-xs badge badge-secondary font-mono">v1.5 Security</span>
+                🏫 Bethania Teacher Hub <span class="text-xs badge badge-secondary font-mono">v2.0 Portal</span>
             </h1>
         </div>
-        <div class="flex-none gap-2">
-            <div id="exam-portal-badge" class="badge badge-warning font-bold p-3 text-xs">Checking Session...</div>
-            <span class="text-sm font-medium bg-primary-focus py-1 px-3 rounded-full" id="connection-status">Connecting...</span>
+        <div class="flex-none">
+            <div id="active-session-banner" class="badge badge-neutral font-bold p-3 text-xs text-white">Fetching Exam Target...</div>
         </div>
     </div>
 
@@ -26,12 +25,14 @@
 
         <div class="tabs tabs-boxed justify-center bg-base-100 p-2 shadow-sm rounded-xl">
             <button class="tab tab-active font-medium" id="tab-roster">Student Roster</button>
-            <button class="tab font-medium" id="tab-marks">Marks Entry</button>
-            <button class="tab font-medium border border-base-300/50" id="tab-setup">📐 Exam Setup 🔒</button>
-            <button class="tab font-medium text-success border border-success/20" id="tab-reports">📊 Broad Sheets & Control 🔒</button>
+            <button class="tab font-medium" id="tab-marks">Marks Entry Ledger</button>
         </div>
 
-        <div id="roster-screen" class="space-y-6">
+        <div id="portal-lock-alert" class="alert alert-error shadow-md hidden rounded-xl font-semibold">
+            <span>⚠️ Entry Blocked: Submission window closed. Contact the administration to alter marks entries.</span>
+        </div>
+
+        <div id="screen-roster" class="space-y-6">
             <div class="card bg-base-100 shadow-xl border border-base-300">
                 <div class="card-body p-6">
                     <h2 class="card-title text-lg font-bold text-primary mb-2 flex items-center gap-1">👤 Register New Student Profile</h2>
@@ -63,7 +64,7 @@
                             </select>
                         </div>
                         <div class="form-control md:col-span-2 mt-2">
-                            <button type="submit" class="btn btn-primary btn-block text-white font-bold">Save Profile & Admit Student</button>
+                            <button type="submit" class="btn btn-primary btn-block text-white font-bold">Admit & Register Student</button>
                         </div>
                     </form>
                 </div>
@@ -81,7 +82,7 @@
                                 <tr><th>Login ID</th><th>Full Name</th><th>Grade</th><th>Stream</th><th>Maths Club Family</th></tr>
                             </thead>
                             <tbody id="student-list-rows">
-                                <tr><td colspan="5" class="text-center py-6 text-base-content/50 italic">Connecting to database...</td></tr>
+                                <tr><td colspan="5" class="text-center py-6 text-base-content/50 italic">Pulling records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -89,22 +90,14 @@
             </div>
         </div>
 
-        <div id="marks-screen" class="space-y-6 hidden">
-            <div id="portal-lock-banner" class="alert alert-error shadow-md hidden rounded-xl font-semibold">
-                <span>⚠️ Entry Locked: The administration has locked grading for this cycle or the deadline has passed.</span>
-            </div>
-
+        <div id="screen-marks" class="space-y-6 hidden">
             <div class="card bg-base-100 shadow-xl border border-base-300">
                 <div class="card-body p-6">
                     <h2 class="card-title text-lg font-bold text-secondary mb-2">📝 Batch Enter Marks</h2>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-base-200 p-4 rounded-xl mb-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-base-200 p-4 rounded-xl mb-4">
                         <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Active Portal Exam Assessment Context</label>
-                            <input type="text" id="exam-name" class="input input-bordered input-sm w-full font-bold bg-base-300" readonly />
-                        </div>
-                        <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Class/Grade</label>
+                            <label class="label-text font-semibold mb-1 text-xs">Class/Grade Target</label>
                             <select id="filter-grade" class="select select-bordered select-sm w-full">
                                 <option value="" disabled selected>Choose...</option>
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
@@ -115,22 +108,22 @@
                             </select>
                         </div>
                         <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Subject</label>
-                            <select id="filter-subject" class="select select-bordered select-sm w-full" disabled><option disabled selected>Select Grade First</option></select>
+                            <label class="label-text font-semibold mb-1 text-xs">Subject Selection</label>
+                            <select id="filter-subject" class="select select-bordered select-sm w-full" disabled><option disabled selected>Pick Grade First</option></select>
                         </div>
                         <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Paper Component</label>
-                            <select id="filter-paper" class="select select-bordered select-sm w-full" disabled><option disabled selected>Select Subject First</option></select>
+                            <label class="label-text font-semibold mb-1 text-xs">Paper Component Component</label>
+                            <select id="filter-paper" class="select select-bordered select-sm w-full" disabled><option disabled selected>Pick Subject First</option></select>
                         </div>
                     </div>
 
                     <div class="overflow-x-auto rounded-lg border border-base-200">
                         <table class="table table-zebra w-full">
                             <thead class="bg-base-300 text-xs font-bold uppercase">
-                                <tr><th>Student Name</th><th>Stream</th><th>Raw Score</th></tr>
+                                <tr><th>Student Name</th><th>Stream</th><th id="paper-max-header">Score Input Box</th></tr>
                             </thead>
                             <tbody id="marks-entry-rows">
-                                <tr><td colspan="3" class="text-center py-8 text-base-content/50 italic">Select parameters above to open entry ledger sheet.</td></tr>
+                                <tr><td colspan="3" class="text-center py-8 text-base-content/50 italic">Select options above to pull the active ledger lists.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -141,145 +134,29 @@
             </div>
         </div>
 
-        <div id="setup-screen" class="space-y-6 hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="card bg-base-100 shadow-xl border border-base-300">
-                    <div class="card-body p-6">
-                        <h2 class="card-title text-base font-bold text-neutral">📚 1. Define New Subject</h2>
-                        <form id="subject-form" class="space-y-4 mt-2">
-                            <input type="text" id="new-subject-name" placeholder="e.g. Mathematics, Kiswahili" class="input input-bordered input-md w-full" required />
-                            <button type="submit" class="btn btn-neutral btn-sm btn-block text-white">Add Subject</button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="card bg-base-100 shadow-xl border border-base-300">
-                    <div class="card-body p-6">
-                        <h2 class="card-title text-base font-bold text-accent">📄 2. Configure Assessment Paper</h2>
-                        <form id="paper-form" class="space-y-3 mt-2">
-                            <select id="paper-subject-select" class="select select-bordered select-sm w-full" required><option value="" disabled selected>Loading...</option></select>
-                            <input type="text" id="new-paper-name" placeholder="e.g. Main Exam, Paper 1" class="input input-bordered input-sm w-full" required />
-                            <input type="number" id="new-paper-max" value="50" min="1" max="100" class="input input-bordered input-sm w-full" required />
-                            <button type="submit" class="btn btn-accent btn-sm btn-block text-white">Save Exam Component</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="reports-screen" class="space-y-6 hidden">
-            <div class="card bg-base-100 shadow-xl border-2 border-warning bg-warning/5">
-                <div class="card-body p-6">
-                    <h2 class="card-title text-lg font-bold text-amber-700">⚙️ Master Exam Session Administration Center</h2>
-                    <p class="text-xs text-base-content/70">Start new testing cycles, change grading titles, and configure exact teacher lock deadlines.</p>
-                    
-                    <form id="session-control-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-2 items-end">
-                        <div class="form-control">
-                            <label class="label-text font-bold text-xs mb-1">Testing Cycle Title</label>
-                            <input type="text" id="setup-session-name" placeholder="e.g. Mid Term 2 2026" class="input input-bordered input-sm" required />
-                        </div>
-                        <div class="form-control">
-                            <label class="label-text font-bold text-xs mb-1">Lock Deadline Date & Time</label>
-                            <input type="datetime-local" id="setup-session-deadline" class="input input-bordered input-sm" required />
-                        </div>
-                        <div class="form-control">
-                            <label class="label-text font-bold text-xs mb-1">Portal Entry Status</label>
-                            <select id="setup-session-active" class="select select-bordered select-sm">
-                                <option value="true">🟢 Open (Accepting Marks)</option>
-                                <option value="false">🔴 Closed (Lock Portal)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-warning btn-sm font-bold text-amber-950 shadow-md">Update Master Session Rules</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <h2 class="card-title text-lg font-bold text-success">📊 Broad Sheet Compiled Ledger</h2>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-base-200 p-4 rounded-xl mt-2 items-end">
-                        <div class="form-control">
-                            <label class="label-text font-semibold text-xs mb-1">Target Class Level</label>
-                            <select id="report-grade" class="select select-bordered select-sm w-full">
-                                <option value="" disabled selected>Choose Grade...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                            </select>
-                        </div>
-                        <button id="load-broadsheet-btn" class="btn btn-success text-white btn-sm shadow-md">Compile Broad Sheet Matrix</button>
-                    </div>
-
-                    <div class="mt-4 p-4 bg-base-200 rounded-xl">
-                        <h3 class="text-xs uppercase font-bold text-base-content/70 mb-2">Subject Tracking Status Monitor</h3>
-                        <div id="subject-status-pills" class="flex flex-wrap gap-2">
-                            <span class="text-xs italic text-base-content/50">Select parameters to compute tracker metrics...</span>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto rounded-lg border border-base-200 mt-4">
-                        <table class="table table-zebra table-sm w-full">
-                            <thead class="bg-base-300 text-xs font-bold uppercase" id="broadsheet-header">
-                                <tr><th>Student Name</th><th>Stream</th><th>Select Parameters</th></tr>
-                            </thead>
-                            <tbody id="broadsheet-rows">
-                                <tr><td colspan="3" class="text-center py-6 text-base-content/40 italic">Choose criteria above to unpack broad sheet metrics.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="flex justify-end mt-4">
-                        <button id="download-csv-btn" class="btn btn-outline btn-success btn-sm font-bold" disabled>📥 Download Broad Sheet Ledger (.CSV)</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </main>
 
     <script>
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
-        const _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // SECURITY PIN SETTING
-        const ADMIN_SECRET_PASSWORD = "AdminBethania2026";
-        let isAdminAuthenticated = false;
-
+        let systemIsLocked = false;
+        let activeExamContextName = "";
         let localStudentsCache = [];
         let subjectsCache = [];
-        let globalPapersList = [];
-        
-        let systemIsLocked = false;
-        let activeExamContextName = "Mid Term 2 2026";
 
-        // Navigation DOM Elements
-        const tabs = {
-            roster: document.getElementById('tab-roster'),
-            marks: document.getElementById('tab-marks'),
-            setup: document.getElementById('tab-setup'),
-            reports: document.getElementById('tab-reports')
-        };
-        const screens = {
-            roster: document.getElementById('roster-screen'),
-            marks: document.getElementById('marks-screen'),
-            setup: document.getElementById('setup-screen'),
-            reports: document.getElementById('reports-screen')
-        };
-        const connStatus = document.getElementById('connection-status');
-        const examPortalBadge = document.getElementById('exam-portal-badge');
-        const portalLockBanner = document.getElementById('portal-lock-banner');
-        const examNameField = document.getElementById('exam-name');
+        // DOM Handles
+        const tabRoster = document.getElementById('tab-roster');
+        const tabMarks = document.getElementById('tab-marks');
+        const screenRoster = document.getElementById('screen-roster');
+        const screenMarks = document.getElementById('screen-marks');
+        const activeSessionBanner = document.getElementById('active-session-banner');
+        const portalLockAlert = document.getElementById('portal-lock-alert');
 
         const studentForm = document.getElementById('student-form');
         const studentListRows = document.getElementById('student-list-rows');
         const searchBar = document.getElementById('search-bar');
-        const subjectForm = document.getElementById('subject-form');
-        const paperForm = document.getElementById('paper-form');
-        const paperSubjectSelect = document.getElementById('paper-subject-select');
 
         const filterGrade = document.getElementById('filter-grade');
         const filterSubject = document.getElementById('filter-subject');
@@ -288,125 +165,53 @@
         const paperMaxHeader = document.getElementById('paper-max-header');
         const saveMarksBtn = document.getElementById('save-marks-btn');
 
-        const sessionControlForm = document.getElementById('session-control-form');
-        const setupSessionName = document.getElementById('setup-session-name');
-        const setupSessionDeadline = document.getElementById('setup-session-deadline');
-        const setupSessionActive = document.getElementById('setup-session-active');
-
-        const reportGrade = document.getElementById('report-grade');
-        const loadBroadsheetBtn = document.getElementById('load-broadsheet-btn');
-        const subjectStatusPills = document.getElementById('subject-status-pills');
-        const broadsheetHeader = document.getElementById('broadsheet-header');
-        const broadsheetRows = document.getElementById('broadsheet-rows');
-        const downloadCsvBtn = document.getElementById('download-csv-btn');
-
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
-        function resetTabs() {
-            Object.values(tabs).forEach(t => t.classList.remove('tab-active'));
-            Object.values(screens).forEach(s => s.classList.add('hidden'));
-        }
+        tabRoster.addEventListener('click', () => { tabRoster.classList.add('tab-active'); tabMarks.classList.remove('tab-active'); screenRoster.classList.remove('hidden'); screenMarks.classList.add('hidden'); });
+        tabMarks.addEventListener('click', () => { tabMarks.classList.add('tab-active'); tabRoster.classList.remove('tab-active'); screenMarks.classList.remove('hidden'); screenRoster.classList.add('hidden'); fetchSubjects(); });
 
-        function verifyAdminAccess(successCallback) {
-            if (isAdminAuthenticated) {
-                successCallback();
-                return;
-            }
-            const input = prompt("🔐 Enter Administrative Security Password:");
-            if (input === ADMIN_SECRET_PASSWORD) {
-                isAdminAuthenticated = true;
-                successCallback();
-            } else if (input !== null) {
-                alert("❌ Access Denied: Invalid Administrative Password Key.");
-            }
-        }
-
-        tabs.roster.addEventListener('click', () => { resetTabs(); tabs.roster.classList.add('tab-active'); screens.roster.classList.remove('hidden'); });
-        tabs.marks.addEventListener('click', () => { resetTabs(); tabs.marks.classList.add('tab-active'); screens.marks.classList.remove('hidden'); fetchSubjects(); });
-        
-        tabs.setup.addEventListener('click', () => {
-            verifyAdminAccess(() => {
-                resetTabs(); tabs.setup.classList.add('tab-active'); screens.setup.classList.remove('hidden'); populateSetupSubjects();
-            });
-        });
-        
-        tabs.reports.addEventListener('click', () => {
-            verifyAdminAccess(() => {
-                resetTabs(); tabs.reports.classList.add('tab-active'); screens.reports.classList.remove('hidden'); fetchGlobalPapers(); populateSessionPanel();
-            });
-        });
-
-        async function verifyExamSessionState() {
-            const { data, error } = await _supabaseClient.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
+        async function pullActiveCycleState() {
+            const { data, error } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
             if (!error && data && data.length > 0) {
                 const session = data[0];
                 activeExamContextName = session.exam_name;
-                examNameField.value = activeExamContextName;
-                
-                const deadlineDate = new Date(session.deadline_at);
+                const deadline = new Date(session.deadline_at);
                 const now = new Date();
 
-                if (!session.is_active || now > deadlineDate) {
+                if (!session.is_active || now > deadline) {
                     systemIsLocked = true;
-                    examPortalBadge.innerText = `🔴 PORTAL LOCKED (${activeExamContextName})`;
-                    examPortalBadge.className = "badge badge-error font-bold p-3 text-xs text-white";
-                    portalLockBanner.classList.remove('hidden');
+                    activeSessionBanner.innerText = `🔴 PORTAL LOCKED (${activeExamContextName})`;
+                    activeSessionBanner.className = "badge badge-error text-white text-xs font-bold p-3 animate-pulse";
+                    portalLockAlert.classList.remove('hidden');
                 } else {
                     systemIsLocked = false;
-                    examPortalBadge.innerText = `🟢 ENTRY OPEN (${activeExamContextName})`;
-                    examPortalBadge.className = "badge badge-success font-bold p-3 text-xs text-white";
-                    portalLockBanner.classList.add('hidden');
+                    activeSessionBanner.innerText = `🟢 ACTIVE EXAM CYCLE: ${activeExamContextName}`;
+                    activeSessionBanner.className = "badge badge-success text-white text-xs font-bold p-3";
+                    portalLockAlert.classList.add('hidden');
                 }
             }
         }
-
-        async function populateSessionPanel() {
-            const { data } = await _supabaseClient.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
-            if(data && data.length > 0) {
-                setupSessionName.value = data[0].exam_name;
-                if(data[0].deadline_at) {
-                    setupSessionDeadline.value = new Date(data[0].deadline_at).toISOString().slice(0, 16);
-                }
-                setupSessionActive.value = data[0].is_active ? "true" : "false";
-            }
-        }
-
-        sessionControlForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const exam_name = setupSessionName.value.trim();
-            const deadline_at = new Date(setupSessionDeadline.value).toISOString();
-            const is_active = setupSessionActive.value === "true";
-
-            const { error } = await _supabaseClient.from('exam_sessions').insert([{ exam_name, deadline_at, is_active }]);
-            if(error) alert("Error saving session configurations: " + error.message);
-            else {
-                alert("✨ Master Exam cycle updated successfully!");
-                await verifyExamSessionState();
-            }
-        });
 
         async function loadStudentRoster() {
-            const { data, error } = await _supabaseClient.from('students').select('*').order('created_at', { ascending: false });
-            if (!error) {
-                connStatus.innerText = "Database: Connected"; connStatus.className = "text-sm font-medium bg-success py-1 px-3 rounded-full text-white";
-                localStudentsCache = data || []; renderTable(localStudentsCache);
-            }
+            const { data } = await _supabase.from('students').select('*').order('created_at', { ascending: false });
+            localStudentsCache = data || [];
+            renderTable(localStudentsCache);
         }
 
         function renderTable(students) {
-            if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-base-content/50 italic">No records.</td></tr>`; return; }
-            studentListRows.innerHTML = students.map(student => `
+            if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-base-content/40">No entries.</td></tr>`; return; }
+            studentListRows.innerHTML = students.map(s => `
                 <tr class="hover">
-                    <td class="font-mono text-xs font-bold text-primary select-all">${student.id.substring(0, 8).toUpperCase()}</td>
-                    <td class="font-medium">${student.name}</td><td class="font-bold">${gradeMap[student.grade] || student.grade}</td>
-                    <td><span class="badge font-mono">${student.stream}</span></td><td><span class="badge font-bold text-xs">${student.maths_club_family || 'None'}</span></td>
+                    <td class="font-mono text-xs font-bold text-primary">${s.id.substring(0, 8).toUpperCase()}</td>
+                    <td class="font-medium">${s.name}</td><td>${gradeMap[s.grade] || s.grade}</td>
+                    <td><span class="badge font-mono">${s.stream}</span></td><td><span class="badge font-bold text-xs">${s.maths_club_family || 'None'}</span></td>
                 </tr>
             `).join('');
         }
 
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const { data, error } = await _supabaseClient.from('students').insert([{
+            const { data, error } = await _supabase.from('students').insert([{
                 name: document.getElementById('stud-name').value.trim(),
                 grade: parseInt(document.getElementById('stud-grade').value),
                 stream: document.getElementById('stud-stream').value.trim(),
@@ -415,40 +220,35 @@
             if (!error && data) { studentForm.reset(); document.getElementById('stud-stream').value = "A"; localStudentsCache.unshift(data[0]); renderTable(localStudentsCache); }
         });
 
-        async function fetchSubjects() { const { data } = await _supabaseClient.from('subjects').select('*').order('subject_name'); subjectsCache = data || []; }
-        async function fetchGlobalPapers() { await fetchSubjects(); const { data } = await _supabaseClient.from('subject_papers').select('*'); globalPapersList = data || []; }
-        async function populateSetupSubjects() { await fetchSubjects(); paperSubjectSelect.innerHTML = '<option value="" disabled selected>Pick parent subject...</option>' + subjectsCache.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join(''); }
-
-        subjectForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await _supabaseClient.from('subjects').insert([{ subject_name: document.getElementById('new-subject-name').value.trim() }]);
-            subjectForm.reset(); populateSetupSubjects(); alert("Subject Created!");
-        });
-
-        paperForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await _supabaseClient.from('subject_papers').insert([{ subject_id: paperSubjectSelect.value, paper_name: document.getElementById('new-paper-name').value.trim(), max_marks: parseInt(document.getElementById('new-paper-max').value) }]);
-            paperForm.reset(); alert("Paper Configured!");
-        });
+        async function fetchSubjects() {
+            const { data } = await _supabase.from('subjects').select('*').order('subject_name');
+            // If contest cycle is active, automatically restrict subjects to Math only
+            if(activeExamContextName.toLowerCase().includes('maths contest')) {
+                subjectsCache = (data || []).filter(s => s.subject_name.toLowerCase().includes('math'));
+            } else {
+                subjectsCache = data || [];
+            }
+            filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade Level...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
+        }
 
         filterGrade.addEventListener('change', () => {
-            filterSubject.innerHTML = '<option value="" disabled selected>Select Subject...</option>' + subjectsCache.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+            filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Component...</option>' + subjectsCache.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
             filterSubject.disabled = false; filterPaper.disabled = true;
         });
 
         filterSubject.addEventListener('change', async () => {
-            const { data } = await _supabaseClient.from('subject_papers').select('*').eq('subject_id', filterSubject.value);
+            const { data } = await _supabase.from('subject_papers').select('*').eq('subject_id', filterSubject.value);
             filterPaper.innerHTML = '<option value="" disabled selected>Select Component...</option>' + (data || []).map(p => `<option value="${p.id}" data-max="${p.max_marks}">${p.paper_name}</option>`).join('');
             filterPaper.disabled = false;
         });
 
         filterPaper.addEventListener('change', () => {
             const maxMarks = filterPaper.options[filterPaper.selectedIndex].getAttribute('data-max');
-            paperMaxHeader.innerText = `Raw Score (Out of ${maxMarks})`;
+            paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
             const filtered = localStudentsCache.filter(s => s.grade === parseInt(filterGrade.value));
             
             marksEntryRows.innerHTML = filtered.map(s => `
-                <tr><td>${s.name}</td><td><span class="badge">${s.stream}</span></td>
+                <tr><td>${s.name}</td><td><span class="badge font-mono">${s.stream}</span></td>
                 <td><input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
                     class="input input-bordered input-sm w-full score-field font-mono" placeholder="0-${maxMarks}" ${systemIsLocked ? 'disabled' : ''}/></td></tr>
             `).join('');
@@ -457,72 +257,23 @@
         });
 
         saveMarksBtn.addEventListener('click', async () => {
-            if(systemIsLocked) return alert("Submission Blocked: This grading window is officially locked.");
+            if(systemIsLocked) return alert("System Closed. Data submission rejected.");
             const entries = Array.from(document.querySelectorAll('.score-field')).map(input => ({
                 student_id: input.getAttribute('data-sid'),
                 paper_id: filterPaper.value,
                 test_name: activeExamContextName,
                 raw_score: parseFloat(input.value) || 0.00
             }));
-            await _supabaseClient.from('marks_entry').insert(entries);
-            alert("✨ All marks recorded successfully!"); saveMarksBtn.disabled = true;
-        });
-
-        // BROAD SHEET ENGINE LOOP
-        let activeBroadSheetCsvData = "";
-        loadBroadsheetBtn.addEventListener('click', async () => {
-            const grade = parseInt(reportGrade.value);
-            if (!grade) return alert("Specify Target Grade!");
-
-            const targetStudents = localStudentsCache.filter(s => s.grade === grade);
-            if(targetStudents.length === 0) { broadsheetRows.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-warning">No students in this class.</td></tr>`; return; }
-
-            const studentIds = targetStudents.map(s => s.id);
-            const { data: marksData } = await _supabaseClient.from('marks_entry').select('*').eq('test_name', activeExamContextName).in('student_id', studentIds);
-
-            subjectStatusPills.innerHTML = globalPapersList.map(paper => {
-                const marksForPaper = (marksData || []).filter(m => m.paper_id === paper.id);
-                let badgeColor = "badge-error"; let statusTxt = "Pending";
-                if(marksForPaper.length >= targetStudents.length) { badgeColor = "badge-success"; statusTxt = "Completed"; }
-                else if(marksForPaper.length > 0) { badgeColor = "badge-warning"; statusTxt = "In Progress"; }
-                return `<div class="badge ${badgeColor} text-white font-bold gap-1 p-3">${paper.paper_name}: ${statusTxt}</div>`;
-            }).join('');
-
-            let headerHtml = `<tr><th>Student Name</th><th>Stream</th>`;
-            globalPapersList.forEach(p => { headerHtml += `<th>${p.paper_name}</th>`; });
-            headerHtml += `<th>Total Marks</th></tr>`;
-            broadsheetHeader.innerHTML = headerHtml;
-
-            let csvRows = [["Student Name", "Stream", ...globalPapersList.map(p => p.paper_name), "Total Marks"]];
-            broadsheetRows.innerHTML = targetStudents.map(student => {
-                let total = 0; let rowCsv = [student.name, student.stream];
-                let cells = `<td>${student.name}</td><td><span class="badge font-mono">${student.stream}</span></td>`;
-                
-                globalPapersList.forEach(p => {
-                    const match = (marksData || []).find(m => m.student_id === student.id && m.paper_id === p.id);
-                    const score = match ? parseFloat(match.raw_score) : 0;
-                    total += score; rowCsv.push(score); cells += `<td class="font-mono">${match ? score : '-'}</td>`;
-                });
-                cells += `<td class="font-bold text-success font-mono">${total.toFixed(2)}</td>`;
-                rowCsv.push(total.toFixed(2)); csvRows.push(rowCsv); return `<tr>${cells}</tr>`;
-            }).join('');
-
-            activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
-            downloadCsvBtn.disabled = false;
-        });
-
-        downloadCsvBtn.addEventListener('click', () => {
-            const encodedUri = encodeURI(activeBroadSheetCsvData);
-            const link = document.createElement("a"); link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `BroadSheet_${gradeMap[reportGrade.value]}.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            await _supabase.from('marks_entry').insert(entries);
+            alert("✨ Marks successfully captured and sent to broad sheets!"); saveMarksBtn.disabled = true;
         });
 
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
+
         window.addEventListener('DOMContentLoaded', async () => {
-            await verifyExamSessionState();
+            await pullActiveCycleState();
             await loadStudentRoster();
         });
     </script>
