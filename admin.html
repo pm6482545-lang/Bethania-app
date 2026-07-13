@@ -10,6 +10,7 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
+    <!-- Premium Admin Navigation Bar (Fully Responsive) -->
     <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 sticky top-0 z-50 border-b border-amber-500/30">
         <div class="flex-1">
             <div class="flex items-center gap-2 sm:gap-3">
@@ -29,6 +30,7 @@
 
     <main class="container mx-auto p-3 sm:p-4 max-w-6xl space-y-6 mt-4">
 
+        <!-- ASSESSMENT DEPLOYMENT CONTROL PANEL -->
         <div class="card bg-white shadow-xl border border-slate-200">
             <div class="card-body p-4 sm:p-6">
                 <div class="flex items-center gap-2 mb-2">
@@ -40,6 +42,7 @@
                 <div class="divider my-2"></div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-2">
+                    <!-- Configuration Form Selection -->
                     <div class="form-control bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4">
                         <label class="label-text font-bold text-slate-700">1. Select Assessment Classification Type</label>
                         <div class="flex gap-2 sm:gap-4">
@@ -53,6 +56,7 @@
                             </label>
                         </div>
 
+                        <!-- Calendar Parameters -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="form-control">
                                 <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Calendar Year</label>
@@ -72,7 +76,9 @@
                         </div>
                     </div>
 
+                    <!-- Dynamic Sub-parameters -->
                     <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4 flex flex-col justify-between">
+                        <!-- Main Exam Sub-parameters -->
                         <div id="main-exam-options" class="space-y-2">
                             <label class="label-text font-bold text-slate-700 block">2. Main Exam Series</label>
                             <select id="main-series" class="select select-bordered select-sm w-full font-medium">
@@ -82,11 +88,13 @@
                             </select>
                         </div>
 
+                        <!-- Contest Sub-parameters -->
                         <div id="contest-options" class="space-y-2 hidden">
                             <label class="label-text font-bold text-slate-700 block">2. Contest Identifier Series</label>
                             <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
                         </div>
 
+                        <!-- Deadline Control -->
                         <div class="form-control">
                             <label class="label-text font-bold text-slate-700 text-xs mb-1">3. Closing Submission Deadline</label>
                             <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
@@ -102,17 +110,20 @@
             </div>
         </div>
 
+        <!-- TWO-COLUMN WORKFLOW SECTION -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+            <!-- COLUMN 1: SYSTEM CONTROLLER -->
             <div class="space-y-6 lg:col-span-1">
                 
+                <!-- SUBMISSION AUDITOR WITH SUBJECT TIER FILTERING -->
                 <div class="card bg-white shadow-xl border border-slate-200">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">📡</span>
                             <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Submission Tracker</h3>
                         </div>
-                        <p class="text-xs text-slate-500">Analyze real-time data uploads across streams. Live records will display with scores or highlight missing inputs instantly.</p>
+                        <p class="text-xs text-slate-500">Analyze real-time data uploads. Subjects filter automatically according to the grade tier selected.</p>
 
                         <div class="divider my-1"></div>
 
@@ -149,6 +160,7 @@
                     </div>
                 </div>
 
+                <!-- SUBJECT & PAPER CONFIGURATION ENGINE -->
                 <div class="card bg-white shadow-xl border border-slate-200">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
@@ -159,11 +171,13 @@
 
                         <div class="divider my-1"></div>
 
+                        <!-- Mini Tabs inside Sidebar -->
                         <div class="tabs tabs-boxed bg-slate-100 p-1 mb-2">
                             <button class="tab tab-active tab-xs w-1/2 font-bold" id="tab-add-sub">Add Content</button>
                             <button class="tab tab-xs w-1/2 font-bold" id="tab-del-sub">Remove Content</button>
                         </div>
 
+                        <!-- VIEW 1: ADD CONTENT -->
                         <div id="sub-panel-add" class="space-y-3">
                             <div class="form-control">
                                 <label class="label-text text-[11px] font-bold text-slate-700 mb-1">1. Subject / Learning Area Title</label>
@@ -180,6 +194,7 @@
                             <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold">✨ Save Subjects & Components</button>
                         </div>
 
+                        <!-- VIEW 2: REMOVE CONTENT -->
                         <div id="sub-panel-del" class="space-y-3 hidden">
                             <div class="form-control">
                                 <label class="label-text text-[11px] font-bold text-slate-700 mb-1">Target Subject to Delete</label>
@@ -195,6 +210,7 @@
 
             </div>
 
+            <!-- COLUMN 2 & 3: ANALYTICS ENGINE -->
             <div class="card bg-white shadow-xl border border-slate-200 lg:col-span-2">
                 <div class="card-body p-4 sm:p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
@@ -234,6 +250,7 @@
                         </button>
                     </div>
 
+                    <!-- Output Dynamic Grid Table (Scrollable on Mobile) -->
                     <div class="overflow-x-auto rounded-xl border border-slate-200 mt-4">
                         <table class="table table-xs table-zebra w-full font-medium text-slate-700">
                             <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
@@ -313,6 +330,52 @@
         const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
         const cfgBtnDelete = document.getElementById('cfg-btn-delete');
 
+        // CBC Subject Categories by Grade Tier
+        const CBC_SUBJECT_TIERS = {
+            lower_primary: [
+                "Language Activities",
+                "Mathematical Activities",
+                "Environmental Activities",
+                "Psychomotor Activities",
+                "Religious Education Activities",
+                "Indigenous Language Activities",
+                "Kiswahili Language Activities"
+            ],
+            upper_primary: [
+                "English",
+                "Kiswahili",
+                "Mathematics",
+                "Science and Technology",
+                "Agriculture and Nutrition",
+                "Creative Arts",
+                "Social Studies",
+                "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
+            ],
+            junior_school: [
+                "English",
+                "Kiswahili",
+                "Mathematics",
+                "Integrated Science",
+                "Pre-Technical Studies",
+                "Social Studies",
+                "Agriculture and Nutrition",
+                "Creative Arts and Sports",
+                "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
+            ]
+        };
+
+        function getGradeTier(grade) {
+            const g = parseInt(grade);
+            if (g <= 3) return "lower_primary";
+            if (g >= 4 && g <= 6) return "upper_primary";
+            if (g >= 7 && g <= 9) return "junior_school";
+            return "upper_primary"; 
+        }
+
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
         // Configuration panel toggles
@@ -324,13 +387,11 @@
         radioContest.addEventListener('change', () => { contestOptions.classList.remove('hidden'); mainExamOptions.classList.add('hidden'); });
 
         async function initAdminEngine() {
-            // Cache Student Database & Subject Papers structure
             const { data: students } = await _supabase.from('students').select('*');
             localStudentsCache = students || [];
             const { data: papers } = await _supabase.from('subject_papers').select('*');
             globalPapersList = papers || [];
 
-            // Detect current deployed cycle context
             const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
             if(sessions && sessions.length > 0) {
                 currentActiveExamName = sessions[0].exam_name;
@@ -344,7 +405,6 @@
             const subjectTitle = cfgSubName.value.trim();
             if(!subjectTitle) return alert("You must provide an assessment subject title!");
 
-            // 1. Insert/ensure parent subject exists
             const { data: subData, error: subErr } = await _supabase
                 .from('subjects')
                 .insert([{ subject_name: subjectTitle }])
@@ -356,7 +416,6 @@
             const paperTitle = cfgPaperName.value.trim();
             const maxVal = parseFloat(cfgPaperMax.value) || 100;
 
-            // 2. Insert mapped sub-component if configured by user
             if(paperTitle) {
                 const { error: papErr } = await _supabase
                     .from('subject_papers')
@@ -392,7 +451,6 @@
 
             if(!confirm("Are you absolutely sure you want to delete this learning area? This clears out all linked paper components!")) return;
 
-            // Cascading wipes on components first
             await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
             const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
 
@@ -433,14 +491,26 @@
             }
         });
 
-        // TRACKING AND SUBMISSION AUDITING
+        // TRACKING AND SUBMISSION AUDITING (WITH TARGETED GRADE SUBJECT FILTER)
         trackerGrade.addEventListener('change', async () => {
             trackerSubject.innerHTML = '<option value="" disabled selected>Loading Subject components...</option>';
+            
+            const selectedGrade = trackerGrade.value;
+            const tier = getGradeTier(selectedGrade);
+            const allowedSubjects = CBC_SUBJECT_TIERS[tier];
+
             const { data } = await _supabase.from('subjects').select('*').order('subject_name');
             if(data) {
-                trackerSubject.innerHTML = '<option value="" disabled selected>Choose Component Subject...</option>' + 
-                    data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
-                trackerSubject.disabled = false;
+                // Filter dropdown list based on CBC Subject parameters matching the selected grade tier
+                const filteredList = data.filter(s => allowedSubjects.includes(s.subject_name.trim()));
+                
+                if (filteredList.length === 0) {
+                    trackerSubject.innerHTML = '<option value="" disabled selected>No subjects matched this grade...</option>';
+                } else {
+                    trackerSubject.innerHTML = '<option value="" disabled selected>Choose Component Subject...</option>' + 
+                        filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                    trackerSubject.disabled = false;
+                }
             }
         });
 
@@ -516,13 +586,11 @@
             const studIds = targetStudents.map(s => s.id);
             const { data: marks } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studIds);
 
-            // Filter columns to isolate maths papers automatically if it's a Maths Contest active session
             let activeColumns = globalPapersList;
             if(currentActiveExamName.toLowerCase().includes('maths contest')) {
                 activeColumns = globalPapersList.filter(p => p.paper_name.toLowerCase().includes('math'));
             }
 
-            // Write Broad Sheet Header Row
             let headerHtml = `<tr><th class="text-left font-bold text-xs p-3">Learner Name</th><th class="text-center font-bold text-xs p-3">Stream</th>`;
             activeColumns.forEach(p => {
                 headerHtml += `<th class="text-center font-bold text-xs p-3">${p.paper_name}</th>`;
@@ -532,10 +600,8 @@
 
             let csvRows = [["Learner Name", "Stream", ...activeColumns.map(p => p.paper_name), mode === 'marks' ? "Cumulative Score" : "Competency Descriptor"]];
 
-            // Setup tracking counters for summary badges
             let countEE = 0, countME = 0, countAE = 0, countEM = 0;
 
-            // Render Rows Dynamically
             broadsheetRows.innerHTML = targetStudents.map(s => {
                 let totalScore = 0;
                 let maxPossible = 0;
@@ -570,7 +636,6 @@
                 return `<tr>${cells}</tr>`;
             }).join('');
 
-            // Display Competency Analytics summary badges if in Rubric mode
             if(mode === 'rubric') {
                 analyticalSummaryBadges.innerHTML = `
                     <span class="badge bg-emerald-100 text-emerald-800 font-bold text-[10px] p-2">EE: ${countEE}</span>
@@ -586,7 +651,6 @@
             downloadCsvBtn.disabled = false;
         });
 
-        // Trigger Broad Sheet Export download flow
         downloadCsvBtn.addEventListener('click', () => {
             const encodedUri = encodeURI(activeBroadSheetCsvData);
             const link = document.createElement("a");
