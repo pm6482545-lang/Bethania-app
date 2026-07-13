@@ -25,11 +25,10 @@
 
         <div class="tabs tabs-boxed justify-center bg-base-100 p-2 shadow-sm rounded-xl">
             <button class="tab tab-active font-medium px-6" id="tab-roster">Student Roster</button>
-            <button class="tab font-medium px-6" id="tab-marks" disabled>Marks Entry (Next Step)</button>
+            <button class="tab font-medium px-6" id="tab-marks">Marks Entry</button>
         </div>
 
         <div id="roster-screen" class="space-y-6">
-            
             <div class="card bg-base-100 shadow-xl border border-base-300">
                 <div class="card-body p-6">
                     <h2 class="card-title text-lg font-bold text-primary mb-2 flex items-center gap-1">
@@ -97,11 +96,11 @@
                     </div>
 
                     <div class="overflow-x-auto rounded-lg border border-base-200">
-                        <table class="table table-zebra w-full" id="roster-table">
+                        <table class="table table-zebra w-full">
                             <thead class="bg-base-300 text-xs uppercase font-bold tracking-wider">
                                 <tr>
                                     <th>Full Name</th>
-                                    <th>Section Type</th>
+                                    <th>Section</th>
                                     <th>Grade</th>
                                     <th>Stream</th>
                                     <th>Maths Club Family</th>
@@ -109,50 +108,129 @@
                             </thead>
                             <tbody id="student-list-rows">
                                 <tr>
-                                    <td colspan="5" class="text-center py-6 text-base-content/50 italic">Connecting to Bethania backend database...</td>
+                                    <td colspan="5" class="text-center py-6 text-base-content/50 italic">Connecting to database...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
         </div>
+
+        <div id="marks-screen" class="space-y-6 hidden">
+            <div class="card bg-base-100 shadow-xl border border-base-300">
+                <div class="card-body p-6">
+                    <h2 class="card-title text-lg font-bold text-secondary mb-2 flex items-center gap-1">
+                        📝 Batch Enter Marks
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-base-200 p-4 rounded-xl border border-base-300 mb-4">
+                        <div class="form-control">
+                            <label class="label-text font-semibold mb-1 text-xs">Assessment Name</label>
+                            <input type="text" id="exam-name" value="Term 2 Opener 2026" class="input input-bordered input-sm w-full focus:input-secondary" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-semibold mb-1 text-xs">Target Class/Grade</label>
+                            <select id="filter-grade" class="select select-bordered select-sm w-full focus:select-secondary">
+                                <option value="" disabled selected>Choose...</option>
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-semibold mb-1 text-xs">Subject</label>
+                            <select id="filter-subject" class="select select-bordered select-sm w-full focus:select-secondary" disabled>
+                                <option value="" disabled selected>Select Grade First</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-semibold mb-1 text-xs">Paper Section</label>
+                            <select id="filter-paper" class="select select-bordered select-sm w-full focus:select-secondary" disabled>
+                                <option value="" disabled selected>Select Subject First</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-base-200">
+                        <table class="table table-zebra w-full">
+                            <thead class="bg-base-300 text-xs font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Stream</th>
+                                    <th id="paper-max-header" class="w-48">Raw Score (Out of --)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="marks-entry-rows">
+                                <tr>
+                                    <td colspan="3" class="text-center py-8 text-base-content/50 italic">Please select Grade, Subject, and Paper above to populate the input ledger sheet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-end mt-4">
+                        <button id="save-marks-btn" class="btn btn-secondary text-white font-bold tracking-wide px-8 shadow-md" disabled>
+                            💾 Save All Marks
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        // 1. Core Production Connection Config
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
-        
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Global state array to prevent frequent double-fetching
         let localStudentsCache = [];
+        let subjectsCache = [];
+        let papersCache = [];
 
         // DOM elements
+        const tabRoster = document.getElementById('tab-roster');
+        const tabMarks = document.getElementById('tab-marks');
+        const rosterScreen = document.getElementById('roster-screen');
+        const marksScreen = document.getElementById('marks-screen');
+        
         const studentForm = document.getElementById('student-form');
         const studentListRows = document.getElementById('student-list-rows');
         const searchBar = document.getElementById('search-bar');
 
-        // Helper map to transform stored raw integers into friendly grade names
+        const filterGrade = document.getElementById('filter-grade');
+        const filterSubject = document.getElementById('filter-subject');
+        const filterPaper = document.getElementById('filter-paper');
+        const marksEntryRows = document.getElementById('marks-entry-rows');
+        const paperMaxHeader = document.getElementById('paper-max-header');
+        const saveMarksBtn = document.getElementById('save-marks-btn');
+
         const gradeMap = {
-            '-2': 'PP1', '-1': 'PP2',
-            '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3',
-            '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6',
+            '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2',
+            '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6',
             '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9'
         };
 
+        // Tab Screen Navigation Setup
+        tabRoster.addEventListener('click', () => {
+            tabRoster.classList.add('tab-active'); tabMarks.classList.remove('tab-active');
+            rosterScreen.classList.remove('hidden'); marksScreen.classList.add('hidden');
+        });
+        tabMarks.addEventListener('click', () => {
+            tabMarks.classList.add('tab-active'); tabRoster.classList.remove('tab-active');
+            marksScreen.classList.remove('hidden'); rosterScreen.classList.add('hidden');
+            fetchSubjects();
+        });
+
         // 2. Fetch and render active rosters
         async function loadStudentRoster() {
-            const { data, error } = await supabase
-                .from('students')
-                .select('*')
-                .order('created_at', { ascending: false });
-
+            const { data, error } = await supabase.from('students').select('*').order('created_at', { ascending: false });
             if (error) {
-                console.error("Error fetching students:", error.message);
-                studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-error font-semibold">Error linking database: ${error.message}</td></tr>`;
+                console.error(error.message);
                 return;
             }
             localStudentsCache = data || [];
@@ -164,11 +242,10 @@
                 studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-base-content/50 italic">No student records found.</td></tr>`;
                 return;
             }
-
             studentListRows.innerHTML = students.map(student => `
                 <tr class="hover">
                     <td class="font-medium text-base-content">${student.name}</td>
-                    <td><span class="badge badge-ghost badge-sm font-semibold tracking-wider text-xs">${student.section_type || (student.grade >= 7 ? 'Junior School' : 'Primary')}</span></td>
+                    <td><span class="badge badge-ghost badge-sm font-semibold text-xs">${student.section_type || (student.grade >= 7 ? 'Junior School' : 'Primary')}</span></td>
                     <td class="font-bold text-primary">${gradeMap[student.grade] || student.grade}</td>
                     <td><span class="badge badge-outline font-mono">${student.stream}</span></td>
                     <td>
@@ -184,48 +261,98 @@
             `).join('');
         }
 
-        // 3. Handle Form Submission
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const name = document.getElementById('stud-name').value.trim();
             const grade = parseInt(document.getElementById('stud-grade').value);
             const stream = document.getElementById('stud-stream').value.trim();
             const familyValue = document.getElementById('stud-family').value;
-            const maths_club_family = familyValue === "" ? null : familyValue;
+            const { data, error } = await supabase.from('students').insert([{ name, grade, stream, maths_club_family: familyValue || null }]).select();
 
-            // Optimistic execution block: Send to server
-            const { data, error } = await supabase
-                .from('students')
-                .insert([{ name, grade, stream, maths_club_family }])
-                .select(); // Ask Supabase to echo back the confirmed row details
-
-            if (error) {
-                alert("❌ Failed to register profile: " + error.message);
-            } else {
-                studentForm.reset();
-                document.getElementById('stud-stream').value = "A"; // Maintain "A" as a standard default stream
-                
-                if (data && data.length > 0) {
-                    // Update cache instantly without triggering a complete network pull
-                    localStudentsCache.unshift(data[0]);
-                    renderTable(localStudentsCache);
-                } else {
-                    loadStudentRoster();
-                }
+            if (error) alert("❌ Error: " + error.message);
+            else {
+                studentForm.reset(); document.getElementById('stud-stream').value = "A";
+                if (data) { localStudentsCache.unshift(data[0]); renderTable(localStudentsCache); }
             }
         });
 
-        // 4. Client-side Realtime Search Bar filter
+        // 3. Dynamic Marks Ledger Logic
+        async function fetchSubjects() {
+            const { data } = await supabase.from('subjects').select('*').order('subject_name');
+            subjectsCache = data || [];
+        }
+
+        filterGrade.addEventListener('change', () => {
+            filterSubject.innerHTML = '<option value="" disabled selected>Select Subject...</option>' + 
+                subjectsCache.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+            filterSubject.disabled = false;
+            filterPaper.disabled = true; filterPaper.innerHTML = '<option disabled selected>Select Subject First</option>';
+            marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-base-content/40 italic">Please select Subject next...</td></tr>`;
+        });
+
+        filterSubject.addEventListener('change', async () => {
+            const subId = filterSubject.value;
+            const { data } = await supabase.from('subject_papers').select('*').eq('subject_id', subId).order('paper_name');
+            papersCache = data || [];
+            
+            filterPaper.innerHTML = '<option value="" disabled selected>Select Paper Section...</option>' + 
+                papersCache.map(p => `<option value="${p.id}" data-max="${p.max_marks}">${p.paper_name} (Max: ${p.max_marks})</option>`).join('');
+            filterPaper.disabled = false;
+        });
+
+        filterPaper.addEventListener('change', () => {
+            const selectedOpt = filterPaper.options[filterPaper.selectedIndex];
+            const maxMarks = selectedOpt.getAttribute('data-max');
+            paperMaxHeader.innerText = `Raw Score (Out of ${maxMarks})`;
+            
+            const selectedGrade = parseInt(filterGrade.value);
+            const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+
+            if(filteredStudents.length === 0) {
+                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-warning font-semibold">No active student profiles found registered in ${gradeMap[selectedGrade]}.</td></tr>`;
+                saveMarksBtn.disabled = true;
+                return;
+            }
+
+            marksEntryRows.innerHTML = filteredStudents.map(s => `
+                <tr class="hover">
+                    <td class="font-medium">${s.name}</td>
+                    <td><span class="badge badge-outline">${s.stream}</span></td>
+                    <td>
+                        <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
+                            class="input input-bordered input-sm w-full focus:input-secondary score-field font-mono" placeholder="0 - ${maxMarks}" />
+                    </td>
+                </tr>
+            `).join('');
+            saveMarksBtn.disabled = false;
+        });
+
+        saveMarksBtn.addEventListener('click', async () => {
+            const examName = document.getElementById('exam-name').value.trim();
+            const paperId = filterPaper.value;
+            const scoreInputs = document.querySelectorAll('.score-field');
+            
+            const entries = Array.from(scoreInputs).map(input => ({
+                student_id: input.getAttribute('data-sid'),
+                paper_id: paperId,
+                test_name: examName,
+                raw_score: parseFloat(input.value) || 0.00
+            }));
+
+            const { error } = await supabase.from('marks_entry').insert(entries);
+            if (error) alert("❌ Error saving marks: " + error.message);
+            else {
+                alert("✨ All marks securely recorded onto the backend ledger spreadsheet!");
+                filterPaper.selectedIndex = 0; marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-base-content/50 italic">Marks recorded. Choose parameters to reload.</td></tr>`;
+                saveMarksBtn.disabled = true;
+            }
+        });
+
         searchBar.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = localStudentsCache.filter(student => 
-                student.name.toLowerCase().includes(searchTerm)
-            );
+            const filtered = localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase()));
             renderTable(filtered);
         });
 
-        // Initialize on boot
         window.addEventListener('DOMContentLoaded', loadStudentRoster);
     </script>
 </body>
