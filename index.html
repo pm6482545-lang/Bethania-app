@@ -45,12 +45,21 @@
         <div id="screen-roster" class="space-y-6">
             <div class="card bg-white shadow-xl border border-slate-200">
                 <div class="card-body p-4 sm:p-6">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-xl">👤</span>
-                        <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Register New Student Profile</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">👤</span>
+                                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Register Student Profiles</h2>
+                            </div>
+                            <p class="text-xs text-slate-500">Choose between Single Entry registration or pulling a Batch Roster.</p>
+                        </div>
+                        <div class="join bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button id="btn-mode-single" class="btn btn-ghost btn-xs rounded-md text-xs font-bold btn-active bg-white shadow-sm">Single Entry</button>
+                            <button id="btn-mode-batch" class="btn btn-ghost btn-xs rounded-md text-xs font-bold">📋 Batch Import</button>
+                        </div>
                     </div>
-                    <p class="text-xs text-slate-500 mb-4">Add a new learner profile to the cloud database to enable continuous assessment tracking.</p>
                     
+                    <!-- OPTION A: SINGLE STUDENT ENTRY -->
                     <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-control w-full">
                             <label class="label-text font-bold text-xs text-slate-700 mb-1">Student's Full Name</label>
@@ -82,6 +91,80 @@
                             <button type="submit" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold w-full shadow-md">Admit & Register Student</button>
                         </div>
                     </form>
+
+                    <!-- OPTION B: BATCH ENTRY -->
+                    <div id="batch-form-container" class="space-y-4 hidden">
+                        <div class="alert alert-info bg-sky-50 border border-sky-200 text-xs text-sky-900 rounded-xl py-3 px-4">
+                            <strong>💡 Instructions:</strong> Copy rows of student names from your Excel sheet and paste them below (one name per line). 
+                            The system will automatically assign the target Grade level, set the default Stream, and leave families empty so you can assign them later.
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1">Target Grade Level</label>
+                                <select id="batch-grade" class="select select-bordered select-sm w-full">
+                                    <option value="" disabled selected>Select Grade...</option>
+                                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1">Default Stream</label>
+                                <input type="text" id="batch-default-stream" value="A" class="input input-bordered input-sm w-full" />
+                            </div>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Paste Student Roster (One Name Per Line)</label>
+                            <textarea id="batch-names" rows="6" placeholder="Jane Atieno&#10;David Kiprop&#10;Mary Wanjiku" class="textarea textarea-bordered font-mono text-xs w-full"></textarea>
+                        </div>
+
+                        <button id="btn-trigger-batch" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold w-full shadow-md">
+                            🚀 Pull & Import Student Roster
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Student Inline Modal/Box -->
+            <div id="edit-student-box" class="card bg-amber-50 border border-amber-200 shadow-md p-4 rounded-xl hidden space-y-3">
+                <div class="flex justify-between items-center pb-2 border-b border-amber-200">
+                    <h3 class="font-bold text-sm text-slate-900 uppercase tracking-tight">✏️ Edit Student Profile: <span id="edit-display-name" class="text-amber-700"></span></h3>
+                    <button id="btn-close-edit" class="btn btn-ghost btn-xs text-slate-500 font-bold">Cancel</button>
+                </div>
+                <input type="hidden" id="edit-student-id">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div class="form-control">
+                        <label class="label-text font-bold text-[10px] text-slate-600">Full Name</label>
+                        <input type="text" id="edit-stud-name" class="input input-bordered input-xs w-full" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label-text font-bold text-[10px] text-slate-600">Grade Level</label>
+                        <select id="edit-stud-grade" class="select select-bordered select-xs w-full">
+                            <option value="-2">PP1</option><option value="-1">PP2</option>
+                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label-text font-bold text-[10px] text-slate-600">Stream</label>
+                        <input type="text" id="edit-stud-stream" class="input input-bordered input-xs w-full" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label-text font-bold text-[10px] text-slate-600">Maths Club Family</label>
+                        <select id="edit-stud-family" class="select select-bordered select-xs w-full">
+                            <option value="">None</option>
+                            <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button id="btn-save-student-edit" class="btn btn-neutral btn-xs px-4 text-white font-bold">Save Updates</button>
                 </div>
             </div>
 
@@ -104,10 +187,11 @@
                                     <th class="p-3 text-center">Grade</th>
                                     <th class="p-3 text-center">Stream</th>
                                     <th class="p-3 text-center">Maths Club Family</th>
+                                    <th class="p-3 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="student-list-rows" class="font-mono text-xs">
-                                <tr><td colspan="5" class="text-center py-6 text-slate-400 italic">Pulling records...</td></tr>
+                                <tr><td colspan="6" class="text-center py-6 text-slate-400 italic">Pulling records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -192,10 +276,34 @@
         const activeSessionBanner = document.getElementById('active-session-banner');
         const portalLockAlert = document.getElementById('portal-lock-alert');
 
+        // Registration form toggle hooks
+        const btnModeSingle = document.getElementById('btn-mode-single');
+        const btnModeBatch = document.getElementById('btn-mode-batch');
         const studentForm = document.getElementById('student-form');
+        const batchFormContainer = document.getElementById('batch-form-container');
+
+        // Student lists
         const studentListRows = document.getElementById('student-list-rows');
         const searchBar = document.getElementById('search-bar');
 
+        // Student Editor Panel Handles
+        const editStudentBox = document.getElementById('edit-student-box');
+        const editStudentId = document.getElementById('edit-student-id');
+        const editDisplayName = document.getElementById('edit-display-name');
+        const editStudName = document.getElementById('edit-stud-name');
+        const editStudGrade = document.getElementById('edit-stud-grade');
+        const editStudStream = document.getElementById('edit-stud-stream');
+        const editStudFamily = document.getElementById('edit-stud-family');
+        const btnCloseEdit = document.getElementById('btn-close-edit');
+        const btnSaveStudentEdit = document.getElementById('btn-save-student-edit');
+
+        // Batch Form Hooks
+        const btnTriggerBatch = document.getElementById('btn-trigger-batch');
+        const batchGradeInput = document.getElementById('batch-grade');
+        const batchDefaultStream = document.getElementById('batch-default-stream');
+        const batchNamesArea = document.getElementById('batch-names');
+
+        // Marks Filters
         const filterGrade = document.getElementById('filter-grade');
         const filterSubject = document.getElementById('filter-subject');
         const filterPaper = document.getElementById('filter-paper');
@@ -250,8 +358,24 @@
 
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
+        // Navigation toggles
         tabRoster.addEventListener('click', () => { tabRoster.classList.add('tab-active'); tabMarks.classList.remove('tab-active'); screenRoster.classList.remove('hidden'); screenMarks.classList.add('hidden'); });
         tabMarks.addEventListener('click', () => { tabMarks.classList.add('tab-active'); tabRoster.classList.remove('tab-active'); screenMarks.classList.remove('hidden'); screenRoster.classList.add('hidden'); fetchSubjects(); });
+
+        // Registration mode selection handlers
+        btnModeSingle.addEventListener('click', () => {
+            btnModeSingle.classList.add('btn-active', 'bg-white', 'shadow-sm');
+            btnModeBatch.classList.remove('btn-active', 'bg-white', 'shadow-sm');
+            studentForm.classList.remove('hidden');
+            batchFormContainer.classList.add('hidden');
+        });
+
+        btnModeBatch.addEventListener('click', () => {
+            btnModeBatch.classList.add('btn-active', 'bg-white', 'shadow-sm');
+            btnModeSingle.classList.remove('btn-active', 'bg-white', 'shadow-sm');
+            batchFormContainer.classList.remove('hidden');
+            studentForm.classList.add('hidden');
+        });
 
         async function pullActiveCycleState() {
             const { data, error } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
@@ -283,7 +407,7 @@
         }
 
         function renderTable(students) {
-            if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">No entries.</td></tr>`; return; }
+            if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">No entries.</td></tr>`; return; }
             studentListRows.innerHTML = students.map(s => `
                 <tr class="hover">
                     <td class="font-mono text-xs font-bold text-slate-500 py-2.5 px-3">${s.id.substring(0, 8).toUpperCase()}</td>
@@ -291,10 +415,14 @@
                     <td class="text-center py-2.5 px-3">${gradeMap[s.grade] || s.grade}</td>
                     <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
                     <td class="text-center py-2.5 px-3"><span class="badge font-bold text-xs">${s.maths_club_family || 'None'}</span></td>
+                    <td class="text-center py-2.5 px-3">
+                        <button onclick="initiateStudentEdit('${s.id}')" class="btn btn-ghost btn-xs text-amber-600 hover:text-amber-800 font-bold">✏️ Edit</button>
+                    </td>
                 </tr>
             `).join('');
         }
 
+        // Single Form Submit Hook
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const { data, error } = await _supabase.from('students').insert([{
@@ -303,7 +431,117 @@
                 stream: document.getElementById('stud-stream').value.trim(),
                 maths_club_family: document.getElementById('stud-family').value || null
             }]).select();
-            if (!error && data) { studentForm.reset(); document.getElementById('stud-stream').value = "A"; localStudentsCache.unshift(data[0]); renderTable(localStudentsCache); }
+            if (!error && data) { 
+                studentForm.reset(); 
+                document.getElementById('stud-stream').value = "A"; 
+                localStudentsCache.unshift(data[0]); 
+                renderTable(localStudentsCache); 
+            }
+        });
+
+        // Trigger and parse Batch CSV list
+        btnTriggerBatch.addEventListener('click', async () => {
+            const selectedGrade = batchGradeInput.value;
+            if(!selectedGrade) return alert("Please select a target Grade level for this batch roster pull!");
+
+            const rawContent = batchNamesArea.value.trim();
+            if(!rawContent) return alert("Please copy and paste student names into the text area first!");
+
+            const lines = rawContent.split('\n');
+            const insertPayload = [];
+
+            for(let line of lines) {
+                const nameParsed = line.trim();
+                if(!nameParsed) continue; // skip blank lines
+
+                insertPayload.push({
+                    name: nameParsed,
+                    grade: parseInt(selectedGrade),
+                    stream: batchDefaultStream.value.trim() || 'A',
+                    maths_club_family: null // blank family to be configured later with the inline editor
+                });
+            }
+
+            if(insertPayload.length === 0) return alert("No valid student profiles parsed.");
+
+            btnTriggerBatch.disabled = true;
+            btnTriggerBatch.innerText = `⏳ Pulling & Registering ${insertPayload.length} students...`;
+
+            const { data, error } = await _supabase.from('students').insert(insertPayload).select();
+
+            if(error) {
+                console.error("Batch insertion error: ", error);
+                alert("Failed to perform batch registration: " + error.message);
+            } else {
+                alert(`🎉 Successfully added ${data.length} student profiles into your DB!`);
+                batchNamesArea.value = "";
+                localStudentsCache = [...data, ...localStudentsCache];
+                renderTable(localStudentsCache);
+            }
+
+            btnTriggerBatch.disabled = false;
+            btnTriggerBatch.innerText = "🚀 Pull & Import Student Roster";
+        });
+
+        // Initialize Student inline editor panel
+        window.initiateStudentEdit = function(id) {
+            const student = localStudentsCache.find(s => s.id === id);
+            if(!student) return;
+
+            editStudentId.value = student.id;
+            editDisplayName.innerText = student.name;
+            editStudName.value = student.name;
+            editStudGrade.value = student.grade;
+            editStudStream.value = student.stream || 'A';
+            editStudFamily.value = student.maths_club_family || "";
+
+            editStudentBox.classList.remove('hidden');
+            editStudentBox.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        // Close editor panel
+        btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
+
+        // Save inline adjustments to DB
+        btnSaveStudentEdit.addEventListener('click', async () => {
+            const id = editStudentId.value;
+            const updatedName = editStudName.value.trim();
+            const updatedGrade = parseInt(editStudGrade.value);
+            const updatedStream = editStudStream.value.trim();
+            const updatedFamily = editStudFamily.value || null;
+
+            if(!updatedName) return alert("Student name field cannot be empty.");
+
+            btnSaveStudentEdit.disabled = true;
+            btnSaveStudentEdit.innerText = "Saving Changes...";
+
+            const { error } = await _supabase.from('students')
+                .update({
+                    name: updatedName,
+                    grade: updatedGrade,
+                    stream: updatedStream,
+                    maths_club_family: updatedFamily
+                })
+                .eq('id', id);
+
+            if (error) {
+                console.error("Error updating profile:", error);
+                alert("Update failed: " + error.message);
+            } else {
+                // Update local memory cache array
+                const index = localStudentsCache.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    localStudentsCache[index].name = updatedName;
+                    localStudentsCache[index].grade = updatedGrade;
+                    localStudentsCache[index].stream = updatedStream;
+                    localStudentsCache[index].maths_club_family = updatedFamily;
+                }
+                renderTable(localStudentsCache);
+                editStudentBox.classList.add('hidden');
+                alert("✨ Student profile updated successfully!");
+            }
+            btnSaveStudentEdit.disabled = false;
+            btnSaveStudentEdit.innerText = "Save Updates";
         });
 
         async function fetchSubjects() {
