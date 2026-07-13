@@ -323,7 +323,6 @@
             const tier = getGradeTier(selectedGrade);
             const allowedSubjects = CBC_SUBJECT_TIERS[tier];
 
-            // Filter cache based on allowed subject definitions for this grade level
             const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
 
             if (filteredSubjects.length === 0) {
@@ -350,8 +349,12 @@
             }
 
             if (!data || data.length === 0) {
-                filterPaper.innerHTML = '<option value="" disabled selected>⚠️ No papers configured under this subject</option>';
-                filterPaper.disabled = true;
+                // FALLBACK: Allow direct entry out of 100 if no papers are configured
+                filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default Max: 100)</option>';
+                filterPaper.disabled = false;
+                
+                // Trigger the change event immediately to load the student table list
+                filterPaper.dispatchEvent(new Event('change'));
             } else {
                 filterPaper.innerHTML = '<option value="" disabled selected>Select Component...</option>' + 
                     data.map(p => `<option value="${p.id}" data-max="${p.max_marks || p.max_score || 50}">${p.paper_name || p.name}</option>`).join('');
@@ -361,6 +364,8 @@
 
         filterPaper.addEventListener('change', () => {
             const selectedOption = filterPaper.options[filterPaper.selectedIndex];
+            if (!selectedOption) return;
+
             const maxMarks = selectedOption.getAttribute('data-max') || "100";
             paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
             const filtered = localStudentsCache.filter(s => s.grade === parseInt(filterGrade.value));
@@ -373,7 +378,7 @@
 
             marksEntryRows.innerHTML = filtered.map(s => `
                 <tr class="hover">
-                    <td class="font-bold text-slate-800 py-2.5 px-3">${s.name}</td>
+                    <td class="font-bold text-slate-800 py-2.5 px-3 text-left">${s.name}</td>
                     <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
                     <td class="py-2 px-3">
                         <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
@@ -387,12 +392,20 @@
 
         saveMarksBtn.addEventListener('click', async () => {
             if(systemIsLocked) return alert("System Closed. Data submission rejected.");
-            const entries = Array.from(document.querySelectorAll('.score-field')).map(input => ({
-                student_id: input.getAttribute('data-sid'),
-                paper_id: filterPaper.value,
-                test_name: activeExamContextName,
-                raw_score: parseFloat(input.value) || 0.00
-            }));
+            const entries = Array.from(document.querySelectorAll('.score-field')).map(input => {
+                const paperVal = filterPaper.value;
+                const payload = {
+                    student_id: input.getAttribute('data-sid'),
+                    test_name: activeExamContextName,
+                    raw_score: parseFloat(input.value) || 0.00
+                };
+                
+                // If it's a real sub-paper in the DB, append the column identifier
+                if (paperVal !== 'DIRECT_ENTRY') {
+                    payload.paper_id = paperVal;
+                }
+                return payload;
+            });
             
             const { error } = await _supabase.from('marks_entry').insert(entries);
             if (error) {
