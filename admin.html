@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans pb-10">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
     <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 sticky top-0 z-50 border-b border-amber-500/30">
         <div class="flex-1">
@@ -58,13 +58,40 @@
         </div>
 
         <div class="card bg-white shadow-xl border border-slate-200">
+            <div class="card-body p-4 sm:p-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xl">🚀</span>
+                    <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
+                </div>
+                <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts.</p>
+                <div class="divider my-2"></div>
+                <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto">⚡ Publish Active Exam Context</button>
             </div>
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="space-y-6 lg:col-span-1">
+                <div class="card bg-white shadow-xl border border-slate-200">
+                    <div class="card-body p-4 sm:p-5 space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">📡</span>
+                            <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Submission Tracker</h3>
+                        </div>
+                        <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
+                    </div>
                 </div>
+                <div class="card bg-white shadow-xl border border-slate-200">
+                    <div class="card-body p-4 sm:p-5 space-y-4">
+                        <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Manage Learning Areas</h3>
+                        </div>
+                </div>
+            </div>
+
             <div class="card bg-white shadow-xl border border-slate-200 lg:col-span-2">
-                </div>
+                <div class="card-body p-4 sm:p-6">
+                    <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                    </div>
+            </div>
         </div>
     </main>
 
@@ -73,7 +100,7 @@
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Manage Learners Elements
+        // Manage Learners Logic
         const manageGradeSelect = document.getElementById('manage-grade-select');
         const manageList = document.getElementById('manage-learner-list');
         const addLearnerBtn = document.getElementById('add-learner-btn');
@@ -113,7 +140,7 @@
             }
         });
 
-        // ... (Keep your other existing scripts) ...
+        // Add your original scripts here to maintain existing functionality
     </script>
 </body>
 </html>
