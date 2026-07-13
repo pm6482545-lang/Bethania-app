@@ -1,142 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethania Academy - Teacher Portal</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://tailwindcss.com"></script>
-</head>
-<body class="bg-base-200 min-h-screen text-base-content font-sans">
+        // ... (Keep all your existing HTML and UI elements exactly the same) ...
 
-    <div class="navbar bg-primary text-primary-content shadow-lg px-4 sticky top-0 z-50">
-        <div class="flex-1">
-            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
-                🏫 Bethania Teacher Hub <span class="text-xs badge badge-secondary font-mono">v2.0 Portal</span>
-            </h1>
-        </div>
-        <div class="flex-none">
-            <div id="active-session-banner" class="badge badge-neutral font-bold p-3 text-xs text-white">Fetching Exam Target...</div>
-        </div>
-    </div>
-
-    <main class="container mx-auto p-4 max-w-5xl space-y-6">
-
-        <div class="tabs tabs-boxed justify-center bg-base-100 p-2 shadow-sm rounded-xl">
-            <button class="tab tab-active font-medium" id="tab-roster">Student Roster</button>
-            <button class="tab font-medium" id="tab-marks">Marks Entry Ledger</button>
-        </div>
-
-        <div id="portal-lock-alert" class="alert alert-error shadow-md hidden rounded-xl font-semibold">
-            <span>⚠️ Entry Blocked: Submission window closed. Contact the administration to alter marks entries.</span>
-        </div>
-
-        <div id="screen-roster" class="space-y-6">
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <h2 class="card-title text-lg font-bold text-primary mb-2 flex items-center gap-1">👤 Register New Student Profile</h2>
-                    <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Student's Full Name</span></label>
-                            <input type="text" id="stud-name" placeholder="e.g. Peter Musau" class="input input-bordered w-full" required />
-                        </div>
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Class / Grade Level</span></label>
-                            <select id="stud-grade" class="select select-bordered w-full" required>
-                                <option value="" disabled selected>Select Grade...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                            </select>
-                        </div>
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Stream / Arm</span></label>
-                            <input type="text" id="stud-stream" value="A" class="input input-bordered w-full" required />
-                        </div>
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Maths Club Family</span></label>
-                            <select id="stud-family" class="select select-bordered w-full">
-                                <option value="" selected>None</option>
-                                <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
-                            </select>
-                        </div>
-                        <div class="form-control md:col-span-2 mt-2">
-                            <button type="submit" class="btn btn-primary btn-block text-white font-bold">Admit & Register Student</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                        <h2 class="card-title text-lg font-bold">Active Student Database</h2>
-                        <input type="text" id="search-bar" placeholder="🔍 Search name..." class="input input-bordered input-sm w-full sm:w-64" />
-                    </div>
-                    <div class="overflow-x-auto rounded-lg border border-base-200">
-                        <table class="table table-zebra w-full">
-                            <thead class="bg-base-300 text-xs uppercase font-bold">
-                                <tr><th>Login ID</th><th>Full Name</th><th>Grade</th><th>Stream</th><th>Maths Club Family</th></tr>
-                            </thead>
-                            <tbody id="student-list-rows">
-                                <tr><td colspan="5" class="text-center py-6 text-base-content/50 italic">Pulling records...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="screen-marks" class="space-y-6 hidden">
-            <div class="card bg-base-100 shadow-xl border border-base-300">
-                <div class="card-body p-6">
-                    <h2 class="card-title text-lg font-bold text-secondary mb-2">📝 Batch Enter Marks</h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-base-200 p-4 rounded-xl mb-4">
-                        <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Class/Grade Target</label>
-                            <select id="filter-grade" class="select select-bordered select-sm w-full">
-                                <option value="" disabled selected>Choose...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                            </select>
-                        </div>
-                        <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Subject Selection</label>
-                            <select id="filter-subject" class="select select-bordered select-sm w-full" disabled><option disabled selected>Pick Grade First</option></select>
-                        </div>
-                        <div class="form-control">
-                            <label class="label-text font-semibold mb-1 text-xs">Paper Component Component</label>
-                            <select id="filter-paper" class="select select-bordered select-sm w-full" disabled><option disabled selected>Pick Subject First</option></select>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto rounded-lg border border-base-200">
-                        <table class="table table-zebra w-full">
-                            <thead class="bg-base-300 text-xs font-bold uppercase">
-                                <tr><th>Student Name</th><th>Stream</th><th id="paper-max-header">Score Input Box</th></tr>
-                            </thead>
-                            <tbody id="marks-entry-rows">
-                                <tr><td colspan="3" class="text-center py-8 text-base-content/50 italic">Select options above to pull the active ledger lists.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="flex justify-end mt-4">
-                        <button id="save-marks-btn" class="btn btn-secondary text-white font-bold px-8 shadow-md" disabled>💾 Save All Marks</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
+        // Updated JavaScript Logic to fix empty components dropdown:
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -193,7 +57,8 @@
         }
 
         async function loadStudentRoster() {
-            const { data } = await _supabase.from('students').select('*').order('created_at', { ascending: false });
+            const { data, error } = await _supabase.from('students').select('*').order('created_at', { ascending: false });
+            if (error) console.error("Error loading students:", error);
             localStudentsCache = data || [];
             renderTable(localStudentsCache);
         }
@@ -221,9 +86,11 @@
         });
 
         async function fetchSubjects() {
-            const { data } = await _supabase.from('subjects').select('*').order('subject_name');
+            const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+            if (error) console.error("Error fetching subjects:", error);
+            
             // If contest cycle is active, automatically restrict subjects to Math only
-            if(activeExamContextName.toLowerCase().includes('maths contest')) {
+            if(activeExamContextName && activeExamContextName.toLowerCase().includes('maths contest')) {
                 subjectsCache = (data || []).filter(s => s.subject_name.toLowerCase().includes('math'));
             } else {
                 subjectsCache = data || [];
@@ -233,20 +100,50 @@
 
         filterGrade.addEventListener('change', () => {
             filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Component...</option>' + subjectsCache.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
-            filterSubject.disabled = false; filterPaper.disabled = true;
+            filterSubject.disabled = false; 
+            filterPaper.disabled = true;
+            filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
         });
 
         filterSubject.addEventListener('change', async () => {
-            const { data } = await _supabase.from('subject_papers').select('*').eq('subject_id', filterSubject.value);
-            filterPaper.innerHTML = '<option value="" disabled selected>Select Component...</option>' + (data || []).map(p => `<option value="${p.id}" data-max="${p.max_marks}">${p.paper_name}</option>`).join('');
-            filterPaper.disabled = false;
+            // Debug Log to check what ID is being queried
+            console.log("Fetching papers for subject ID:", filterSubject.value);
+            
+            const { data, error } = await _supabase
+                .from('subject_papers')
+                .select('*')
+                .eq('subject_id', filterSubject.value);
+
+            if (error) {
+                console.error("Supabase Error fetching papers:", error);
+                alert("Error loading components from database. Please verify schema.");
+                return;
+            }
+
+            console.log("Database returned papers:", data);
+
+            if (!data || data.length === 0) {
+                filterPaper.innerHTML = '<option value="" disabled selected>⚠️ No papers found for this subject</option>';
+                filterPaper.disabled = true;
+            } else {
+                filterPaper.innerHTML = '<option value="" disabled selected>Select Component...</option>' + 
+                    data.map(p => `<option value="${p.id}" data-max="${p.max_marks || p.max_score || 50}">${p.paper_name || p.name}</option>`).join('');
+                filterPaper.disabled = false;
+            }
         });
 
         filterPaper.addEventListener('change', () => {
-            const maxMarks = filterPaper.options[filterPaper.selectedIndex].getAttribute('data-max');
+            const selectedOption = filterPaper.options[filterPaper.selectedIndex];
+            const maxMarks = selectedOption.getAttribute('data-max') || "100";
             paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
             const filtered = localStudentsCache.filter(s => s.grade === parseInt(filterGrade.value));
             
+            if (filtered.length === 0) {
+                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-warning italic">No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
+                saveMarksBtn.disabled = true;
+                return;
+            }
+
             marksEntryRows.innerHTML = filtered.map(s => `
                 <tr><td>${s.name}</td><td><span class="badge font-mono">${s.stream}</span></td>
                 <td><input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
@@ -264,8 +161,15 @@
                 test_name: activeExamContextName,
                 raw_score: parseFloat(input.value) || 0.00
             }));
-            await _supabase.from('marks_entry').insert(entries);
-            alert("✨ Marks successfully captured and sent to broad sheets!"); saveMarksBtn.disabled = true;
+            
+            const { error } = await _supabase.from('marks_entry').insert(entries);
+            if (error) {
+                console.error("Save Marks Error:", error);
+                alert("Database save failed: " + error.message);
+            } else {
+                alert("✨ Marks successfully captured and sent to broad sheets!"); 
+                saveMarksBtn.disabled = true;
+            }
         });
 
         searchBar.addEventListener('input', (e) => {
@@ -276,6 +180,3 @@
             await pullActiveCycleState();
             await loadStudentRoster();
         });
-    </script>
-</body>
-</html>
