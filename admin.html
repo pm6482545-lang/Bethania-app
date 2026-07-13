@@ -29,69 +29,237 @@
 
     <main class="container mx-auto p-3 sm:p-4 max-w-6xl space-y-6 mt-4">
 
-        <div class="card bg-white shadow-xl border border-blue-100">
-            <div class="card-body p-4 sm:p-6">
-                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">👥 Manage Learners</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="label-text font-bold text-xs text-slate-700 mb-1 block">Select Grade to Edit</label>
-                        <select id="manage-grade-select" class="select select-bordered select-sm w-full">
-                            <option value="" disabled selected>Choose Grade...</option>
-                            <option value="-2">PP1</option><option value="-1">PP2</option>
-                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                            <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                        </select>
-                        <div id="manage-learner-list" class="mt-3 max-h-60 overflow-y-auto border rounded-lg p-2 bg-slate-50 space-y-1">
-                            <p class="text-xs text-slate-400 text-center py-4">Select a grade to load learners...</p>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <label class="label-text font-bold text-xs text-slate-700 mb-2 block">Register New Learner</label>
-                        <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full mb-2" />
-                        <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full mb-3" />
-                        <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold">✨ Save Learner</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="card bg-white shadow-xl border border-slate-200">
             <div class="card-body p-4 sm:p-6">
                 <div class="flex items-center gap-2 mb-2">
                     <span class="text-xl">🚀</span>
                     <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
                 </div>
-                <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts.</p>
+                <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts and targets only the specified evaluation model.</p>
+
                 <div class="divider my-2"></div>
-                <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto">⚡ Publish Active Exam Context</button>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-2">
+                    <div class="form-control bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4">
+                        <label class="label-text font-bold text-slate-700">1. Select Assessment Classification Type</label>
+                        <div class="flex gap-2 sm:gap-4">
+                            <label class="label cursor-pointer gap-2 bg-white px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm w-1/2 hover:bg-slate-100 transition">
+                                <input type="radio" name="exam_class" value="main" class="radio radio-xs sm:radio-sm radio-primary" checked id="radio-main" />
+                                <span class="label-text text-xs sm:text-sm font-bold text-slate-700">🏫 Main Exam</span>
+                            </label>
+                            <label class="label cursor-pointer gap-2 bg-white px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm w-1/2 hover:bg-slate-100 transition">
+                                <input type="radio" name="exam_class" value="contest" class="radio radio-xs sm:radio-sm radio-secondary" id="radio-contest" />
+                                <span class="label-text text-xs sm:text-sm font-bold text-slate-700">🧮 Contest</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="form-control">
+                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Calendar Year</label>
+                                <select id="cycle-year" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Target Term</label>
+                                <select id="cycle-term" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="Term 1">Term 1</option>
+                                    <option value="Term 2" selected>Term 2</option>
+                                    <option value="Term 3">Term 3</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4 flex flex-col justify-between">
+                        <div id="main-exam-options" class="space-y-2">
+                            <label class="label-text font-bold text-slate-700 block">2. Main Exam Series</label>
+                            <select id="main-series" class="select select-bordered select-sm w-full font-medium">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid Term Exam" selected>Mid Term Exam</option>
+                                <option value="End Term Exam">End Term Exam</option>
+                            </select>
+                        </div>
+
+                        <div id="contest-options" class="space-y-2 hidden">
+                            <label class="label-text font-bold text-slate-700 block">2. Contest Identifier Series</label>
+                            <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-slate-700 text-xs mb-1">3. Closing Submission Deadline</label>
+                            <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end mt-4">
+                    <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto">
+                        ⚡ Publish Active Exam Context
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
             <div class="space-y-6 lg:col-span-1">
+                
                 <div class="card bg-white shadow-xl border border-slate-200">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">📡</span>
                             <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Submission Tracker</h3>
                         </div>
+                        <p class="text-xs text-slate-500">Analyze real-time data uploads. Subjects filter automatically according to the grade tier selected.</p>
+
+                        <div class="divider my-1"></div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Level</label>
+                            <select id="tracker-grade" class="select select-bordered select-sm w-full">
+                                <option value="" disabled selected>Choose Class...</option>
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Subject Component</label>
+                            <select id="tracker-subject" class="select select-bordered select-sm w-full" disabled>
+                                <option value="" disabled selected>Choose class level first...</option>
+                            </select>
+                        </div>
+
                         <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
+
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                            <div class="bg-slate-100 p-2 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600">
+                                <span>Learner Name</span>
+                                <span>Upload Status</span>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
+                                <p class="text-center py-6 text-xs italic text-slate-400">Select parameters to audit...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="card bg-white shadow-xl border border-slate-200">
                     <div class="card-body p-4 sm:p-5 space-y-4">
-                        <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Manage Learning Areas</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🛠️</span>
+                            <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Manage Learning Areas</h3>
                         </div>
+                        <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam papers/components, or remove outdated selections from the portals.</p>
+
+                        <div class="divider my-1"></div>
+
+                        <div class="tabs tabs-boxed bg-slate-100 p-1 mb-2">
+                            <button class="tab tab-active tab-xs w-1/2 font-bold" id="tab-add-sub">Add Content</button>
+                            <button class="tab tab-xs w-1/2 font-bold" id="tab-del-sub">Remove Content</button>
+                        </div>
+
+                        <div id="sub-panel-add" class="space-y-3">
+                            <div class="form-control">
+                                <label class="label-text text-[11px] font-bold text-slate-700 mb-1">1. Subject / Learning Area Title</label>
+                                <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
+                            </div>
+
+                            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-2">
+                                <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500">Optional Component Paper Setup</span>
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    <input type="text" id="cfg-paper-name" placeholder="Paper/Part name" class="input input-bordered input-xs w-full" />
+                                    <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
+                                </div>
+                            </div>
+                            <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold">✨ Save Subjects & Components</button>
+                        </div>
+
+                        <div id="sub-panel-del" class="space-y-3 hidden">
+                            <div class="form-control">
+                                <label class="label-text text-[11px] font-bold text-slate-700 mb-1">Target Subject to Delete</label>
+                                <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="" disabled selected>Select from database...</option>
+                                </select>
+                            </div>
+                            <p class="text-[10px] text-red-600 font-semibold italic">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
+                            <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold">🗑️ Delete Selected Subject</button>
+                        </div>
+                    </div>
                 </div>
+
             </div>
 
             <div class="card bg-white shadow-xl border border-slate-200 lg:col-span-2">
                 <div class="card-body p-4 sm:p-6">
-                    <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">📊</span>
+                            <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                        </div>
+                        <span class="badge badge-warning text-[9px] sm:text-[10px] font-black uppercase text-slate-900" id="detected-active-label">No Deployed Exam Series Found</span>
                     </div>
+                    <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
+
+                    <div class="divider my-1"></div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 items-end">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Cohort</label>
+                            <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
+                                <option value="" disabled selected>Choose Grade...</option>
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Analysis Model</label>
+                            <select id="analysis-model" class="select select-bordered select-sm w-full font-medium">
+                                <option value="marks">Performance Score Ledger (Marks)</option>
+                                <option value="rubric">CBA Competency Descriptor (Levels)</option>
+                            </select>
+                        </div>
+
+                        <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full">
+                            📊 Compile Broad Sheet
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 mt-4">
+                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                            <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
+                                <tr>
+                                    <th>Learner Name</th>
+                                    <th>Stream / Arm</th>
+                                    <th>Database Record Profiles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="broadsheet-rows" class="font-mono text-xs">
+                                <tr>
+                                    <td colspan="3" class="text-center py-10 text-slate-400 italic">Configure constraints and click "Compile Broad Sheet" above...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+                        <div id="analytical-summary-badges" class="flex flex-wrap gap-1.5 justify-center sm:justify-start"></div>
+                        <button id="download-csv-btn" class="btn btn-success text-white btn-sm font-bold w-full sm:w-auto" disabled>
+                            📥 Export Ledger (.CSV)
+                        </button>
+                    </div>
+                </div>
             </div>
+
         </div>
     </main>
 
@@ -100,47 +268,37 @@
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Manage Learners Logic
-        const manageGradeSelect = document.getElementById('manage-grade-select');
-        const manageList = document.getElementById('manage-learner-list');
-        const addLearnerBtn = document.getElementById('add-learner-btn');
+        let currentActiveExamName = "";
+        let globalPapersList = [];
+        let localStudentsCache = [];
+        let activeBroadSheetCsvData = "";
 
-        async function fetchManageList() {
-            const grade = parseInt(manageGradeSelect.value);
-            if (!grade) return;
-            manageList.innerHTML = '<p class="text-xs text-center py-2">Loading...</p>';
-            const { data } = await _supabase.from('students').select('*').eq('grade', grade);
-            manageList.innerHTML = (data || []).map(s => `
-                <div class="flex justify-between items-center text-xs p-2 bg-white border-b border-slate-100">
-                    <span class="font-medium">${s.name} <span class="text-slate-400 font-mono">(${s.stream})</span></span>
-                    <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white">Delete</button>
-                </div>
-            `).join('');
-        }
+        // Elements
+        const dbStatus = document.getElementById('db-status');
+        const detectedActiveLabel = document.getElementById('detected-active-label');
+        const radioMain = document.getElementById('radio-main');
+        const radioContest = document.getElementById('radio-contest');
+        const mainExamOptions = document.getElementById('main-exam-options');
+        const contestOptions = document.getElementById('contest-options');
+        const startCycleBtn = document.getElementById('start-cycle-btn');
 
-        async function removeLearner(id) {
-            if(!confirm("Are you sure? This will delete the learner permanently.")) return;
-            await _supabase.from('students').delete().eq('id', id);
-            fetchManageList();
-        }
+        const cycleYear = document.getElementById('cycle-year');
+        const cycleTerm = document.getElementById('cycle-term');
+        const mainSeries = document.getElementById('main-series');
+        const contestSeries = document.getElementById('contest-series');
+        const cycleDeadline = document.getElementById('cycle-deadline');
 
-        manageGradeSelect.addEventListener('change', fetchManageList);
+        const trackerGrade = document.getElementById('tracker-grade');
+        const trackerSubject = document.getElementById('tracker-subject');
+        const checkUploadsBtn = document.getElementById('check-uploads-btn');
+        const trackerOutput = document.getElementById('tracker-output');
 
-        addLearnerBtn.addEventListener('click', async () => {
-            const grade = manageGradeSelect.value;
-            const name = document.getElementById('new-name').value;
-            const stream = document.getElementById('new-stream').value;
-            if(!grade || !name) return alert("Select a grade and enter a name.");
-            const { error } = await _supabase.from('students').insert([{ name, stream, grade: parseInt(grade) }]);
-            if (error) alert("Error: " + error.message);
-            else {
-                alert("Learner added!");
-                document.getElementById('new-name').value = "";
-                fetchManageList();
-            }
-        });
+        const reportGrade = document.getElementById('report-grade');
+        const analysisModel = document.getElementById('analysis-model');
+        const compileReportsBtn = document.getElementById('compile-reports-btn');
+        const broadsheetHeader = document.getElementById('broadsheet-header');
+        const broadsheetRows = document.getElementById('broadsheet-rows');
+        const downloadCsvBtn = document.getElementById('download-csv-btn');
+        const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
 
-        // Add your original scripts here to maintain existing functionality
-    </script>
-</body>
-</html>
+        // Configuration Panel Elements
