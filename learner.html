@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bethania Academy - Learner Results Portal</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <!-- Standalone Navigation -->
+    <nav class="navbar bg-slate-900 text-white shadow-lg px-6">
+        <div class="flex-1">
+            <a class="text-lg font-black uppercase text-amber-400">Bethania Academy</a>
+            <span class="ml-4 text-[10px] uppercase tracking-widest text-slate-400 border-l border-slate-700 pl-4">Learner Portal</span>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <div id="login-screen" class="flex items-center justify-center min-h-[80vh] p-4">
+        <div class="card w-full max-w-sm bg-white shadow-xl border border-slate-200">
+            <div class="card-body">
+                <h2 class="card-title text-xl font-black uppercase text-slate-900 justify-center mb-4">🎓 Learner Access</h2>
+                <input type="text" id="login-name" placeholder="Full Name (as registered)" class="input input-bordered w-full" />
+                <input type="text" id="login-id" placeholder="Enter System Login ID" class="input input-bordered w-full" />
+                <button id="login-btn" class="btn btn-primary w-full mt-4 text-white font-bold">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Dashboard -->
+    <div id="dashboard-screen" class="hidden p-4 max-w-4xl mx-auto mt-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-black text-slate-900" id="welcome-msg"></h1>
+            <button onclick="location.reload()" class="btn btn-sm btn-ghost">Logout</button>
+        </div>
+
+        <div class="card bg-white shadow-xl border border-slate-200">
+            <div class="card-body">
+                <div class="tabs tabs-boxed bg-slate-100 p-1 mb-4">
+                    <button id="view-marks" class="tab tab-active font-bold flex-1">Raw Marks</button>
+                    <button id="view-points" class="tab font-bold flex-1">CBA Levels</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table w-full text-center">
+                        <thead class="bg-slate-900 text-white">
+                            <tr><th>Subject</th><th>Result</th></tr>
+                        </thead>
+                        <tbody id="results-body"></tbody>
+                    </table>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button onclick="window.print()" class="btn btn-outline btn-sm">📄 Download / Print Results</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const _supabase = window.supabase.createClient("https://avspdkeozxuxzbmegqwl.supabase.co", "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR");
+        let activeStudent = null;
+        let currentMode = 'marks';
+
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            const name = document.getElementById('login-name').value.trim();
+            const id = document.getElementById('login-id').value.trim();
+
+            const { data, error } = await _supabase
+                .from('students')
+                .select('*')
+                .eq('name', name)
+                .eq('login_id', id)
+                .single();
+
+            if (data) {
+                activeStudent = data;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('dashboard-screen').classList.remove('hidden');
+                document.getElementById('welcome-msg').innerText = `Results for: ${data.name}`;
+                loadResults();
+            } else {
+                alert("Incorrect Name or Login ID.");
+            }
+        });
+
+        async function loadResults() {
+            const { data } = await _supabase
+                .from('marks_entry')
+                .select('raw_score, subject_papers(paper_name, max_marks)')
+                .eq('student_id', activeStudent.id);
+
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = (data || []).map(r => `
+                <tr>
+                    <td class="font-bold">${r.subject_papers.paper_name}</td>
+                    <td>${currentMode === 'marks' ? r.raw_score : getCBALevel(r.raw_score, r.subject_papers.max_marks)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getCBALevel(score, max) {
+            const p = (score / max) * 100;
+            if(p >= 80) return "EE (Exceeding)";
+            if(p >= 60) return "ME (Meeting)";
+            if(p >= 40) return "AE (Approaching)";
+            return "EM (Emerging)";
+        }
+
+        document.getElementById('view-marks').addEventListener('click', () => { 
+            currentMode = 'marks'; 
+            document.getElementById('view-marks').classList.add('tab-active');
+            document.getElementById('view-points').classList.remove('tab-active');
+            loadResults(); 
+        });
+        
+        document.getElementById('view-points').addEventListener('click', () => { 
+            currentMode = 'rubric'; 
+            document.getElementById('view-points').classList.add('tab-active');
+            document.getElementById('view-marks').classList.remove('tab-active');
+            loadResults(); 
+        });
+    </script>
+</body>
+  </html>
+  
