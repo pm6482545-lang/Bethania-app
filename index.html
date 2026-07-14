@@ -575,65 +575,7 @@
             filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
         });
 
-        filterSubject.addEventListener('change', async () => {
-            const { data, error } = await _supabase
-                .from('subject_papers')
-                .select('*')
-                .eq('subject_id', filterSubject.value);
-
-            if (error) {
-                console.error("Supabase Error fetching papers:", error);
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                // FALLBACK: Allow direct entry out of 100 if no papers are configured
-                filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default Max: 100)</option>';
-                filterPaper.disabled = false;
-                
-                // Trigger the change event immediately to load the student table list
-                filterPaper.dispatchEvent(new Event('change'));
-            } else {
-                filterPaper.innerHTML = '<option value="" disabled selected>Select Component...</option>' + 
-                    data.map(p => `<option value="${p.id}" data-max="${p.max_marks || p.max_score || 50}">${p.paper_name || p.name}</option>`).join('');
-                filterPaper.disabled = false;
-            }
-        });
-
-                   filterPaper.addEventListener('change', async () => {
-            const selectedOption = filterPaper.options[filterPaper.selectedIndex];
-            if (!selectedOption) return;
-
-            const maxMarks = selectedOption.getAttribute('data-max') || "100";
-            paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
-
-            const selectedGrade = parseInt(filterGrade.value);
-            const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
-            
-            if (filteredStudents.length === 0) {
-                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-warning italic font-semibold">No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
-                saveMarksBtn.disabled = true;
-                return;
-            }
-
-            // 1. Fetch pre-existing marks from Supabase for this group
-            const studentIds = filteredStudents.map(s => s.id);
-            const paperVal = filterPaper.value;
-            
-            let query = _supabase
-                .from('marks_entry')
-                .select('student_id, raw_score')
-                .eq('test_name', activeExamContextName)
-                .in('student_id', studentIds);
-
-            if (paperVal === 'DIRECT_ENTRY') {
-                query = query.is('paper_id', null);
-            } else {
-                query = query.eq('paper_id', paperVal);
-            }
-
-            const { data: savedMarks, error } = await query;
-        // Triggered when Subject selection changes
+        // 1. Triggered when Subject selection changes
         filterSubject.addEventListener('change', () => {
             const subId = filterSubject.value;
             if(!subId) {
@@ -642,20 +584,23 @@
                 return;
             }
 
+            // Read components directly from your local cache list
             const papers = papersCache.filter(p => p.subject_id === subId);
             if(papers.length === 0) {
                 filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default Max: 100)</option>';
+                // Automatically look up student entries if it immediately switches to Direct Entry
+                filterPaper.dispatchEvent(new Event('change'));
             } else {
-                let html = '<option value="">-- Select Paper Component --</option>';
+                let html = '<option value="" disabled selected>-- Select Paper Component --</option>';
                 papers.forEach(p => {
                     html += `<option value="${p.id}" data-max="${p.max_marks || 50}">${p.paper_name} (Max: ${p.max_marks || 50})</option>`;
                 });
                 filterPaper.innerHTML = html;
             }
-            marksEntryRows.innerHTML = ''; // Keep work area clean
+            marksEntryRows.innerHTML = ''; // Keep work area clean before component selection
         });
 
-        // Triggered when Paper selection changes (Fetches scores and builds inputs)
+        // 2. Triggered when Paper selection changes (Fetches scores and builds inputs dynamically)
         filterPaper.addEventListener('change', async () => {
             const selectedOption = filterPaper.options[filterPaper.selectedIndex];
             if (!selectedOption || !selectedOption.value) return;
@@ -672,7 +617,7 @@
                 return;
             }
 
-            // 1. Fetch pre-existing marks from Supabase for this group
+            // Fetch pre-existing marks from Supabase for this group
             const studentIds = filteredStudents.map(s => s.id);
             const paperVal = filterPaper.value;
             
@@ -699,7 +644,7 @@
                 });
             }
 
-            // 2. Build rows and fill inputs with saved marks if they exist
+            // Build rows and fill inputs with saved marks if they exist
             marksEntryRows.innerHTML = filteredStudents.map(s => {
                 const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
                 return `
@@ -719,9 +664,9 @@
             
             saveMarksBtn.disabled = systemIsLocked;
         });
-                        
-               
-  
+
+            
+            
         saveMarksBtn.addEventListener('click', async () => {
     if(systemIsLocked) return alert("System Closed. Data submission rejected.");
     
