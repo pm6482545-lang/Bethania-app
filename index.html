@@ -575,6 +575,7 @@
             filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
         });
 
+        
         // 1. Triggered when Subject selection changes
         filterSubject.addEventListener('change', () => {
             const subId = filterSubject.value;
@@ -664,8 +665,7 @@
             
             saveMarksBtn.disabled = systemIsLocked;
         });
-
-            
+        
             
         saveMarksBtn.addEventListener('click', async () => {
     if(systemIsLocked) return alert("System Closed. Data submission rejected.");
