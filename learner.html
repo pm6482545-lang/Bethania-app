@@ -3,327 +3,529 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethania Academy | CBA Learner Portal</title>
-    <!-- Supabase JS Library -->
+    <title>Bethania Academy - Student Report Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- jsPDF Library for Premium Document Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- DaisyUI and Tailwind CSS for Premium Styling -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2pdf library for clean, client-side PDF downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="bg-slate-900 min-h-screen text-slate-100 font-sans p-4 flex items-center justify-center">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
-    <!-- Premium CBA Workstation Container -->
-    <div id="portal-app" class="card w-full max-w-lg bg-slate-800 shadow-2xl border border-slate-700/50 rounded-2xl">
-        <div class="card-body p-6 sm:p-8">
-            
-            <!-- School Header with Live Logo Preview -->
-            <div class="text-center mb-6">
-                <div class="avatar mb-3">
-                    <div class="w-20 rounded-full ring ring-amber-500 ring-offset-base-100 ring-offset-2 bg-white">
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" />
+    <!-- LOGIN PANEL -->
+    <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen px-4">
+        <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
+            <div class="card-body p-6 sm:p-8 text-center space-y-4">
+                <div class="avatar bg-white p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16">
+                    <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=100&auto=format&fit=crop" id="portal-logo" alt="Bethania Academy" class="rounded-full overflow-hidden" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                </div>
+                <div>
+                    <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
+                    <p class="text-[10px] text-slate-500 tracking-widest font-bold uppercase">Student CBA Report Card Portal</p>
+                </div>
+                <div class="divider my-1"></div>
+                <div class="form-control w-full text-left">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Enter Unique Student Login ID</label>
+                    <input type="text" id="student-id-input" placeholder="e.g. AA1234" class="input input-bordered input-md w-full font-mono text-center text-lg uppercase tracking-widest font-bold" />
+                </div>
+                <button id="login-btn" class="btn btn-neutral btn-md w-full text-white font-bold uppercase tracking-wider">🔓 Access Assessment Records</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT DASHBOARD -->
+    <div id="dashboard-screen" class="hidden">
+        <!-- Header -->
+        <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 border-b border-amber-500/30">
+            <div class="flex-1">
+                <div class="flex items-center gap-3">
+                    <div class="avatar bg-white p-1 rounded-full border border-amber-400">
+                        <div class="w-8 h-8 rounded-full overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=100&auto=format&fit=crop" alt="Bethania Academy Logo" />
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-xs sm:text-sm font-black uppercase text-amber-400 tracking-wider">Bethania Academy</h1>
+                        <p class="text-[9px] text-slate-400 uppercase tracking-widest">Student Assessment Portfolio</p>
                     </div>
                 </div>
-                <h1 class="text-lg sm:text-xl font-black text-amber-400 tracking-wider uppercase">F.P.F.K Bethania Academy</h1>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-widest uppercase">CBA Learner Verification Portal</p>
             </div>
-
-            <div class="divider divider-warning opacity-30 my-2"></div>
-
-            <!-- VIEW 1: SECURE LOGIN SCREEN -->
-            <div id="login-section" class="space-y-4 py-2">
-                <div class="text-center">
-                    <h2 class="text-sm font-bold text-slate-300 uppercase tracking-tight">Access Assessment Records</h2>
-                    <p class="text-xs text-slate-500 mt-1">Provide your unique Learner Login ID below.</p>
-                </div>
-                <div class="form-control w-full">
-                    <input type="text" id="login-id" placeholder="e.g. AB1234" class="input input-bordered input-md bg-slate-900 border-slate-700 text-amber-300 w-full text-center font-mono uppercase font-bold tracking-widest" maxlength="6" />
-                </div>
-                <button id="btn-login" class="btn btn-warning hover:bg-amber-500 w-full font-bold text-slate-950 uppercase tracking-wide shadow-lg">
-                    🔑 Verify & Enter Portal
-                </button>
+            <div class="flex-none">
+                <button id="logout-btn" class="btn btn-ghost btn-xs text-amber-400 font-bold uppercase">Sign Out</button>
             </div>
+        </div>
 
-            <!-- VIEW 2: PREMIUM RESULTS SCREEN -->
-            <div id="result-section" class="hidden space-y-6">
-                
-                <!-- Student Meta-Info Badge -->
-                <div id="student-info" class="text-xs space-y-1.5 bg-slate-900 border border-slate-700 p-4 rounded-xl font-mono text-slate-300 shadow-inner">
-                    <!-- Dynamic details are rendered here -->
-                </div>
-
-                <!-- Live Ledger Table -->
-                <div class="overflow-hidden rounded-xl border border-slate-700 bg-slate-900">
-                    <table class="table table-xs w-full text-slate-300">
-                        <thead class="bg-slate-950 text-amber-400 text-[10px] uppercase font-bold tracking-wider">
-                            <tr>
-                                <th class="p-3 text-left">Subject / Learning Area</th>
-                                <th id="score-type-header" class="p-3 text-right">Score achieved</th>
-                            </tr>
-                        </thead>
-                        <tbody id="marks-list" class="divide-y divide-slate-800 font-mono text-xs">
-                            <!-- Dynamic rows are rendered here -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Action Button Container -->
-                <div class="flex gap-2.5">
-                    <button id="btn-back" class="btn btn-outline btn-slate w-1/3 text-xs font-bold uppercase tracking-wider text-slate-400 border-slate-700 hover:bg-slate-700">
-                        ↩️ Log Out
-                    </button>
-                    <button id="btn-download" class="btn btn-warning w-2/3 text-xs font-bold text-slate-950 uppercase tracking-wider shadow-lg">
-                        📥 Save Result Slip (PDF)
-                    </button>
+        <main class="container mx-auto p-4 max-w-4xl space-y-6">
+            <!-- Profile Banner Card -->
+            <div class="card bg-gradient-to-r from-slate-900 to-slate-850 text-white shadow-xl border border-slate-800">
+                <div class="card-body p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <span class="badge badge-amber text-slate-950 font-black text-[10px] uppercase mb-1" id="active-term-badge">Loading...</span>
+                        <h2 class="text-2xl font-black" id="student-name">...</h2>
+                        <p class="text-xs text-slate-300 mt-1 font-medium">Grade Level: <span id="student-grade" class="font-bold text-amber-400">...</span> | Stream Group: <span id="student-stream" class="font-bold text-amber-400">...</span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] block font-mono text-slate-400 uppercase">Authenticated ID</span>
+                        <span class="text-lg font-black font-mono text-white bg-slate-800 px-3 py-1 rounded-md border border-slate-700" id="student-badge-id">...</span>
+                    </div>
                 </div>
             </div>
 
+            <!-- DYNAMIC REPORT SLIPS PANEL -->
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6 space-y-4">
+                    <h3 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">📄 Available Assessment Report Slips</h3>
+                    <p class="text-xs text-slate-500">Below are your authorized evaluation documents. Your grade curriculum determines the report framework available for generation.</p>
+                    
+                    <div class="divider my-1"></div>
+
+                    <!-- REPORT GENERATION CARD CONTAINER -->
+                    <div id="slips-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Loading State -->
+                        <div class="col-span-2 text-center py-8">
+                            <span class="loading loading-spinner loading-md text-primary"></span>
+                            <p class="text-xs text-slate-400 mt-2 font-medium">Processing records and computing ranking metrics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- HIDDEN PRINTER CANVAS (RENDERED OFFSCREEN FOR PDF CAPTURE) -->
+    <div class="absolute left-[-9999px] top-[-9999px]">
+        <div id="pdf-report-canvas" style="width: 790px; padding: 40px; background-color: #ffffff; color: #1e293b; font-family: sans-serif;">
+            <!-- Content dynamically generated by print engine -->
         </div>
     </div>
 
     <script>
-        // Supabase Setup
-        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co";
+        // Supabase Init
+        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
-        let currentStudentData = null;
-        let currentMarksData = null;
+        // State Elements
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const idInput = document.getElementById('student-id-input');
 
-        const gradeMap = { 
-            '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', 
-            '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' 
+        const labelTerm = document.getElementById('active-term-badge');
+        const labelName = document.getElementById('student-name');
+        const labelGrade = document.getElementById('student-grade');
+        const labelStream = document.getElementById('student-stream');
+        const labelIdBadge = document.getElementById('student-badge-id');
+        const slipsContainer = document.getElementById('slips-container');
+        const pdfCanvas = document.getElementById('pdf-report-canvas');
+
+        let activeSessionName = "Assessment";
+        let activeStudent = null;
+        let globalPapers = [];
+        let allStudentsInCohort = [];
+        let cohortMarks = [];
+
+        // Official CBC Subject Tiers
+        const CBC_SUBJECT_TIERS = {
+            lower_primary: [
+                "Language Activities", "Mathematical Activities", "Environmental Activities",
+                "Psychomotor and Creative Activities", "Religious Education Activities", "Literacy",
+                "English Language Activities", "Kiswahili Language Activities"
+            ],
+            upper_primary: [
+                "English", "Kiswahili", "Mathematics", "Science and Technology",
+                "Agriculture and Nutrition", "Creative Arts", "Social Studies", "Religious Education"
+            ],
+            junior_school: [
+                "English", "Kiswahili", "Mathematics", "Integrated Science",
+                "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
+                "Creative Arts and Sports", "Religious Education"
+            ]
         };
 
-        // DOM Hooks
-        const loginSection = document.getElementById('login-section');
-        const resultSection = document.getElementById('result-section');
-        const loginInput = document.getElementById('login-id');
-        const btnLogin = document.getElementById('btn-login');
-        const btnBack = document.getElementById('btn-back');
-        const btnDownload = document.getElementById('btn-download');
-        const studentInfoDiv = document.getElementById('student-info');
-        const marksListBody = document.getElementById('marks-list');
-        const scoreTypeHeader = document.getElementById('score-type-header');
+        function getGradeTier(grade) {
+            const g = parseInt(grade);
+            if (g <= 3) return "lower_primary";
+            if (g >= 4 && g <= 6) return "upper_primary";
+            return "junior_school";
+        }
 
-        // Login Authenticator
-        btnLogin.addEventListener('click', async () => {
-            const id = loginInput.value.trim().toUpperCase();
-            if (!id) return alert("Please enter your Learner ID.");
+        function convertScoreToPoints(score, max) {
+            const pct = (score / max) * 100;
+            if (pct >= 90) return 8; // EE1
+            if (pct >= 75) return 7; // EE2
+            if (pct >= 58) return 6; // ME1
+            if (pct >= 40) return 5; // ME2
+            if (pct >= 30) return 4; // AE1
+            if (pct >= 20) return 3; // AE2
+            if (pct >= 10) return 2; // BE1
+            return 1;                // BE2
+        }
 
-            btnLogin.disabled = true;
-            btnLogin.innerText = "Verifying ID...";
+        function getCompetencyLevel(average, type) {
+            if (type === 'points') {
+                if (average >= 6.5) return { text: "EE", label: "Exceeding Expectations", class: "text-emerald-600 bg-emerald-50" };
+                if (average >= 5.0) return { text: "ME", label: "Meeting Expectations", class: "text-sky-600 bg-sky-50" };
+                if (average >= 3.0) return { text: "AE", label: "Approaching Expectations", class: "text-amber-600 bg-amber-50" };
+                return { text: "BE", label: "Below Expectations", class: "text-rose-600 bg-rose-50" };
+            } else {
+                if (average >= 80) return { text: "EE", label: "Exceeding Expectations", class: "text-emerald-600 bg-emerald-50" };
+                if (average >= 50) return { text: "ME", label: "Meeting Expectations", class: "text-sky-600 bg-sky-50" };
+                if (average >= 30) return { text: "AE", label: "Approaching Expectations", class: "text-amber-600 bg-amber-50" };
+                return { text: "BE", label: "Below Expectations", class: "text-rose-600 bg-rose-50" };
+            }
+        }
 
-            // Fetch Student Details
-            const { data: student, error: studentErr } = await _supabase
-                .from('students')
-                .select('*')
-                .eq('login_id', id)
-                .single();
+        // Fetch Global Session Context
+        async function fetchSessionContext() {
+            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
+            if (sessions && sessions.length > 0) {
+                activeSessionName = sessions[0].exam_name;
+            }
+            labelTerm.innerText = `Active Cycle: ${activeSessionName}`;
+        }
 
-            if (studentErr || !student) {
-                alert("Incorrect Login ID. Please check and try again.");
-                btnLogin.disabled = false;
-                btnLogin.innerText = "🔑 Verify & Enter Portal";
+        // Login Handler
+        loginBtn.addEventListener('click', async () => {
+            const enteredId = idInput.value.trim().toUpperCase();
+            if(!enteredId) return alert("Please specify your Student Login ID!");
+
+            loginBtn.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Authenticating...`;
+            loginBtn.disabled = true;
+
+            const { data: students, error } = await _supabase.from('students').select('*').eq('login_id', enteredId).limit(1);
+            
+            if (error || !students || students.length === 0) {
+                alert("Unauthorized or Invalid Student ID. Please contact your class teacher!");
+                loginBtn.innerHTML = `🔓 Access Assessment Records`;
+                loginBtn.disabled = false;
                 return;
             }
 
-            // Fetch Marks Data
-            const { data: marks, error: marksErr } = await _supabase
-                .from('marks_entry')
-                .select('*, subject_papers(paper_name)')
-                .eq('student_id', student.id);
+            activeStudent = students[0];
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
 
-            currentStudentData = student;
-            currentMarksData = marks || [];
+            // Set student profiles
+            labelName.innerText = activeStudent.name;
+            labelGrade.innerText = activeStudent.grade <= 0 ? (activeStudent.grade === -2 ? "PP1" : "PP2") : `Grade ${activeStudent.grade}`;
+            labelStream.innerText = activeStudent.stream || "General";
+            labelIdBadge.innerText = activeStudent.login_id;
 
-            // Determine if Junior School (Grades 7, 8, 9)
-            const isJunior = student.grade >= 7;
-            scoreTypeHeader.innerText = isJunior ? "Points (Pts)" : "Marks (%)";
+            await fetchSessionContext();
+            await loadCohortPerformances();
+        });
 
-            // Render Meta Info UI
-            studentInfoDiv.innerHTML = `
-                <div class="flex justify-between border-b border-slate-800 pb-1.5 mb-1.5">
-                    <span class="text-slate-500">LEARNER</span>
-                    <span class="font-extrabold text-amber-400 uppercase">${student.name}</span>
-                </div>
-                <div class="flex justify-between border-b border-slate-800 pb-1.5 mb-1.5">
-                    <span class="text-slate-500">GRADE</span>
-                    <span class="font-bold text-white">${gradeMap[student.grade] || 'Grade ' + student.grade}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">LOGIN ID</span>
-                    <span class="font-bold text-emerald-400 tracking-wider">${student.login_id}</span>
-                </div>
-            `;
+        logoutBtn.addEventListener('click', () => {
+            activeStudent = null;
+            idInput.value = "";
+            loginScreen.classList.remove('hidden');
+            dashboardScreen.classList.add('hidden');
+            loginBtn.innerHTML = `🔓 Access Assessment Records`;
+            loginBtn.disabled = false;
+        });
 
-            // Render Marks/Points list UI
-            if (currentMarksData.length === 0) {
-                marksListBody.innerHTML = `<tr><td colspan="2" class="text-center py-6 text-slate-500 italic">No assessment records found for this cycle.</td></tr>`;
+        // Pull Cohort Data to dynamically compute Class Positions
+        async function loadCohortPerformances() {
+            const grade = activeStudent.grade;
+            const tier = getGradeTier(grade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+
+            // 1. Fetch Students in current grade cohort
+            const { data: classmates } = await _supabase.from('students').select('*').eq('grade', grade);
+            allStudentsInCohort = classmates || [];
+
+            // 2. Fetch active subjects
+            const { data: dbSubjects } = await _supabase.from('subjects').select('*');
+            const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+            const subjectIds = validSubjects.map(s => s.id);
+
+            // 3. Fetch all dynamic papers for subjects
+            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
+            globalPapers = dbPapers || [];
+
+            // 4. Fetch cohort marks
+            const classmateIds = allStudentsInCohort.map(c => c.id);
+            const { data: marks } = await _supabase.from('marks_entry')
+                .select('*')
+                .eq('test_name', activeSessionName)
+                .in('student_id', classmateIds)
+                .in('paper_id', globalPapers.map(p => p.id));
+            cohortMarks = marks || [];
+
+            buildAvailableSlips(validSubjects, tier);
+        }
+
+        // Calculate and build interface options
+        function buildAvailableSlips(subjects, tier) {
+            const isJuniorSchool = (tier === "junior_school");
+
+            // Calculate Rankings for Raw Marks
+            const markRankings = calculateRankings(subjects, false);
+            const myMarkRecord = markRankings.find(r => r.id === activeStudent.id);
+
+            let html = "";
+
+            if (isJuniorSchool) {
+                // Junior School: Calculate Rankings for Points
+                const pointRankings = calculateRankings(subjects, true);
+                const myPointRecord = pointRankings.find(r => r.id === activeStudent.id);
+
+                // Option 1: Raw Marks Report Slip
+                html += `
+                    <div class="border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col justify-between h-full">
+                        <div>
+                            <span class="badge badge-neutral text-[10px] font-bold uppercase mb-2">Slip 1 of 2</span>
+                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Performance Summary Slip</h4>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Contains details of raw marks scored per subject paper, accumulated percentage scores, and rank based on raw marks.</p>
+                            <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
+                                <div>Average Score: <strong class="text-slate-900">${myMarkRecord.average.toFixed(1)}%</strong></div>
+                                <div>Class Rank: <strong class="text-slate-900">#${myMarkRecord.position} of ${markRankings.length}</strong></div>
+                            </div>
+                        </div>
+                        <button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📥 Download Raw Marks Slip</button>
+                    </div>
+                `;
+
+                // Option 2: Competency Points Report Slip
+                html += `
+                    <div class="border border-amber-200 rounded-xl p-5 bg-amber-50/50 flex flex-col justify-between h-full">
+                        <div>
+                            <span class="badge badge-warning text-slate-950 text-[10px] font-black uppercase mb-2">Slip 2 of 2</span>
+                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Competency Points Slip</h4>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Features converted points on the CBC 8-Point scale, total points accumulated (max 72), overall points average, and rating.</p>
+                            <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
+                                <div>Mean Points: <strong class="text-slate-900">${myPointRecord.average.toFixed(1)} Pts</strong></div>
+                                <div>Competency Rank: <strong class="text-slate-900">#${myPointRecord.position} of ${pointRankings.length}</strong></div>
+                            </div>
+                        </div>
+                        <button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📥 Download Competency Points Slip</button>
+                    </div>
+                `;
             } else {
-                marksListBody.innerHTML = currentMarksData.map(m => `
-                    <tr class="hover:bg-slate-800/40">
-                        <td class="p-3 text-left text-slate-300 font-medium">${m.subject_papers?.paper_name || 'Subject Component'}</td>
-                        <td class="p-3 text-right font-bold text-white">${m.raw_score} ${isJunior ? 'Pts' : '%'}</td>
-                    </tr>
-                `).join('');
+                // Primary School: Just One PDF Slip based on Raw Marks
+                html += `
+                    <div class="col-span-2 border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <span class="badge badge-neutral text-[10px] font-bold uppercase">Standard Issue Slip</span>
+                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Primary School Evaluation Slip</h4>
+                            <p class="text-xs text-slate-500 max-w-lg">Displays standard raw scores, totals, subject performance percentages, average scores, ratings, and positions.</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                            <div class="bg-white px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-mono text-center min-w-[140px]">
+                                <span class="block text-[10px] text-slate-400">Position</span>
+                                <strong class="text-slate-900 text-base">#${myMarkRecord.position}</strong> of ${markRankings.length}
+                            </div>
+                            <button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📥 Download Performance Slip</button>
+                        </div>
+                    </div>
+                `;
             }
 
-            // Transition UI View
-            loginSection.classList.add('hidden');
-            resultSection.classList.remove('hidden');
-            
-            btnLogin.disabled = false;
-            btnLogin.innerText = "🔑 Verify & Enter Portal";
-        });
+            slipsContainer.innerHTML = html;
+        }
 
-        // Exit Portal Action
-        btnBack.addEventListener('click', () => {
-            currentStudentData = null;
-            currentMarksData = null;
-            loginInput.value = "";
-            resultSection.classList.add('hidden');
-            loginSection.classList.remove('hidden');
-        });
+        // Unified Calculation Engine
+        function calculateRankings(subjects, convertToPoints) {
+            const list = allStudentsInCohort.map(stud => {
+                let totals = 0;
+                let count = 0;
+                let subjectBreakdown = {};
 
-        // PDF Generator with School Logo & Formatting logic
-        btnDownload.addEventListener('click', () => {
-            if (!currentStudentData || !currentMarksData) return;
+                subjects.forEach(sub => {
+                    const papers = globalPapers.filter(p => p.subject_id === sub.id);
+                    if (papers.length === 0) return;
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const isJunior = currentStudentData.grade >= 7;
+                    let rawSum = 0;
+                    let maxSum = 0;
+                    let studentHasScore = false;
 
-            // Load and draw school logo
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.src = logoUrl;
-
-            img.onload = function () {
-                // Centered School Logo (Watermark/Header style)
-                doc.addImage(img, 'JPEG', 88, 15, 34, 34);
-
-                // Formal School Header
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(18);
-                doc.setTextColor(15, 23, 42); // slate-900
-                doc.text("F.P.F.K BETHANIA ACADEMY", 105, 58, { align: "center" });
-
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139); // slate-500
-                doc.text("CBA ASSESSMENT WORKSTATION • OFFICIAL RESULT SLIP", 105, 63, { align: "center" });
-
-                // Divider Line
-                doc.setDrawColor(245, 158, 11); // amber-500
-                doc.setLineWidth(0.8);
-                doc.line(20, 68, 190, 68);
-
-                // Student Metadata Block
-                doc.setFillColor(248, 250, 252); // slate-50 background block
-                doc.rect(20, 74, 170, 26, "F");
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(11);
-                doc.setTextColor(15, 23, 42);
-                doc.text("LEARNER ASSESSMENT CARD", 24, 80);
-
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(10);
-                doc.text(`Name: ${currentStudentData.name}`, 24, 88);
-                doc.text(`Grade/Class: ${gradeMap[currentStudentData.grade] || 'Grade ' + currentStudentData.grade}`, 24, 94);
-                
-                doc.setFont("helvetica", "bold");
-                doc.text(`Login ID: ${currentStudentData.login_id}`, 140, 88);
-                doc.setFont("helvetica", "normal");
-                doc.text(`System ID: ${currentStudentData.id.substring(0, 8).toUpperCase()}`, 140, 94);
-
-                // Ledger Table Headers
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(10);
-                doc.setTextColor(255, 255, 255);
-                doc.setFillColor(15, 23, 42); // slate-900
-                doc.rect(20, 108, 170, 8, "F");
-                doc.text("SUBJECT / COMPONENT AREA", 24, 113.5);
-                doc.text(isJunior ? "POINTS ACHIEVED" : "RAW MARKS (%)", 140, 113.5);
-
-                // Populate Records list
-                let y = 122;
-                let totalScore = 0;
-                doc.setFont("helvetica", "normal");
-                doc.setTextColor(51, 65, 85); // slate-700
-
-                if (currentMarksData.length === 0) {
-                    doc.setFont("helvetica", "italic");
-                    doc.text("No academic scores registered to database for this cycle.", 105, y, { align: "center" });
-                    y += 10;
-                } else {
-                    currentMarksData.forEach((m, idx) => {
-                        // Alternate gray background rows
-                        if (idx % 2 === 1) {
-                            doc.setFillColor(248, 250, 252);
-                            doc.rect(20, y - 5, 170, 7.5, "F");
+                    papers.forEach(p => {
+                        const scoreObj = cohortMarks.find(m => m.student_id === stud.id && m.paper_id === p.id);
+                        if (scoreObj) {
+                            rawSum += parseFloat(scoreObj.raw_score);
+                            studentHasScore = true;
                         }
-
-                        const paperName = m.subject_papers?.paper_name || 'Subject Component';
-                        const score = m.raw_score;
-                        totalScore += score;
-
-                        doc.text(paperName.toUpperCase(), 24, y);
-                        doc.setFont("helvetica", "bold");
-                        doc.text(`${score} ${isJunior ? 'Pts' : '%'}`, 140, y);
-                        doc.setFont("helvetica", "normal");
-
-                        y += 7.5;
+                        maxSum += parseFloat(p.max_marks);
                     });
-                }
 
-                // Summary Calculation Block
-                const numSubjects = currentMarksData.length || 1;
-                const averageScore = (totalScore / numSubjects).toFixed(2);
-                
-                let performanceRate = "";
-                if (isJunior) {
-                    // Junior school point rating
-                    performanceRate = averageScore >= 10 ? "Exceeding Expectation (EE)" : averageScore >= 7 ? "Meeting Expectation (ME)" : "Approaching Expectation (AE)";
-                } else {
-                    // Standard raw percentage rating
-                    performanceRate = averageScore >= 80 ? "Exceeding Expectation (EE)" : averageScore >= 60 ? "Meeting Expectation (ME)" : "Approaching Expectation (AE)";
-                }
+                    if (studentHasScore) {
+                        if (convertToPoints) {
+                            const pts = convertScoreToPoints(rawSum, maxSum);
+                            totals += pts;
+                            subjectBreakdown[sub.subject_name] = { score: pts, max: 8, label: `${pts} Pts` };
+                        } else {
+                            const pct = (rawSum / maxSum) * 100;
+                            totals += pct;
+                            subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${pct.toFixed(1)}%` };
+                        }
+                        count++;
+                    } else {
+                        subjectBreakdown[sub.subject_name] = { score: 0, max: 0, label: "-" };
+                    }
+                });
 
-                y += 5;
-                doc.setDrawColor(203, 213, 225); // slate-300
-                doc.setLineWidth(0.5);
-                doc.line(20, y, 190, y);
+                const average = count > 0 ? (totals / count) : 0;
+                return {
+                    id: stud.id,
+                    name: stud.name,
+                    stream: stud.stream,
+                    subjectBreakdown,
+                    totals,
+                    average,
+                    rating: getCompetencyLevel(average, convertToPoints ? 'points' : 'marks')
+                };
+            });
 
-                y += 10;
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(11);
-                doc.setTextColor(15, 23, 42);
-                doc.text(`TOTAL SUM: ${totalScore} ${isJunior ? 'Pts' : '%'}`, 24, y);
-                doc.text(`AVERAGE GRADE: ${averageScore} ${isJunior ? 'Pts' : '%'}`, 24, y + 7);
-                doc.text(`PERFORMANCE RATE: ${performanceRate}`, 24, y + 14);
+            // Sort and append rank positions
+            list.sort((a, b) => b.totals - a.totals);
+            list.forEach((entry, idx) => {
+                entry.position = idx + 1;
+            });
 
-                // Footer Validation Signature
-                doc.setDrawColor(226, 232, 240);
-                doc.line(20, 260, 190, 260);
+            return list;
+        }
 
-                doc.setFont("helvetica", "italic");
-                doc.setFontSize(8);
-                doc.setTextColor(148, 163, 184); // slate-400
-                doc.text("This assessment record was processed automatically from official CBA database sheets.", 105, 266, { align: "center" });
-                doc.text("F.P.F.K Bethania Academy Administration Office.", 105, 271, { align: "center" });
+        // PDF Generation and Styling
+        function generatePDFSlip(type) {
+            const grade = activeStudent.grade;
+            const tier = getGradeTier(grade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+            const isJuniorPoints = (type === 'points');
 
-                // Save Document Download
-                doc.save(`${currentStudentData.name}_Official_Slip.pdf`);
-            };
+            const isLogoValid = document.getElementById('portal-logo').complete;
+            if(!isLogoValid) {
+                return alert("Asset Error: Institutional seal/logo is loading or missing. PDF export disabled.");
+            }
 
-            img.onerror = function () {
-                alert("Unable to fetch school logo asset. Please ensure Supabase Storage is set to Public.");
-            };
-        });
+            // Recalculate context records
+            const rawSubjectsList = allStudentsInCohort.map(s => s); // dummy placeholder logic
+            const { data: dbSubjects } = _supabase.from('subjects').select('*').then(({data}) => {
+                const filteredSubjects = (data || []).filter(s => allowed.includes(s.subject_name.trim()));
+                const rankings = calculateRankings(filteredSubjects, isJuniorPoints);
+                const me = rankings.find(r => r.id === activeStudent.id);
+
+                let reportHtml = `
+                    <div style="border: 4px double #1e293b; padding: 25px; border-radius: 8px;">
+                        <!-- School Header -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-b: 3px double #f59e0b; padding-bottom: 15px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=100&auto=format&fit=crop" style="width: 70px; h-weight: 70px; border-radius: 50%; border: 2px solid #f59e0b;" />
+                                <div>
+                                    <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 1px;">BETHANIA ACADEMY</h1>
+                                    <p style="font-size: 10px; color: #64748b; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">Official CBA Progress Report Slip</p>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="display: inline-block; padding: 4px 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 10px; font-weight: bold; color: #475569;">
+                                    ${activeSessionName.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Bio Info Grid -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
+                            <tr>
+                                <td style="padding: 4px 0; color: #64748b; font-weight: bold;">LEARNER NAME:</td>
+                                <td style="padding: 4px 0; font-weight: 800; color: #0f172a; text-transform: uppercase;">${me.name}</td>
+                                <td style="padding: 4px 0; color: #64748b; font-weight: bold;">CLASS GROUP:</td>
+                                <td style="padding: 4px 0; font-weight: 800; color: #0f172a;">Grade ${grade}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 0; color: #64748b; font-weight: bold;">STUDENT ID:</td>
+                                <td style="padding: 4px 0; font-weight: 800; color: #0f172a; font-family: monospace;">${activeStudent.login_id}</td>
+                                <td style="padding: 4px 0; color: #64748b; font-weight: bold;">STREAM / ARM:</td>
+                                <td style="padding: 4px 0; font-weight: 800; color: #0f172a; text-transform: uppercase;">${me.stream || 'N/A'}</td>
+                            </tr>
+                        </table>
+
+                        <h3 style="font-size: 12px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; color: #0f172a; border-left: 4px solid #1e293b; padding-left: 8px;">
+                            ${isJuniorPoints ? 'Competency Point Matrices (8-Point Evaluation)' : 'Raw Assessment Performance Records'}
+                        </h3>
+
+                        <!-- Subject Table -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
+                            <thead>
+                                <tr style="background-color: #0f172a; color: #ffffff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #334155;">Learning Area / Component</th>
+                                    <th style="padding: 8px; text-align: center; border: 1px solid #334155; width: 150px;">Score / Scale Output</th>
+                                    <th style="padding: 8px; text-align: center; border: 1px solid #334155; width: 120px;">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredSubjects.map(sub => {
+                                    const record = me.subjectBreakdown[sub.subject_name];
+                                    let compText = "-";
+                                    if(record && record.label !== "-") {
+                                        const ptsVal = isJuniorPoints ? record.score : (record.score / record.max) * 100;
+                                        compText = getCompetencyLevel(ptsVal, isJuniorPoints ? 'points' : 'marks').text;
+                                    }
+                                    return `
+                                        <tr>
+                                            <td style="padding: 7px; border: 1px solid #e2e8f0; font-weight: bold; color: #334155;">${sub.subject_name}</td>
+                                            <td style="padding: 7px; border: 1px solid #e2e8f0; text-align: center; font-family: monospace; font-weight: bold; color: #0f172a;">${record ? record.label : '-'}</td>
+                                            <td style="padding: 7px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #1e293b;">${compText}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+
+                        <!-- Overall Summary Row -->
+                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <div>
+                                <span style="font-size: 9px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cumulative Total Output</span>
+                                <strong style="font-size: 18px; color: #0f172a;">${isJuniorPoints ? me.totals.toFixed(0) : me.totals.toFixed(1)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
+                            </div>
+                            <div style="text-align: center;">
+                                <span style="font-size: 9px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Calculated Mean Output</span>
+                                <strong style="font-size: 18px; color: #1e40af;">${me.average.toFixed(1)}${isJuniorPoints ? ' Pts' : '%'}</strong>
+                            </div>
+                            <div style="text-align: center;">
+                                <span style="font-size: 9px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Standing</span>
+                                <strong style="font-size: 18px; color: #0f172a;">Position ${me.position} of ${rankings.length}</strong>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 9px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Competency Level Rating</span>
+                                <span style="display: inline-block; margin-top: 3px; padding: 4px 8px; font-weight: 900; border-radius: 4px; font-size: 10px; background-color: #e0f2fe; color: #0369a1;">
+                                    ${me.rating.text} - ${me.rating.label}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Footer and Signatures -->
+                        <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 10px; border-t: 1px solid #e2e8f0; padding-top: 20px;">
+                            <div style="text-align: center; width: 180px;">
+                                <div style="height: 35px;"></div>
+                                <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 5px;">Class Teacher Signature</div>
+                            </div>
+                            <div style="text-align: center; width: 180px;">
+                                <div style="height: 35px; line-height: 35px; color: #64748b; font-style: italic; font-weight: bold;">OFFICIAL ACCREDITED SEAL</div>
+                                <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 5px;">Institutional Stamp</div>
+                            </div>
+                            <div style="text-align: center; width: 180px;">
+                                <div style="height: 35px;"></div>
+                                <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 5px;">Headteacher Signature</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                pdfCanvas.innerHTML = reportHtml;
+
+                // Configure and fire PDF download
+                const opt = {
+                    margin:       0.2,
+                    filename:     `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`,
+                    image:        { type: 'jpeg', quality: 1.0 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                html2pdf().from(pdfCanvas).set(opt).save();
+            });
+        }
     </script>
 </body>
 </html>
