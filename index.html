@@ -627,40 +627,20 @@
             
             saveMarksBtn.disabled = systemIsLocked;
         });
-
-        saveMarksBtn.addEventListener('click', async () => {
-    if(systemIsLocked) return alert("System Closed. Data submission rejected.");
+saveMarksBtn.addEventListener('click', async () => {
+    // 1. Get all score inputs
+    const allInputs = document.querySelectorAll('.score-field');
     
-    // Build the data array
-    const entries = Array.from(document.querySelectorAll('.score-field'))
-        .filter(input => input.value.trim() !== "") 
-        .map(input => {
-            const paperVal = filterPaper.value;
-            const payload = {
-                student_id: input.getAttribute('data-sid'),
-                test_name: activeExamContextName,
-                raw_score: parseFloat(input.value) || 0.00
-            };
-            if (paperVal !== 'DIRECT_ENTRY') {
-                payload.paper_id = paperVal;
-            }
-            return payload;
-        });
+    // 2. Alert how many inputs the computer found
+    alert("Step 1 check: I found " + allInputs.length + " score boxes on your screen.");
 
-    if (entries.length === 0) return alert("No scores entered!");
-
-    // Attempt the save with detailed error logging
-    const { data, error } = await _supabase.from('marks_entry').insert(entries);
-    
-    if (error) {
-        // This force-alerts the full error details
-        console.error("Full Error Object:", error);
-        alert("❌ ERROR: " + error.message + "\n\nHint: " + (error.hint || "None") + "\n\nDetails: " + (error.details || "None"));
-    } else {
-        alert("✨ Marks successfully captured!"); 
-        saveMarksBtn.disabled = true;
+    // 3. Let's see the first value
+    if (allInputs.length > 0) {
+        alert("The first score box has this value: '" + allInputs[0].value + "'");
     }
 });
+
+    
         
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
