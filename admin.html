@@ -293,29 +293,68 @@
     </main>
 
     <script>
-        // --- NEW: Manage Learners Logic ---
-const manageGradeSelect = document.getElementById('manage-grade-select');
-const manageList = document.getElementById('manage-learner-list');
-const addLearnerBtn = document.getElementById('add-learner-btn');
+                // --- NEW: Manage Learners Logic ---
+        const manageGradeSelect = document.getElementById('manage-grade-select');
+        const manageList = document.getElementById('manage-learner-list');
+        const newNameInput = document.getElementById('new-name');
+        const newStreamInput = document.getElementById('new-stream');
+        const addLearnerBtn = document.getElementById('add-learner-btn');
 
-async function fetchManageList() {
-    const grade = parseInt(manageGradeSelect.value);
-    if (!grade) return;
-    manageList.innerHTML = '<p class="text-xs text-center py-2">Loading...</p>';
-    const { data } = await _supabase.from('students').select('*').eq('grade', grade);
-    manageList.innerHTML = (data || []).map(s => `
-        <div class="flex justify-between items-center text-xs p-2 bg-white border-b border-slate-100">
-            <span class="font-medium">${s.name} <span class="text-slate-400 font-mono">(${s.stream})</span></span>
-            <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white">Delete</button>
-        </div>
-    `).join('');
-}
+        // ID Generator matching your 2-letter + 4-digit format
+        function generateStudentID() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
+            const l2 = letters.charAt(Math.floor(Math.random() * letters.length));
+            const nums = Math.floor(1000 + Math.random() * 9000); 
+            return `${l1}${l2}${nums}`;
+        }
 
-async function removeLearner(id) {
-    if(!confirm("Are you sure? This will delete the learner permanently.")) return;
-    await _supabase.from('students').delete().eq('id', id);
-    fetchManageList();
-}
+        async function fetchManageList() {
+            const grade = parseInt(manageGradeSelect.value);
+            if (!grade) return;
+            manageList.innerHTML = '<p class="text-xs text-center py-2">Loading...</p>';
+            const { data } = await _supabase.from('students').select('*').eq('grade', grade);
+            manageList.innerHTML = (data || []).map(s => `
+                <div class="flex justify-between items-center text-xs p-2 bg-white border-b border-slate-100">
+                    <div class="flex flex-col">
+                        <span class="font-medium">${s.name} <span class="text-slate-400 font-mono italic">(${s.stream})</span></span>
+                        <span class="text-[10px] text-slate-500 font-mono">ID: ${s.login_id || 'NO ID'}</span>
+                    </div>
+                    <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        async function removeLearner(id) {
+            if(!confirm("Are you sure? This will delete the learner permanently.")) return;
+            await _supabase.from('students').delete().eq('id', id);
+            fetchManageList();
+        }
+
+        manageGradeSelect.addEventListener('change', fetchManageList);
+
+        addLearnerBtn.addEventListener('click', async () => {
+            const grade = manageGradeSelect.value;
+            const name = newNameInput.value.trim();
+            const stream = newStreamInput.value.trim();
+            if(!grade || !name) return alert("Select a grade and enter a name.");
+            
+            // Now saving with the generated login_id
+            const { error } = await _supabase.from('students').insert([{ 
+                name, 
+                stream, 
+                grade: parseInt(grade),
+                login_id: generateStudentID() 
+            }]);
+            
+            if (error) alert("Error: " + error.message);
+            else {
+                alert("Learner added with new ID!");
+                newNameInput.value = "";
+                newStreamInput.value = "";
+                fetchManageList();
+            }
+        });
 
 manageGradeSelect.addEventListener('change', fetchManageList);
 
