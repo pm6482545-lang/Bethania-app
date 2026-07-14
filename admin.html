@@ -10,12 +10,18 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
+    <!-- EXECUTIVE HEADER WITH BRANDING VALIDATION -->
     <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 sticky top-0 z-50 border-b border-amber-500/30">
         <div class="flex-1">
-            <div class="flex items-center gap-2 sm:gap-3">
-                <span class="text-xl sm:text-2xl">🛡️</span>
+            <div class="flex items-center gap-3">
+                <!-- Official School Logo Badge -->
+                <div class="avatar bg-white p-1 rounded-full border-2 border-amber-400">
+                    <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=100&auto=format&fit=crop" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                    </div>
+                </div>
                 <div>
-                    <h1 class="text-sm sm:text-md font-black tracking-wider uppercase text-amber-400">Bethania Command Center</h1>
+                    <h1 class="text-sm sm:text-md font-black tracking-wider uppercase text-amber-400" id="school-title">Bethania Academy</h1>
                     <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-widest uppercase">Executive CBA Management Portal</p>
                 </div>
             </div>
@@ -26,37 +32,42 @@
             </span>
         </div>
     </div>
-<div class="card bg-white shadow-xl border border-blue-100 mb-6">
-    <div class="card-body p-4 sm:p-6">
-        <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">👥 Manage Learners</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="label-text font-bold text-xs text-slate-700 mb-1 block">Select Grade to Edit</label>
-                <select id="manage-grade-select" class="select select-bordered select-sm w-full">
-                    <option value="" disabled selected>Choose Grade...</option>
-                    <option value="-2">PP1</option><option value="-1">PP2</option>
-                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                    <option value="7">Grade 7</option><option value="8">Grade 8</option>
-                    <option value="9">Grade 9</option>
-                </select>
-                <div id="manage-learner-list" class="mt-3 max-h-60 overflow-y-auto border rounded-lg p-2 bg-slate-50 space-y-1">
-                    <p class="text-xs text-slate-400 text-center py-4">Select a grade to load learners...</p>
-                </div>
-            </div>
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <label class="label-text font-bold text-xs text-slate-700 mb-2 block">Register New Learner</label>
-                <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full mb-2" />
-                <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full mb-3" />
-                <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold">✨ Save Learner</button>
-            </div>
-        </div>
-    </div>
-</div>
-    
+
     <main class="container mx-auto p-3 sm:p-4 max-w-6xl space-y-6 mt-4">
 
+        <!-- 👥 MANAGE LEARNERS BOARD -->
+        <div class="card bg-white shadow-xl border border-blue-100">
+            <div class="card-body p-4 sm:p-6">
+                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">👥 Manage Learners</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="label-text font-bold text-xs text-slate-700 mb-1 block">Select Grade to Edit</label>
+                        <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium">
+                            <option value="" disabled selected>Choose Grade...</option>
+                            <option value="-2">PP1</option><option value="-1">PP2</option>
+                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                            <option value="9">Grade 9</option>
+                        </select>
+                        <div id="manage-learner-list" class="mt-3 max-h-60 overflow-y-auto border rounded-lg p-2 bg-slate-50 space-y-1">
+                            <p class="text-xs text-slate-400 text-center py-4">Select a grade to load learners...</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <label class="label-text font-bold text-xs text-slate-700 mb-2 block font-semibold text-slate-700">Register New Learner</label>
+                            <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full mb-2" />
+                            <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full mb-3" />
+                        </div>
+                        <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold">✨ Save Learner</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASSESSMENT CYCLE DEPLOYER -->
         <div class="card bg-white shadow-xl border border-slate-200">
             <div class="card-body p-4 sm:p-6">
                 <div class="flex items-center gap-2 mb-2">
@@ -130,10 +141,13 @@
             </div>
         </div>
 
+        <!-- THREE-COLUMN ACTION LAYOUT -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+            <!-- CONTROL COLUMNS -->
             <div class="space-y-6 lg:col-span-1">
                 
+                <!-- SUBMISSION MONITOR -->
                 <div class="card bg-white shadow-xl border border-slate-200">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
@@ -146,7 +160,7 @@
 
                         <div class="form-control">
                             <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Level</label>
-                            <select id="tracker-grade" class="select select-bordered select-sm w-full">
+                            <select id="tracker-grade" class="select select-bordered select-sm w-full font-medium">
                                 <option value="" disabled selected>Choose Class...</option>
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
                                 <option value="1">Grade 1</option><option value="2">Grade 2</option>
@@ -177,6 +191,7 @@
                     </div>
                 </div>
 
+                <!-- LEARNING AREA MANAGER -->
                 <div class="card bg-white shadow-xl border border-slate-200">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
@@ -201,7 +216,7 @@
                             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-2">
                                 <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500">Optional Component Paper Setup</span>
                                 <div class="grid grid-cols-2 gap-1.5">
-                                    <input type="text" id="cfg-paper-name" placeholder="Paper/Part name" class="input input-bordered input-xs w-full" />
+                                    <input type="text" id="cfg-paper-name" placeholder="Paper name (e.g. Paper 1)" class="input input-bordered input-xs w-full" />
                                     <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
                                 </div>
                             </div>
@@ -223,6 +238,7 @@
 
             </div>
 
+            <!-- BROAD SHEET LEDGER GENERATOR -->
             <div class="card bg-white shadow-xl border border-slate-200 lg:col-span-2">
                 <div class="card-body p-4 sm:p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
@@ -236,7 +252,7 @@
 
                     <div class="divider my-1"></div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 items-end">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 items-end">
                         <div class="form-control">
                             <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Cohort</label>
                             <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
@@ -246,14 +262,6 @@
                                 <option value="3">Grade 3</option><option value="4">Grade 4</option>
                                 <option value="5">Grade 5</option><option value="6">Grade 6</option>
                                 <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                            </select>
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Analysis Model</label>
-                            <select id="analysis-model" class="select select-bordered select-sm w-full font-medium">
-                                <option value="marks">Performance Score Ledger (Marks)</option>
-                                <option value="rubric">CBA Competency Descriptor (Levels)</option>
                             </select>
                         </div>
 
@@ -268,12 +276,12 @@
                                 <tr>
                                     <th>Learner Name</th>
                                     <th>Stream / Arm</th>
-                                    <th>Database Record Profiles</th>
+                                    <th>Loading Column Configuration...</th>
                                 </tr>
                             </thead>
                             <tbody id="broadsheet-rows" class="font-mono text-xs">
                                 <tr>
-                                    <td colspan="3" class="text-center py-10 text-slate-400 italic">Configure constraints and click "Compile Broad Sheet" above...</td>
+                                    <td colspan="3" class="text-center py-10 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -292,14 +300,134 @@
     </main>
 
     <script>
-                // --- NEW: Manage Learners Logic ---
+        // Supabase Initialization
+        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // State Elements
+        const dbStatus = document.getElementById('db-status');
+        const detectedActiveLabel = document.getElementById('detected-active-label');
+        const radioMain = document.getElementById('radio-main');
+        const radioContest = document.getElementById('radio-contest');
+        const mainExamOptions = document.getElementById('main-exam-options');
+        const contestOptions = document.getElementById('contest-options');
+        const startCycleBtn = document.getElementById('start-cycle-btn');
+
+        const cycleYear = document.getElementById('cycle-year');
+        const cycleTerm = document.getElementById('cycle-term');
+        const mainSeries = document.getElementById('main-series');
+        const contestSeries = document.getElementById('contest-series');
+        const cycleDeadline = document.getElementById('cycle-deadline');
+
+        // Target Select Elements
         const manageGradeSelect = document.getElementById('manage-grade-select');
         const manageList = document.getElementById('manage-learner-list');
         const newNameInput = document.getElementById('new-name');
         const newStreamInput = document.getElementById('new-stream');
         const addLearnerBtn = document.getElementById('add-learner-btn');
 
-        // ID Generator matching your 2-letter + 4-digit format
+        const trackerGrade = document.getElementById('tracker-grade');
+        const trackerSubject = document.getElementById('tracker-subject');
+        const checkUploadsBtn = document.getElementById('check-uploads-btn');
+        const trackerOutput = document.getElementById('tracker-output');
+
+        const reportGrade = document.getElementById('report-grade');
+        const compileReportsBtn = document.getElementById('compile-reports-btn');
+        const broadsheetHeader = document.getElementById('broadsheet-header');
+        const broadsheetRows = document.getElementById('broadsheet-rows');
+        const downloadCsvBtn = document.getElementById('download-csv-btn');
+        const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
+
+        // Config Elements
+        const tabAddSub = document.getElementById('tab-add-sub');
+        const tabDelSub = document.getElementById('tab-del-sub');
+        const subPanelAdd = document.getElementById('sub-panel-add');
+        const subPanelDel = document.getElementById('sub-panel-del');
+        const cfgSubName = document.getElementById('cfg-sub-name');
+        const cfgPaperName = document.getElementById('cfg-paper-name');
+        const cfgPaperMax = document.getElementById('cfg-paper-max');
+        const cfgBtnSave = document.getElementById('cfg-btn-save');
+        const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
+        const cfgBtnDelete = document.getElementById('cfg-btn-delete');
+
+        let currentActiveExamName = "";
+        let globalPapersList = [];
+        let localStudentsCache = [];
+        let activeBroadSheetCsvData = "";
+
+        // Official CBC Curriculum Rules (Compulsory Lists)
+        const CBC_SUBJECT_TIERS = {
+            lower_primary: [
+                "Language Activities", "Mathematical Activities", "Environmental Activities",
+                "Psychomotor and Creative Activities", "Religious Education Activities", "Literacy",
+                "English Language Activities", "Kiswahili Language Activities"
+            ],
+            upper_primary: [
+                "English", "Kiswahili", "Mathematics", "Science and Technology",
+                "Agriculture and Nutrition", "Creative Arts", "Social Studies", "Religious Education"
+            ],
+            junior_school: [
+                "English", "Kiswahili", "Mathematics", "Integrated Science",
+                "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
+                "Creative Arts and Sports", "Religious Education"
+            ]
+        };
+
+        function getGradeTier(grade) {
+            const g = parseInt(grade);
+            if (g <= 3) return "lower_primary";
+            if (g >= 4 && g <= 6) return "upper_primary";
+            if (g >= 7 && g <= 9) return "junior_school";
+            return "upper_primary";
+        }
+
+        // --- MATH RECKONING SCHEMES ---
+
+        // 8-Point Scale points conversion for Junior School (Grades 7-9)
+        function convertScoreToPoints(score, max) {
+            const pct = (score / max) * 100;
+            if (pct >= 90) return 8; // EE1
+            if (pct >= 75) return 7; // EE2
+            if (pct >= 58) return 6; // ME1
+            if (pct >= 40) return 5; // ME2
+            if (pct >= 30) return 4; // AE1
+            if (pct >= 20) return 3; // AE2
+            if (pct >= 10) return 2; // BE1
+            return 1;                // BE2
+        }
+
+        // Grading Scale for Primary (Average Percent) & Junior (Average Points)
+        function getCompetencyLevel(average, type) {
+            if (type === 'points') {
+                if (average >= 6.5) return { text: "EE", class: "bg-emerald-100 text-emerald-800" };
+                if (average >= 5.0) return { text: "ME", class: "bg-sky-100 text-sky-800" };
+                if (average >= 3.0) return { text: "AE", class: "bg-amber-100 text-amber-800" };
+                return { text: "BE", class: "bg-rose-100 text-rose-800" };
+            } else {
+                if (average >= 80) return { text: "EE", class: "bg-emerald-100 text-emerald-800" };
+                if (average >= 50) return { text: "ME", class: "bg-sky-100 text-sky-800" };
+                if (average >= 30) return { text: "AE", class: "bg-amber-100 text-amber-800" };
+                return { text: "BE", class: "bg-rose-100 text-rose-800" };
+            }
+        }
+
+        // Core Admin Init
+        async function initAdminEngine() {
+            const { data: students } = await _supabase.from('students').select('*');
+            localStudentsCache = students || [];
+            const { data: papers } = await _supabase.from('subject_papers').select('*');
+            globalPapersList = papers || [];
+
+            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
+            if(sessions && sessions.length > 0) {
+                currentActiveExamName = sessions[0].exam_name;
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
+                detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
+            }
+        }
+
+        // ID Generator matching 2-letter + 4-digit format
         function generateStudentID() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
@@ -308,6 +436,7 @@
             return `${l1}${l2}${nums}`;
         }
 
+        // Manage Learners UI Logic
         async function fetchManageList() {
             const grade = parseInt(manageGradeSelect.value);
             if (!grade) return;
@@ -338,7 +467,6 @@
             const stream = newStreamInput.value.trim();
             if(!grade || !name) return alert("Select a grade and enter a name.");
             
-            // Now saving with the generated login_id
             const { error } = await _supabase.from('students').insert([{ 
                 name, 
                 stream, 
@@ -355,135 +483,17 @@
             }
         });
 
-        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
-        const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
-        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let currentActiveExamName = "";
-        let globalPapersList = [];
-        let localStudentsCache = [];
-        let activeBroadSheetCsvData = "";
-
-        // Elements
-        const dbStatus = document.getElementById('db-status');
-        const detectedActiveLabel = document.getElementById('detected-active-label');
-        const radioMain = document.getElementById('radio-main');
-        const radioContest = document.getElementById('radio-contest');
-        const mainExamOptions = document.getElementById('main-exam-options');
-        const contestOptions = document.getElementById('contest-options');
-        const startCycleBtn = document.getElementById('start-cycle-btn');
-
-        const cycleYear = document.getElementById('cycle-year');
-        const cycleTerm = document.getElementById('cycle-term');
-        const mainSeries = document.getElementById('main-series');
-        const contestSeries = document.getElementById('contest-series');
-        const cycleDeadline = document.getElementById('cycle-deadline');
-
-        const trackerGrade = document.getElementById('tracker-grade');
-        const trackerSubject = document.getElementById('tracker-subject');
-        const checkUploadsBtn = document.getElementById('check-uploads-btn');
-        const trackerOutput = document.getElementById('tracker-output');
-
-        const reportGrade = document.getElementById('report-grade');
-        const analysisModel = document.getElementById('analysis-model');
-        const compileReportsBtn = document.getElementById('compile-reports-btn');
-        const broadsheetHeader = document.getElementById('broadsheet-header');
-        const broadsheetRows = document.getElementById('broadsheet-rows');
-        const downloadCsvBtn = document.getElementById('download-csv-btn');
-        const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
-
-        // Configuration Panel Elements
-        const tabAddSub = document.getElementById('tab-add-sub');
-        const tabDelSub = document.getElementById('tab-del-sub');
-        const subPanelAdd = document.getElementById('sub-panel-add');
-        const subPanelDel = document.getElementById('sub-panel-del');
-        const cfgSubName = document.getElementById('cfg-sub-name');
-        const cfgPaperName = document.getElementById('cfg-paper-name');
-        const cfgPaperMax = document.getElementById('cfg-paper-max');
-        const cfgBtnSave = document.getElementById('cfg-btn-save');
-        const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
-        const cfgBtnDelete = document.getElementById('cfg-btn-delete');
-
-        // CBC Subject Categories by Grade Tier
-        const CBC_SUBJECT_TIERS = {
-            lower_primary: [
-                "Language Activities",
-                "Mathematical Activities",
-                "Environmental Activities",
-                "Psychomotor Activities",
-                "Religious Education Activities",
-                "Indigenous Language Activities",
-                "Kiswahili Language Activities"
-            ],
-            upper_primary: [
-                "English",
-                "Kiswahili",
-                "Mathematics",
-                "Science and Technology",
-                "Agriculture and Nutrition",
-                "Creative Arts",
-                "Social Studies",
-                "Christian Religious Education (C.R.E)",
-                "Islamic Religious Education (I.R.E)",
-                "Hindu Religious Education (H.R.E)"
-            ],
-            junior_school: [
-                "English",
-                "Kiswahili",
-                "Mathematics",
-                "Integrated Science",
-                "Pre-Technical Studies",
-                "Social Studies",
-                "Agriculture and Nutrition",
-                "Creative Arts and Sports",
-                "Christian Religious Education (C.R.E)",
-                "Islamic Religious Education (I.R.E)",
-                "Hindu Religious Education (H.R.E)"
-            ]
-        };
-
-        function getGradeTier(grade) {
-            const g = parseInt(grade);
-            if (g <= 3) return "lower_primary";
-            if (g >= 4 && g <= 6) return "upper_primary";
-            if (g >= 7 && g <= 9) return "junior_school";
-            return "upper_primary"; 
-        }
-
-        const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
-
-        // Configuration panel toggles
+        // Config Toggles
         tabAddSub.addEventListener('click', () => { tabAddSub.classList.add('tab-active'); tabDelSub.classList.remove('tab-active'); subPanelAdd.classList.remove('hidden'); subPanelDel.classList.add('hidden'); });
         tabDelSub.addEventListener('click', () => { tabDelSub.classList.add('tab-active'); tabAddSub.classList.remove('tab-active'); subPanelDel.classList.remove('hidden'); subPanelAdd.classList.add('hidden'); fetchRemovalSubjects(); });
-
-        // UI Forms Configuration Toggles
         radioMain.addEventListener('change', () => { mainExamOptions.classList.remove('hidden'); contestOptions.classList.add('hidden'); });
         radioContest.addEventListener('change', () => { contestOptions.classList.remove('hidden'); mainExamOptions.classList.add('hidden'); });
 
-        async function initAdminEngine() {
-            const { data: students } = await _supabase.from('students').select('*');
-            localStudentsCache = students || [];
-            const { data: papers } = await _supabase.from('subject_papers').select('*');
-            globalPapersList = papers || [];
-
-            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
-            if(sessions && sessions.length > 0) {
-                currentActiveExamName = sessions[0].exam_name;
-                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
-                detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
-            }
-        }
-
-        // Add Subjects & Custom Component Papers Form Controller
         cfgBtnSave.addEventListener('click', async () => {
             const subjectTitle = cfgSubName.value.trim();
             if(!subjectTitle) return alert("You must provide an assessment subject title!");
 
-            const { data: subData, error: subErr } = await _supabase
-                .from('subjects')
-                .insert([{ subject_name: subjectTitle }])
-                .select();
-
+            const { data: subData, error: subErr } = await _supabase.from('subjects').insert([{ subject_name: subjectTitle }]).select();
             if(subErr) return alert("Save Error: " + subErr.message);
 
             const savedSubject = subData[0];
@@ -491,26 +501,17 @@
             const maxVal = parseFloat(cfgPaperMax.value) || 100;
 
             if(paperTitle) {
-                const { error: papErr } = await _supabase
-                    .from('subject_papers')
-                    .insert([{
-                        subject_id: savedSubject.id,
-                        paper_name: paperTitle,
-                        max_marks: maxVal
-                    }]);
-                if(papErr) return alert("Added subject successfully, but component paper failed: " + papErr.message);
+                const { error: papErr } = await _supabase.from('subject_papers').insert([{ subject_id: savedSubject.id, paper_name: paperTitle, max_marks: maxVal }]);
+                if(papErr) return alert("Added subject, but paper failed: " + papErr.message);
             }
 
-            alert(`"${subjectTitle}" has been configured successfully as a learning area!`);
-            cfgSubName.value = "";
-            cfgPaperName.value = "";
-            cfgPaperMax.value = "";
+            alert(`"${subjectTitle}" registered!`);
+            cfgSubName.value = ""; cfgPaperName.value = ""; cfgPaperMax.value = "";
             await initAdminEngine();
         });
 
-        // Load subjects dynamically into deletion select field
         async function fetchRemovalSubjects() {
-            cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Loading records...</option>';
+            cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Loading...</option>';
             const { data } = await _supabase.from('subjects').select('*').order('subject_name');
             if(data) {
                 cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select from database...</option>' + 
@@ -518,241 +519,245 @@
             }
         }
 
-        // Delete Selected Subjects Control
         cfgBtnDelete.addEventListener('click', async () => {
             const selectedId = cfgDelSubDropdown.value;
             if(!selectedId) return alert("Please select a target subject to remove!");
-
-            if(!confirm("Are you absolutely sure you want to delete this learning area? This clears out all linked paper components!")) return;
+            if(!confirm("Delete this subject and all its component papers?")) return;
 
             await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
-            const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
-
-            if(error) {
-                alert("Database deletion block error: " + error.message);
-            } else {
-                alert("Subject successfully scrubbed from database records.");
-                fetchRemovalSubjects();
-                await initAdminEngine();
-            }
+            await _supabase.from('subjects').delete().eq('id', selectedId);
+            alert("Subject deleted.");
+            fetchRemovalSubjects();
+            await initAdminEngine();
         });
 
-        // Publish Context 
         startCycleBtn.addEventListener('click', async () => {
-            if(!cycleDeadline.value) return alert("Choose a valid closing deadline date first!");
-            let constructedName = "";
-            if(radioMain.checked) {
-                constructedName = `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}`;
-            } else {
-                constructedName = `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
-            }
-
+            if(!cycleDeadline.value) return alert("Choose a valid deadline date!");
+            let constructedName = radioMain.checked ? `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}` : `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
             const deadlineIso = new Date(cycleDeadline.value).toISOString();
 
-            const { error } = await _supabase.from('exam_sessions').insert([{
-                exam_name: constructedName,
-                deadline_at: deadlineIso,
-                is_active: true
-            }]);
-
-            if(error) {
-                alert("Database insertion failure: " + error.message);
-            } else {
-                alert(`Assessment Context "${constructedName}" was successfully broadcast to the server.`);
+            const { error } = await _supabase.from('exam_sessions').insert([{ exam_name: constructedName, deadline_at: deadlineIso, is_active: true }]);
+            if(error) alert("Insertion failure: " + error.message);
+            else {
+                alert(`Assessment Context "${constructedName}" Deployed!`);
                 currentActiveExamName = constructedName;
                 dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
                 detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
             }
         });
 
-        // TRACKING AND SUBMISSION AUDITING (WITH TARGETED GRADE SUBJECT FILTER)
+        // Submission Tracker
         trackerGrade.addEventListener('change', async () => {
-            trackerSubject.innerHTML = '<option value="" disabled selected>Loading Subject components...</option>';
-            
+            trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
             const selectedGrade = trackerGrade.value;
             const tier = getGradeTier(selectedGrade);
-            const allowedSubjects = CBC_SUBJECT_TIERS[tier];
+            const allowed = CBC_SUBJECT_TIERS[tier];
 
             const { data } = await _supabase.from('subjects').select('*').order('subject_name');
             if(data) {
-                // Filter dropdown list based on CBC Subject parameters matching the selected grade tier
-                const filteredList = data.filter(s => allowedSubjects.includes(s.subject_name.trim()));
-                
-                if (filteredList.length === 0) {
-                    trackerSubject.innerHTML = '<option value="" disabled selected>No subjects matched this grade...</option>';
-                } else {
-                    trackerSubject.innerHTML = '<option value="" disabled selected>Choose Component Subject...</option>' + 
-                        filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
-                    trackerSubject.disabled = false;
-                }
+                const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
+                trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' : 
+                    '<option value="" disabled selected>Choose Component Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                trackerSubject.disabled = false;
             }
         });
 
         checkUploadsBtn.addEventListener('click', async () => {
             const grade = parseInt(trackerGrade.value);
             const subId = trackerSubject.value;
-            if(!grade || !subId) return alert("Select grade and subject parameters to track uploads!");
+            if(!grade || !subId) return alert("Select grade and subject parameters!");
 
-            // 1. Fetch and filter students for this grade (always shows registered students!)
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
             if(targetStudents.length === 0) {
-                trackerOutput.innerHTML = `<p class="p-4 text-center text-xs text-error font-semibold">No students registered in this grade.</p>`;
+                trackerOutput.innerHTML = `<p class="p-4 text-center text-xs text-error font-semibold">No students in this grade.</p>`;
                 return;
             }
 
-            // 2. Fetch papers for this subject
             const targetPapers = globalPapersList.filter(p => p.subject_id === subId);
             const studIds = targetStudents.map(s => s.id);
             
-            // 3. Fetch uploaded marks for this exam session
             let uploadedMarks = [];
             if (targetPapers.length > 0) {
-                const { data } = await _supabase.from('marks_entry')
-                    .select('*')
-                    .eq('test_name', currentActiveExamName)
-                    .in('student_id', studIds)
-                    .in('paper_id', targetPapers.map(p => p.id));
+                const { data } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studIds).in('paper_id', targetPapers.map(p => p.id));
                 uploadedMarks = data || [];
             }
 
-            // 4. Render student list (will ALWAYS show registered students now!)
             trackerOutput.innerHTML = targetStudents.map(s => {
                 const marksForStudent = uploadedMarks.filter(m => m.student_id === s.id);
-                
-                // If there are no papers configured yet, then nothing is uploaded
                 const hasUploaded = targetPapers.length > 0 && marksForStudent.length >= targetPapers.length;
-                
-                let scoreDetails = "";
-                if (targetPapers.length === 0) {
-                    scoreDetails = "No assessment papers set up in database";
-                } else {
-                    scoreDetails = marksForStudent.map(m => {
+                let scoreDetails = targetPapers.length === 0 ? "No papers set up" : 
+                    marksForStudent.map(m => {
                         const pap = targetPapers.find(tp => tp.id === m.paper_id);
                         return pap ? `${pap.paper_name}: ${m.raw_score}` : `Score: ${m.raw_score}`;
                     }).join(', ');
-                }
 
                 return `
                     <div class="flex items-center justify-between p-2.5 text-xs border-b border-slate-100">
                         <div class="flex flex-col">
-                            <span class="font-bold text-slate-800 text-[11px] sm:text-xs">${s.name}</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
+                            <span class="font-bold text-slate-800">${s.name}</span>
+                            <span class="text-[9px] text-slate-400 font-mono">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
                         </div>
                         <div>
-                            ${hasUploaded ? 
-                                `<span class="badge badge-success text-white font-bold text-[9px] sm:text-[10px] py-1 px-2">Uploaded</span>` : 
-                                `<span class="badge badge-error text-white font-bold text-[9px] sm:text-[10px] py-1 px-2">Missing</span>`}
+                            ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
                         </div>
                     </div>
                 `;
             }).join('');
         });
 
-        // KNEC CBA METRICS ENGINE - UPDATED SCALE
-        function getCompetencyLevel(score, max) {
-            const percentage = (score / max) * 100;
-            if(percentage >= 90) return { term: 'EE1 (8 Points)', code: 'EE1', class: 'bg-emerald-200 text-emerald-950 border border-emerald-400' };
-            if(percentage >= 75) return { term: 'EE2 (7 Points)', code: 'EE2', class: 'bg-emerald-100 text-emerald-900' };
-            if(percentage >= 58) return { term: 'ME1 (6 Points)', code: 'ME1', class: 'bg-sky-200 text-sky-950' };
-            if(percentage >= 40) return { term: 'ME2 (5 Points)', code: 'ME2', class: 'bg-sky-100 text-sky-900' };
-            if(percentage >= 30) return { term: 'AE1 (4 Points)', code: 'AE1', class: 'bg-amber-200 text-amber-950' };
-            if(percentage >= 20) return { term: 'AE2 (3 Points)', code: 'AE2', class: 'bg-amber-100 text-amber-900' };
-            if(percentage >= 10) return { term: 'BE1 (2 Points)', code: 'BE1', class: 'bg-rose-200 text-rose-950' };
-            return { term: 'BE2 (1 Point)', code: 'BE2', class: 'bg-rose-100 text-rose-900' };
-        }
-
+        // REPORT COMPILATION & POSITION MATRIX ENGINE
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
-            const mode = analysisModel.value;
-            if(!grade) return alert("Select target standard grade cohort!");
+            if(isNaN(grade)) return alert("Select target grade cohort!");
+
+            // BRANDING AND LOGO VALIDATION
+            const schoolLogo = document.getElementById('school-logo');
+            const schoolNameText = document.getElementById('school-title').innerText.trim();
+            if (!schoolLogo.complete || schoolLogo.naturalWidth === 0 || !schoolNameText) {
+                return alert("Critical Error: Core institutional branding (School Name and Valid Logo Asset) missing. Broadsheet generation halted.");
+            }
+
+            const tier = getGradeTier(grade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+            const isJuniorSchool = (tier === "junior_school");
 
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
             if(targetStudents.length === 0) {
-                broadsheetRows.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-rose-500 italic">No student profiles admitted under this grade.</td></tr>`;
+                broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
                 return;
             }
 
-            const studIds = targetStudents.map(s => s.id);
-            const { data: marks } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studIds);
+            // Fetch dynamic valid subjects
+            const { data: dbSubjects } = await _supabase.from('subjects').select('*');
+            const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+            const subjectIds = filteredSubjects.map(s => s.id);
 
-            let activeColumns = globalPapersList;
-            if(currentActiveExamName.toLowerCase().includes('maths contest')) {
-                activeColumns = globalPapersList.filter(p => p.paper_name.toLowerCase().includes('math'));
-            }
+            // Filter relevant papers
+            const relevantPapers = globalPapersList.filter(p => subjectIds.includes(p.subject_id));
+            const studentIds = targetStudents.map(s => s.id);
 
-            let headerHtml = `<tr><th class="text-left font-bold text-xs p-3">Learner Name</th><th class="text-center font-bold text-xs p-3">Stream</th>`;
-            activeColumns.forEach(p => {
-                headerHtml += `<th class="text-center font-bold text-xs p-3">${p.paper_name}</th>`;
-            });
-            headerHtml += `<th class="text-center font-bold text-xs p-3">${mode === 'marks' ? 'Cumulative Score' : 'Competency Level'}</th></tr>`;
-            broadsheetHeader.innerHTML = headerHtml;
+            // Fetch scores
+            const { data: marks } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studentIds).in('paper_id', relevantPapers.map(p => p.id));
+            const marksData = marks || [];
 
-            let csvRows = [["Learner Name", "Stream", ...activeColumns.map(p => p.paper_name), mode === 'marks' ? "Cumulative Score" : "Competency Descriptor"]];
+            // Compute Student Metrics to determine Class Positions
+            const calculatedStudents = targetStudents.map(s => {
+                let totals = 0;
+                let count = 0;
+                let subjectScores = {};
 
-            let countEE1 = 0, countEE2 = 0, countME1 = 0, countME2 = 0, countAE1 = 0, countAE2 = 0, countBE1 = 0, countBE2 = 0;
+                filteredSubjects.forEach(sub => {
+                    const papersForSub = relevantPapers.filter(p => p.subject_id === sub.id);
+                    if (papersForSub.length === 0) return;
 
-            broadsheetRows.innerHTML = targetStudents.map(s => {
-                let totalScore = 0;
-                let maxPossible = 0;
-                let rowCsv = [s.name, s.stream];
-                
-                let cells = `<td class="text-left py-2.5 px-3 font-semibold text-slate-900">${s.name}</td><td class="text-center py-2.5 px-3"><span class="badge font-mono">${s.stream}</span></td>`;
-                
-                activeColumns.forEach(p => {
-                    const scoreRecord = (marks || []).find(m => m.student_id === s.id && m.paper_id === p.id);
-                    const score = scoreRecord ? parseFloat(scoreRecord.raw_score) : 0;
-                    totalScore += score;
-                    maxPossible += parseFloat(p.max_marks || p.max_score || 50);
-                    rowCsv.push(scoreRecord ? score : '-');
-                    cells += `<td class="text-center py-2.5 px-3 text-slate-600 font-mono">${scoreRecord ? score : '-'}</td>`;
+                    let subRawSum = 0;
+                    let subMaxSum = 0;
+                    let recordExists = false;
+
+                    papersForSub.forEach(p => {
+                        const m = marksData.find(md => md.student_id === s.id && md.paper_id === p.id);
+                        if (m) {
+                            subRawSum += parseFloat(m.raw_score);
+                            recordExists = true;
+                        }
+                        subMaxSum += parseFloat(p.max_marks);
+                    });
+
+                    if (recordExists) {
+                        if (isJuniorSchool) {
+                            // Instant conversion from raw scores to 8-Point scale points (Grades 7-9)
+                            const points = convertScoreToPoints(subRawSum, subMaxSum);
+                            totals += points;
+                            subjectScores[sub.subject_name] = `${points} Pts`;
+                        } else {
+                            // Core raw marks totals for Primary School (PP1 to Grade 6)
+                            const percentage = (subRawSum / subMaxSum) * 100;
+                            totals += percentage;
+                            subjectScores[sub.subject_name] = `${percentage.toFixed(1)}%`;
+                        }
+                        count++;
+                    } else {
+                        subjectScores[sub.subject_name] = "-";
+                    }
                 });
 
-                if(mode === 'marks') {
-                    cells += `<td class="text-center font-bold text-slate-900 py-2.5 px-3">${totalScore.toFixed(2)}</td>`;
-                    rowCsv.push(totalScore.toFixed(2));
-                } else {
-                    const level = getCompetencyLevel(totalScore, maxPossible || 100);
-                    if(level.code === 'EE1') countEE1++;
-                    if(level.code === 'EE2') countEE2++;
-                    if(level.code === 'ME1') countME1++;
-                    if(level.code === 'ME2') countME2++;
-                    if(level.code === 'AE1') countAE1++;
-                    if(level.code === 'AE2') countAE2++;
-                    if(level.code === 'BE1') countBE1++;
-                    if(level.code === 'BE2') countBE2++;
+                const average = count > 0 ? (totals / count) : 0;
+                return {
+                    id: s.id,
+                    name: s.name,
+                    stream: s.stream,
+                    subjectScores,
+                    totals,
+                    average,
+                    rating: getCompetencyLevel(average, isJuniorSchool ? 'points' : 'marks')
+                };
+            });
 
-                    cells += `<td class="text-center py-2.5 px-3"><span class="badge font-bold py-1 px-3 ${level.class}">${level.term}</span></td>`;
-                    rowCsv.push(level.term);
-                }
+            // Sort descending to assign Position ranks
+            calculatedStudents.sort((a, b) => b.totals - a.totals);
+            calculatedStudents.forEach((cs, i) => {
+                cs.position = i + 1;
+            });
 
-                csvRows.push(rowCsv);
+            // Build Broadsheet Table Headers
+            let headerHtml = `<tr><th class="p-3 text-left">Learner Name</th><th class="p-3 text-center">Stream</th>`;
+            filteredSubjects.forEach(sub => {
+                headerHtml += `<th class="p-3 text-center">${sub.subject_name}</th>`;
+            });
+            headerHtml += `<th class="p-3 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
+            headerHtml += `<th class="p-3 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
+            headerHtml += `<th class="p-3 text-center">Rating</th>`;
+            headerHtml += `<th class="p-3 text-center">Pos</th></tr>`;
+            broadsheetHeader.innerHTML = headerHtml;
+
+            // Generate Table Rows
+            broadsheetRows.innerHTML = calculatedStudents.map(cs => {
+                let cells = `<td class="text-left font-bold py-2.5 px-3 text-slate-900">${cs.name}</td>`;
+                cells += `<td class="text-center py-2.5 px-3"><span class="badge badge-outline">${cs.stream}</span></td>`;
+                
+                filteredSubjects.forEach(sub => {
+                    cells += `<td class="text-center py-2.5 px-3 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
+                });
+
+                cells += `<td class="text-center py-2.5 px-3 font-bold">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
+                cells += `<td class="text-center py-2.5 px-3 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
+                cells += `<td class="text-center py-2.5 px-3"><span class="badge font-black ${cs.rating.class}">${cs.rating.text}</span></td>`;
+                cells += `<td class="text-center py-2.5 px-3 font-black text-slate-950">${cs.position}</td>`;
                 return `<tr>${cells}</tr>`;
             }).join('');
 
-            if(mode === 'rubric') {
-                analyticalSummaryBadges.innerHTML = `
-                    <span class="badge bg-emerald-200 text-emerald-950 font-bold text-[10px] p-2 border border-emerald-400">EE1: ${countEE1}</span>
-                    <span class="badge bg-emerald-100 text-emerald-900 font-bold text-[10px] p-2">EE2: ${countEE2}</span>
-                    <span class="badge bg-sky-200 text-sky-950 font-bold text-[10px] p-2">ME1: ${countME1}</span>
-                    <span class="badge bg-sky-100 text-sky-900 font-bold text-[10px] p-2">ME2: ${countME2}</span>
-                    <span class="badge bg-amber-200 text-amber-950 font-bold text-[10px] p-2">AE1: ${countAE1}</span>
-                    <span class="badge bg-amber-100 text-amber-900 font-bold text-[10px] p-2">AE2: ${countAE2}</span>
-                    <span class="badge bg-rose-200 text-rose-950 font-bold text-[10px] p-2">BE1: ${countBE1}</span>
-                    <span class="badge bg-rose-100 text-rose-900 font-bold text-[10px] p-2">BE2: ${countBE2}</span>
-                `;
-            } else {
-                analyticalSummaryBadges.innerHTML = "";
-            }
+            // CSV Export Assembly
+            let csvHeaders = ["Learner Name", "Stream", ...filteredSubjects.map(s => s.subject_name), isJuniorSchool ? "Total Points" : "Total Marks", isJuniorSchool ? "Mean Points" : "Mean Marks (%)", "Rating", "Class Position"];
+            let csvRows = [csvHeaders];
+            calculatedStudents.forEach(cs => {
+                csvRows.push([
+                    cs.name,
+                    cs.stream,
+                    ...filteredSubjects.map(s => cs.subjectScores[s.subject_name] || '-'),
+                    isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1),
+                    cs.average.toFixed(1),
+                    cs.rating.text,
+                    cs.position
+                ]);
+            });
 
             activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
             downloadCsvBtn.disabled = false;
+
+            // Aggregate metrics indicators
+            const totalRanked = calculatedStudents.length;
+            const classMean = (calculatedStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+            analyticalSummaryBadges.innerHTML = `
+                <span class="badge badge-neutral p-3 font-bold text-xs uppercase">Class Cohort Size: ${totalRanked}</span>
+                <span class="badge badge-primary p-3 font-bold text-xs uppercase">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
+            `;
         });
 
         downloadCsvBtn.addEventListener('click', () => {
             const encodedUri = encodeURI(activeBroadSheetCsvData);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `CBA_Assessment_BroadSheet_${reportGrade.value}.csv`);
+            link.setAttribute("download", `Bethania_Academy_BroadSheet_Grade_${reportGrade.value}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
