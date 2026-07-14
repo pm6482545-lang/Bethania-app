@@ -600,34 +600,70 @@
             }
         });
 
-        filterPaper.addEventListener('change', () => {
+                filterPaper.addEventListener('change', async () => {
             const selectedOption = filterPaper.options[filterPaper.selectedIndex];
             if (!selectedOption) return;
 
             const maxMarks = selectedOption.getAttribute('data-max') || "100";
             paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
-            const filtered = localStudentsCache.filter(s => s.grade === parseInt(filterGrade.value));
             
-            if (filtered.length === 0) {
+            const selectedGrade = parseInt(filterGrade.value);
+            const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+            
+            if (filteredStudents.length === 0) {
                 marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-warning italic font-semibold">No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
                 saveMarksBtn.disabled = true;
                 return;
             }
 
-            marksEntryRows.innerHTML = filtered.map(s => `
-                <tr class="hover">
-                    <td class="font-bold text-slate-800 py-2.5 px-3 text-left">${s.name}</td>
-                    <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
-                    <td class="py-2 px-3">
-                        <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
-                            class="input input-bordered input-sm w-full score-field font-mono text-center" placeholder="0-${maxMarks}" ${systemIsLocked ? 'disabled' : ''}/>
-                    </td>
-                </tr>
-            `).join('');
+            // 1. FETCH EXISTING MARKS FROM DATABASE FOR THESE STUDENTS
+            const studentIds = filteredStudents.map(s => s.id);
+            const paperVal = filterPaper.value;
+            
+            let query = _supabase
+                .from('marks_entry')
+                .select('student_id, raw_score')
+                .eq('test_name', activeExamContextName)
+                .in('student_id', studentIds);
+
+            if (paperVal === 'DIRECT_ENTRY') {
+                query = query.is('paper_id', null);
+            } else {
+                query = query.eq('paper_id', paperVal);
+            }
+
+            const { data: savedMarks, error } = await query;
+            if (error) console.error("Error loading existing marks:", error);
+
+            // Create a quick lookup map of student_id -> raw_score
+            const marksMap = {};
+            if (savedMarks) {
+                savedMarks.forEach(m => {
+                    marksMap[m.student_id] = m.raw_score;
+                });
+            }
+
+            // 2. RENDER ROWS WITH PRE-FILLED VALUES IF THEY EXIST
+            marksEntryRows.innerHTML = filteredStudents.map(s => {
+                const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
+                return `
+                    <tr class="hover">
+                        <td class="font-bold text-slate-800 py-2.5 px-3 text-left">${s.name}</td>
+                        <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
+                        <td class="py-2 px-3">
+                            <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
+                                class="input input-bordered input-sm w-full score-field font-mono text-center" 
+                                placeholder="0-${maxMarks}" 
+                                value="${existingScore}" 
+                                ${systemIsLocked ? 'disabled' : ''}/>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
             
             saveMarksBtn.disabled = systemIsLocked;
         });
-
+        
         saveMarksBtn.addEventListener('click', async () => {
     if(systemIsLocked) return alert("System Closed. Data submission rejected.");
     
