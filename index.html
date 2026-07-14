@@ -633,6 +633,62 @@
             }
 
             const { data: savedMarks, error } = await query;
+        // Triggered when Subject selection changes
+        filterSubject.addEventListener('change', () => {
+            const subId = filterSubject.value;
+            if(!subId) {
+                filterPaper.innerHTML = '<option value="">-- Choose Paper Component --</option>';
+                marksEntryRows.innerHTML = '';
+                return;
+            }
+
+            const papers = papersCache.filter(p => p.subject_id === subId);
+            if(papers.length === 0) {
+                filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default Max: 100)</option>';
+            } else {
+                let html = '<option value="">-- Select Paper Component --</option>';
+                papers.forEach(p => {
+                    html += `<option value="${p.id}" data-max="${p.max_marks || 50}">${p.paper_name} (Max: ${p.max_marks || 50})</option>`;
+                });
+                filterPaper.innerHTML = html;
+            }
+            marksEntryRows.innerHTML = ''; // Keep work area clean
+        });
+
+        // Triggered when Paper selection changes (Fetches scores and builds inputs)
+        filterPaper.addEventListener('change', async () => {
+            const selectedOption = filterPaper.options[filterPaper.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return;
+
+            const maxMarks = selectedOption.getAttribute('data-max') || "100";
+            paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
+
+            const selectedGrade = parseInt(filterGrade.value);
+            const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+            
+            if (filteredStudents.length === 0) {
+                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-warning italic font-semibold">No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
+                saveMarksBtn.disabled = true;
+                return;
+            }
+
+            // 1. Fetch pre-existing marks from Supabase for this group
+            const studentIds = filteredStudents.map(s => s.id);
+            const paperVal = filterPaper.value;
+            
+            let query = _supabase
+                .from('marks_entry')
+                .select('student_id, raw_score')
+                .eq('test_name', activeExamContextName)
+                .in('student_id', studentIds);
+
+            if (paperVal === 'DIRECT_ENTRY') {
+                query = query.is('paper_id', null);
+            } else {
+                query = query.eq('paper_id', paperVal);
+            }
+
+            const { data: savedMarks, error } = await query;
             if (error) console.error("Error loading existing marks:", error);
 
             // Create a quick lookup dictionary of student_id -> raw_score
@@ -663,6 +719,7 @@
             
             saveMarksBtn.disabled = systemIsLocked;
         });
+                        
                
   
         saveMarksBtn.addEventListener('click', async () => {
