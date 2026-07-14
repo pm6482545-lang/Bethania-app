@@ -21,6 +21,7 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
 
+    <!-- Premium Navigation Bar -->
     <header class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-8 sticky top-0 z-50 border-b-2 border-amber-500">
         <div class="flex-1 gap-3">
             <div class="avatar">
@@ -34,7 +35,7 @@
             </div>
         </div>
         <div class="flex-none">
-            <span id="active-session-banner" class="text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-4 rounded-xl flex items-center gap-2">
+            <span id="active-session-banner" class="text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-3 sm:px-4 rounded-xl flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> Connecting to DB...
             </span>
         </div>
@@ -42,28 +43,33 @@
 
     <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
 
-        <div class="tabs tabs-boxed justify-center bg-white border border-slate-200 p-1.5 shadow-md rounded-2xl max-w-md mx-auto">
-            <button class="tab tab-active font-bold text-xs sm:text-sm w-1/2 py-2.5 transition rounded-xl" id="tab-roster">
-                👤 Student Roster
+        <!-- ADVANCED VISIBLE BUTTONS TABS SYSTEM (Perfect on Phone/PC) -->
+        <div class="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
+                <span class="text-base sm:text-lg">👤</span>
+                <span class="text-xs sm:text-sm font-extrabold tracking-tight">Student Roster</span>
             </button>
-            <button class="tab font-bold text-xs sm:text-sm w-1/2 py-2.5 transition rounded-xl" id="tab-marks">
-                📝 Marks Entry Ledger
+            <button id="tab-marks" class="btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200">
+                <span class="text-base sm:text-lg text-emerald-600">📝</span>
+                <span class="text-xs sm:text-sm font-extrabold tracking-tight">Marks Entry</span>
             </button>
         </div>
 
+        <!-- DEADLINE PASS WARNING STATUS -->
         <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
             <span class="text-xl">⚠️</span>
             <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
         </div>
 
+        <!-- SCREEN 1: STUDENT ROSTER -->
         <div id="screen-roster" class="space-y-6">
             <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
-                <div class="card-body p-5 sm:p-8">
+                <div class="card-body p-4 sm:p-8">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
                         <div>
                             <div class="flex items-center gap-2">
                                 <span class="text-2xl">👤</span>
-                                <h2 class="card-title text-lg sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Register Student Profiles</h2>
+                                <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Register Student Profiles</h2>
                             </div>
                             <p class="text-xs text-slate-500 mt-0.5">Admit learners to the school directory individually or via bulk copy-paste roster.</p>
                         </div>
@@ -73,6 +79,7 @@
                         </div>
                     </div>
                     
+                    <!-- OPTION A: SINGLE STUDENT ENTRY -->
                     <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-control w-full">
                             <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Student's Full Name</label>
@@ -107,6 +114,7 @@
                         </div>
                     </form>
 
+                    <!-- OPTION B: BATCH ENTRY -->
                     <div id="batch-form-container" class="space-y-4 hidden">
                         <div class="alert alert-info bg-sky-50 border border-sky-200 text-xs text-sky-900 rounded-xl py-3.5 px-4 flex gap-2">
                             <span>💡</span>
@@ -145,6 +153,7 @@
                 </div>
             </div>
 
+            <!-- Edit Student Inline Box -->
             <div id="edit-student-box" class="card bg-amber-50 border-2 border-amber-300 shadow-lg p-5 rounded-2xl hidden space-y-4">
                 <div class="flex justify-between items-center pb-3 border-b border-amber-200">
                     <h3 class="font-extrabold text-sm text-slate-950 uppercase tracking-wide flex items-center gap-2">
@@ -185,8 +194,9 @@
                 </div>
             </div>
 
+            <!-- Table Database Tracker -->
             <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
-                <div class="card-body p-5 sm:p-8">
+                <div class="card-body p-4 sm:p-8">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <div class="flex items-center gap-2">
                             <span class="text-xl">🗂️</span>
@@ -215,12 +225,13 @@
             </div>
         </div>
 
+        <!-- SCREEN 2: MARKS LEDGER INPUTS -->
         <div id="screen-marks" class="space-y-6 hidden">
             <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
-                <div class="card-body p-5 sm:p-8">
+                <div class="card-body p-4 sm:p-8">
                     <div class="flex items-center gap-2.5 mb-2">
                         <span class="text-2xl">📝</span>
-                        <h2 class="card-title text-lg sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
+                        <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
                     </div>
                     <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort, subject learning area, and sub-paper component to load assessment rosters.</p>
                     
@@ -265,7 +276,7 @@
                         </table>
                     </div>
                     <div class="flex justify-end mt-6">
-                        <button id="save-marks-btn" class="btn btn-success text-white font-extrabold px-10 shadow-lg w-full sm:w-auto rounded-xl hover:bg-emerald-600 transition" disabled>
+                        <button id="save-marks-btn" class="btn btn-success text-white font-extrabold px-10 shadow-lg w-full sm:w-auto rounded-xl hover:bg-emerald-600 transition border-none" disabled>
                             💾 Save All Marks
                         </button>
                     </div>
@@ -288,7 +299,7 @@
         let activeExamContextName = "";
         let localStudentsCache = [];
         let subjectsCache = [];
-        let papersCache = []; // Globally cached papers to fix previous reference error!
+        let papersCache = []; 
 
         // DOM Handles
         const tabRoster = document.getElementById('tab-roster');
@@ -380,16 +391,23 @@
 
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
-        // Navigation toggles
+        // Visible buttons navigation toggle logic
         tabRoster.addEventListener('click', () => { 
-            tabRoster.classList.add('tab-active', 'bg-slate-900', 'text-white'); 
-            tabMarks.classList.remove('tab-active', 'bg-slate-900', 'text-white'); 
+            // Activate Student Roster Button Styling
+            tabRoster.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
+            // Deactivate Marks Entry Button Styling
+            tabMarks.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
+            
             screenRoster.classList.remove('hidden'); 
             screenMarks.classList.add('hidden'); 
         });
+
         tabMarks.addEventListener('click', () => { 
-            tabMarks.classList.add('tab-active', 'bg-slate-900', 'text-white'); 
-            tabRoster.classList.remove('tab-active', 'bg-slate-900', 'text-white'); 
+            // Activate Marks Entry Button Styling
+            tabMarks.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
+            // Deactivate Student Roster Button Styling
+            tabRoster.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
+
             screenMarks.classList.remove('hidden'); 
             screenRoster.classList.add('hidden'); 
             fetchSubjects(); 
@@ -491,7 +509,7 @@
 
             for(let line of lines) {
                 const nameParsed = line.trim();
-                if(!nameParsed) continue; // skip blank lines
+                if(!nameParsed) continue; 
 
                 insertPayload.push({
                     name: nameParsed,
@@ -583,11 +601,9 @@
         });
 
         async function fetchSubjects() {
-            // Fetch subjects table
             const { data: subjectData, error: subjectError } = await _supabase.from('subjects').select('*').order('subject_name');
             if (subjectError) console.error("Error fetching subjects:", subjectError);
 
-            // Fetch papers globally into local memory cache to solve direct entry references!
             const { data: paperData, error: paperError } = await _supabase.from('papers').select('*');
             if (paperError) console.error("Error fetching papers:", paperError);
             papersCache = paperData || [];
@@ -630,14 +646,11 @@
                 return;
             }
 
-            // Identify paper components mapped to this subject from cache
             const papers = papersCache.filter(p => p.subject_id === subId);
             
             if(papers.length === 0) {
-                // FALLBACK: Subjects with only one paper component automatically bypass sub-selection 
                 filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default: 100 Marks)</option>';
                 filterPaper.disabled = false;
-                // Automatically dispatch change to fetch the roster list right away!
                 filterPaper.dispatchEvent(new Event('change'));
             } else {
                 let html = '<option value="" disabled selected>-- Select Paper Component --</option>';
@@ -761,7 +774,6 @@
         window.addEventListener('DOMContentLoaded', async () => {
             await pullActiveCycleState();
             await loadStudentRoster();
-            // Prefetch subjects and paper caches immediately
             await fetchSubjects();
         });
     </script>
