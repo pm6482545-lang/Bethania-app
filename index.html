@@ -600,13 +600,13 @@
             }
         });
 
-                filterPaper.addEventListener('change', async () => {
+                   filterPaper.addEventListener('change', async () => {
             const selectedOption = filterPaper.options[filterPaper.selectedIndex];
             if (!selectedOption) return;
 
             const maxMarks = selectedOption.getAttribute('data-max') || "100";
             paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
-            
+
             const selectedGrade = parseInt(filterGrade.value);
             const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
             
@@ -616,7 +616,7 @@
                 return;
             }
 
-            // 1. FETCH EXISTING MARKS FROM DATABASE FOR THESE STUDENTS
+            // 1. Fetch pre-existing marks from Supabase for this group
             const studentIds = filteredStudents.map(s => s.id);
             const paperVal = filterPaper.value;
             
@@ -635,7 +635,7 @@
             const { data: savedMarks, error } = await query;
             if (error) console.error("Error loading existing marks:", error);
 
-            // Create a quick lookup map of student_id -> raw_score
+            // Create a quick lookup dictionary of student_id -> raw_score
             const marksMap = {};
             if (savedMarks) {
                 savedMarks.forEach(m => {
@@ -643,7 +643,7 @@
                 });
             }
 
-            // 2. RENDER ROWS WITH PRE-FILLED VALUES IF THEY EXIST
+            // 2. Build rows and fill inputs with saved marks if they exist
             marksEntryRows.innerHTML = filteredStudents.map(s => {
                 const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
                 return `
@@ -663,7 +663,8 @@
             
             saveMarksBtn.disabled = systemIsLocked;
         });
-        
+               
+  
         saveMarksBtn.addEventListener('click', async () => {
     if(systemIsLocked) return alert("System Closed. Data submission rejected.");
     
