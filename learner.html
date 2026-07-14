@@ -3,126 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethania Academy - Learner Results Portal</title>
-    <meta name="robots" content="noindex, nofollow">
+    <title>Bethania Academy - Learner Verification Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans p-4 flex items-center justify-center">
 
-    <!-- Standalone Navigation -->
-    <nav class="navbar bg-slate-900 text-white shadow-lg px-6">
-        <div class="flex-1">
-            <a class="text-lg font-black uppercase text-amber-400">Bethania Academy</a>
-            <span class="ml-4 text-[10px] uppercase tracking-widest text-slate-400 border-l border-slate-700 pl-4">Learner Portal</span>
-        </div>
-    </nav>
-
-    <!-- Login Section -->
-    <div id="login-screen" class="flex items-center justify-center min-h-[80vh] p-4">
-        <div class="card w-full max-w-sm bg-white shadow-xl border border-slate-200">
-            <div class="card-body">
-                <h2 class="card-title text-xl font-black uppercase text-slate-900 justify-center mb-4">🎓 Learner Access</h2>
-                <input type="text" id="login-name" placeholder="Full Name (as registered)" class="input input-bordered w-full" />
-                <input type="text" id="login-id" placeholder="Enter System Login ID" class="input input-bordered w-full" />
-                <button id="login-btn" class="btn btn-primary w-full mt-4 text-white font-bold">Sign In</button>
+    <div class="card w-full max-w-sm bg-white shadow-2xl border border-slate-200">
+        <div class="card-body p-6">
+            <div class="text-center mb-4">
+                <span class="text-4xl">🎓</span>
+                <h1 class="text-lg font-black text-slate-900 uppercase tracking-wider mt-2">Learner Access</h1>
+                <p class="text-xs text-slate-500">Enter your unique Login ID to view profile.</p>
             </div>
-        </div>
-    </div>
 
-    <!-- Results Dashboard -->
-    <div id="dashboard-screen" class="hidden p-4 max-w-4xl mx-auto mt-8">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-xl font-black text-slate-900" id="welcome-msg"></h1>
-            <button onclick="location.reload()" class="btn btn-sm btn-ghost">Logout</button>
-        </div>
+            <div class="form-control w-full mb-4">
+                <input type="text" id="login-input" placeholder="e.g. AB1234" class="input input-bordered w-full text-center font-mono uppercase font-bold" maxlength="6" />
+            </div>
 
-        <div class="card bg-white shadow-xl border border-slate-200">
-            <div class="card-body">
-                <div class="tabs tabs-boxed bg-slate-100 p-1 mb-4">
-                    <button id="view-marks" class="tab tab-active font-bold flex-1">Raw Marks</button>
-                    <button id="view-points" class="tab font-bold flex-1">CBA Levels</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="table w-full text-center">
-                        <thead class="bg-slate-900 text-white">
-                            <tr><th>Subject</th><th>Result</th></tr>
-                        </thead>
-                        <tbody id="results-body"></tbody>
-                    </table>
-                </div>
-                <div class="mt-6 flex justify-end">
-                    <button onclick="window.print()" class="btn btn-outline btn-sm">📄 Download / Print Results</button>
-                </div>
+            <button id="verify-btn" class="btn btn-neutral w-full font-bold text-white shadow-lg">Verify Learner ID</button>
+
+            <div id="result-box" class="mt-6 hidden p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                <h2 id="res-name" class="font-bold text-slate-900"></h2>
+                <p id="res-details" class="text-xs text-slate-600 mt-1 font-mono"></p>
             </div>
         </div>
     </div>
 
     <script>
-        const _supabase = window.supabase.createClient("https://avspdkeozxuxzbmegqwl.supabase.co", "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR");
-        let activeStudent = null;
-        let currentMode = 'marks';
+        // Supabase configuration[span_0](start_span)[span_0](end_span)
+        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        document.getElementById('login-btn').addEventListener('click', async () => {
-            const name = document.getElementById('login-name').value.trim();
-            const id = document.getElementById('login-id').value.trim();
+        const loginInput = document.getElementById('login-input');
+        const verifyBtn = document.getElementById('verify-btn');
+        const resultBox = document.getElementById('result-box');
+        const resName = document.getElementById('res-name');
+        const resDetails = document.getElementById('res-details');
 
-            // Using ilike for name to ignore case, and string conversion for ID
+        verifyBtn.addEventListener('click', async () => {
+            const id = loginInput.value.trim().toUpperCase();
+            if (!id) return alert("Please enter a valid Login ID.");
+
+            verifyBtn.innerText = "Searching...";
+            
+            // Querying the students table for the specific login ID[span_1](start_span)[span_1](end_span)
             const { data, error } = await _supabase
                 .from('students')
                 .select('*')
-                .ilike('name', name)
-                .eq('login_id', id.toString())
+                .eq('login_id', id)
                 .single();
 
-            if (data) {
-                activeStudent = data;
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('dashboard-screen').classList.remove('hidden');
-                document.getElementById('welcome-msg').innerText = `Results for: ${data.name}`;
-                loadResults();
+            verifyBtn.innerText = "Verify Learner ID";
+
+            if (error || !data) {
+                alert("Learner not found. Check the ID and try again.");
+                resultBox.classList.add('hidden');
             } else {
-                console.error("Login Error Details:", error);
-                alert("Incorrect Name or Login ID. Please check and try again.");
+                resName.innerText = data.name;
+                resDetails.innerText = `Grade: ${data.grade} | Stream: ${data.stream}`;
+                resultBox.classList.remove('hidden');
             }
-        });
-
-        async function loadResults() {
-            const { data } = await _supabase
-                .from('marks_entry')
-                .select('raw_score, subject_papers(paper_name, max_marks)')
-                .eq('student_id', activeStudent.id);
-
-            const tbody = document.getElementById('results-body');
-            tbody.innerHTML = (data || []).map(r => `
-                <tr>
-                    <td class="font-bold">${r.subject_papers.paper_name}</td>
-                    <td>${currentMode === 'marks' ? r.raw_score : getCBALevel(r.raw_score, r.subject_papers.max_marks)}</td>
-                </tr>
-            `).join('');
-        }
-
-        function getCBALevel(score, max) {
-            const p = (score / max) * 100;
-            if(p >= 80) return "EE (Exceeding)";
-            if(p >= 60) return "ME (Meeting)";
-            if(p >= 40) return "AE (Approaching)";
-            return "EM (Emerging)";
-        }
-
-        document.getElementById('view-marks').addEventListener('click', () => { 
-            currentMode = 'marks'; 
-            document.getElementById('view-marks').classList.add('tab-active');
-            document.getElementById('view-points').classList.remove('tab-active');
-            loadResults(); 
-        });
-        
-        document.getElementById('view-points').addEventListener('click', () => { 
-            currentMode = 'rubric'; 
-            document.getElementById('view-points').classList.add('tab-active');
-            document.getElementById('view-marks').classList.remove('tab-active');
-            loadResults(); 
         });
     </script>
 </body>
