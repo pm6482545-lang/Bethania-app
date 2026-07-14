@@ -631,9 +631,9 @@
         saveMarksBtn.addEventListener('click', async () => {
     if(systemIsLocked) return alert("System Closed. Data submission rejected.");
     
-    // 1. Collect entries
+    // Collect all filled score fields
     const entries = Array.from(document.querySelectorAll('.score-field'))
-        .filter(input => input.value.trim() !== "") // Only include filled scores
+        .filter(input => input.value.trim() !== "") 
         .map(input => {
             const paperVal = filterPaper.value;
             const payload = {
@@ -641,6 +641,7 @@
                 test_name: activeExamContextName,
                 raw_score: parseFloat(input.value) || 0.00
             };
+            // Include paper_id only if it's not a direct entry
             if (paperVal !== 'DIRECT_ENTRY') {
                 payload.paper_id = paperVal;
             }
@@ -649,24 +650,18 @@
 
     if (entries.length === 0) return alert("No scores entered! Please type at least one score.");
 
-    // 2. Alert the actual data being sent
-    alert("Attempting to send " + entries.length + " entries. Sample: " + JSON.stringify(entries[0]));
-
-    // 3. Attempt the save
-    try {
-        const { data, error } = await _supabase.from('marks_entry').insert(entries);
-        
-        if (error) {
-            alert("❌ DATABASE ERROR: " + error.message + "\n\nDetails: " + JSON.stringify(error));
-        } else {
-            alert("✨ Marks successfully captured!"); 
-            saveMarksBtn.disabled = true;
-        }
-    } catch (err) {
-        alert("❌ CRITICAL ERROR: " + err.message);
+    // Attempt the save to Supabase
+    const { data, error } = await _supabase.from('marks_entry').insert(entries);
+    
+    if (error) {
+        // This alerts you to the exact database issue if one occurs
+        alert("❌ DATABASE ERROR: " + error.message + "\nDetails: " + (error.details || "None"));
+        console.error("Supabase Insert Error:", error);
+    } else {
+        alert("✨ Marks successfully captured!"); 
+        saveMarksBtn.disabled = true;
     }
 });
-
 
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
