@@ -356,22 +356,6 @@
             }
         });
 
-manageGradeSelect.addEventListener('change', fetchManageList);
-
-addLearnerBtn.addEventListener('click', async () => {
-    const grade = manageGradeSelect.value;
-    const name = document.getElementById('new-name').value;
-    const stream = document.getElementById('new-stream').value;
-    if(!grade || !name) return alert("Select a grade and enter a name.");
-    const { error } = await _supabase.from('students').insert([{ name, stream, grade: parseInt(grade) }]);
-    if (error) alert("Error: " + error.message);
-    else {
-        alert("Learner added!");
-        document.getElementById('new-name').value = "";
-        fetchManageList();
-    }
-});
-
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
