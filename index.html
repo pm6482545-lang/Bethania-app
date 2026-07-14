@@ -629,32 +629,39 @@
         });
 
         saveMarksBtn.addEventListener('click', async () => {
-            if(systemIsLocked) return alert("System Closed. Data submission rejected.");
-            const entries = Array.from(document.querySelectorAll('.score-field')).map(input => {
-                const paperVal = filterPaper.value;
-                const payload = {
-                    student_id: input.getAttribute('data-sid'),
-                    test_name: activeExamContextName,
-                    raw_score: parseFloat(input.value) || 0.00
-                };
-                
-                // If it's a real sub-paper in the DB, append the column identifier
-                if (paperVal !== 'DIRECT_ENTRY') {
-                    payload.paper_id = paperVal;
-                }
-                return payload;
-            });
-            
-            const { error } = await _supabase.from('marks_entry').insert(entries);
-            if (error) {
-                console.error("Save Marks Error:", error);
-                alert("Database save failed: " + error.message);
-            } else {
-                alert("✨ Marks successfully captured and sent to broad sheets!"); 
-                saveMarksBtn.disabled = true;
+    if(systemIsLocked) return alert("System Closed. Data submission rejected.");
+    
+    // Build the data array
+    const entries = Array.from(document.querySelectorAll('.score-field'))
+        .filter(input => input.value.trim() !== "") 
+        .map(input => {
+            const paperVal = filterPaper.value;
+            const payload = {
+                student_id: input.getAttribute('data-sid'),
+                test_name: activeExamContextName,
+                raw_score: parseFloat(input.value) || 0.00
+            };
+            if (paperVal !== 'DIRECT_ENTRY') {
+                payload.paper_id = paperVal;
             }
+            return payload;
         });
 
+    if (entries.length === 0) return alert("No scores entered!");
+
+    // Attempt the save with detailed error logging
+    const { data, error } = await _supabase.from('marks_entry').insert(entries);
+    
+    if (error) {
+        // This force-alerts the full error details
+        console.error("Full Error Object:", error);
+        alert("❌ ERROR: " + error.message + "\n\nHint: " + (error.hint || "None") + "\n\nDetails: " + (error.details || "None"));
+    } else {
+        alert("✨ Marks successfully captured!"); 
+        saveMarksBtn.disabled = true;
+    }
+});
+        
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
