@@ -644,25 +644,28 @@
             // Include paper_id only if it's not a direct entry
             if (paperVal !== 'DIRECT_ENTRY') {
                 payload.paper_id = paperVal;
+            } else {
+                payload.paper_id = null; // Explicitly nullify instead of leaving it out
             }
             return payload;
         });
 
     if (entries.length === 0) return alert("No scores entered! Please type at least one score.");
 
-    // Attempt the save to Supabase
-    const { data, error } = await _supabase.from('marks_entry').insert(entries);
+    // Attempt the save to Supabase using upsert to handle updates cleanly
+    const { data, error } = await _supabase
+        .from('marks_entry')
+        .upsert(entries, { onConflict: 'student_id,test_name,paper_id' });
     
     if (error) {
         // This alerts you to the exact database issue if one occurs
         alert("❌ DATABASE ERROR: " + error.message + "\nDetails: " + (error.details || "None"));
-        console.error("Supabase Insert Error:", error);
+        console.error("Supabase Upsert Error:", error);
     } else {
         alert("✨ Marks successfully captured!"); 
         saveMarksBtn.disabled = true;
     }
 });
-
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
