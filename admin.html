@@ -26,7 +26,6 @@
             </span>
         </div>
     </div>
-<!-- Manage Learners Panel -->
 <div class="card bg-white shadow-xl border border-blue-100 mb-6">
     <div class="card-body p-4 sm:p-6">
         <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">👥 Manage Learners</h2>
@@ -649,13 +648,17 @@
             }).join('');
         });
 
-        // KNEC CBA METRICS ENGINE
+        // KNEC CBA METRICS ENGINE - UPDATED SCALE
         function getCompetencyLevel(score, max) {
             const percentage = (score / max) * 100;
-            if(percentage >= 80) return { term: 'Exceeding Expectation (EE)', code: 'EE', class: 'bg-emerald-100 text-emerald-800' };
-            if(percentage >= 60) return { term: 'Meeting Expectation (ME)', code: 'ME', class: 'bg-sky-100 text-sky-800' };
-            if(percentage >= 40) return { term: 'Approaching Expectation (AE)', code: 'AE', class: 'bg-amber-100 text-amber-800' };
-            return { term: 'Emerging (EM)', code: 'EM', class: 'bg-rose-100 text-rose-800' };
+            if(percentage >= 90) return { term: 'EE1 (8 Points)', code: 'EE1', class: 'bg-emerald-200 text-emerald-950 border border-emerald-400' };
+            if(percentage >= 75) return { term: 'EE2 (7 Points)', code: 'EE2', class: 'bg-emerald-100 text-emerald-900' };
+            if(percentage >= 58) return { term: 'ME1 (6 Points)', code: 'ME1', class: 'bg-sky-200 text-sky-950' };
+            if(percentage >= 40) return { term: 'ME2 (5 Points)', code: 'ME2', class: 'bg-sky-100 text-sky-900' };
+            if(percentage >= 30) return { term: 'AE1 (4 Points)', code: 'AE1', class: 'bg-amber-200 text-amber-950' };
+            if(percentage >= 20) return { term: 'AE2 (3 Points)', code: 'AE2', class: 'bg-amber-100 text-amber-900' };
+            if(percentage >= 10) return { term: 'BE1 (2 Points)', code: 'BE1', class: 'bg-rose-200 text-rose-950' };
+            return { term: 'BE2 (1 Point)', code: 'BE2', class: 'bg-rose-100 text-rose-900' };
         }
 
         compileReportsBtn.addEventListener('click', async () => {
@@ -686,7 +689,7 @@
 
             let csvRows = [["Learner Name", "Stream", ...activeColumns.map(p => p.paper_name), mode === 'marks' ? "Cumulative Score" : "Competency Descriptor"]];
 
-            let countEE = 0, countME = 0, countAE = 0, countEM = 0;
+            let countEE1 = 0, countEE2 = 0, countME1 = 0, countME2 = 0, countAE1 = 0, countAE2 = 0, countBE1 = 0, countBE2 = 0;
 
             broadsheetRows.innerHTML = targetStudents.map(s => {
                 let totalScore = 0;
@@ -709,10 +712,14 @@
                     rowCsv.push(totalScore.toFixed(2));
                 } else {
                     const level = getCompetencyLevel(totalScore, maxPossible || 100);
-                    if(level.code === 'EE') countEE++;
-                    if(level.code === 'ME') countME++;
-                    if(level.code === 'AE') countAE++;
-                    if(level.code === 'EM') countEM++;
+                    if(level.code === 'EE1') countEE1++;
+                    if(level.code === 'EE2') countEE2++;
+                    if(level.code === 'ME1') countME1++;
+                    if(level.code === 'ME2') countME2++;
+                    if(level.code === 'AE1') countAE1++;
+                    if(level.code === 'AE2') countAE2++;
+                    if(level.code === 'BE1') countBE1++;
+                    if(level.code === 'BE2') countBE2++;
 
                     cells += `<td class="text-center py-2.5 px-3"><span class="badge font-bold py-1 px-3 ${level.class}">${level.term}</span></td>`;
                     rowCsv.push(level.term);
@@ -724,10 +731,14 @@
 
             if(mode === 'rubric') {
                 analyticalSummaryBadges.innerHTML = `
-                    <span class="badge bg-emerald-100 text-emerald-800 font-bold text-[10px] p-2">EE: ${countEE}</span>
-                    <span class="badge bg-sky-100 text-sky-800 font-bold text-[10px] p-2">ME: ${countME}</span>
-                    <span class="badge bg-amber-100 text-amber-800 font-bold text-[10px] p-2">AE: ${countAE}</span>
-                    <span class="badge bg-rose-100 text-rose-800 font-bold text-[10px] p-2">EM: ${countEM}</span>
+                    <span class="badge bg-emerald-200 text-emerald-950 font-bold text-[10px] p-2 border border-emerald-400">EE1: ${countEE1}</span>
+                    <span class="badge bg-emerald-100 text-emerald-900 font-bold text-[10px] p-2">EE2: ${countEE2}</span>
+                    <span class="badge bg-sky-200 text-sky-950 font-bold text-[10px] p-2">ME1: ${countME1}</span>
+                    <span class="badge bg-sky-100 text-sky-900 font-bold text-[10px] p-2">ME2: ${countME2}</span>
+                    <span class="badge bg-amber-200 text-amber-950 font-bold text-[10px] p-2">AE1: ${countAE1}</span>
+                    <span class="badge bg-amber-100 text-amber-900 font-bold text-[10px] p-2">AE2: ${countAE2}</span>
+                    <span class="badge bg-rose-200 text-rose-950 font-bold text-[10px] p-2">BE1: ${countBE1}</span>
+                    <span class="badge bg-rose-100 text-rose-900 font-bold text-[10px] p-2">BE2: ${countBE2}</span>
                 `;
             } else {
                 analyticalSummaryBadges.innerHTML = "";
