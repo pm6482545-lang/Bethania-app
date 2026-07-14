@@ -749,6 +749,34 @@
                 });
 
             if (entries.length === 0) return alert("No scores entered! Please record at least one grade.");
+        // Save All Marks Submit Event
+        saveMarksBtn.addEventListener('click', async () => {
+            if(systemIsLocked) return alert("System is currently Closed. Data submission rejected.");
+            
+            const paperVal = filterPaper.value;
+
+            // SAFEGUARD: Stop submission if paper selection is completely missing or invalid
+            if (!paperVal || paperVal === "undefined" || paperVal === "null" || paperVal === "") {
+                return alert("⚠️ Please select a valid Paper Component from the dropdown before saving.");
+            }
+
+            // Prevent database crash if DIRECT_ENTRY is selected but is not a valid UUID in marks_entry
+            if (paperVal === 'DIRECT_ENTRY') {
+                return alert("⚠️ Direct Entry is active. Please configure at least one Paper Component (e.g., 'Theory' or 'Paper 1') in your Admin Dashboard first for this subject.");
+            }
+
+            const entries = Array.from(document.querySelectorAll('.score-field'))
+                .filter(input => input.value.trim() !== "") 
+                .map(input => {
+                    return {
+                        student_id: input.getAttribute('data-sid'),
+                        test_name: activeExamContextName,
+                        raw_score: parseFloat(input.value) || 0.00,
+                        paper_id: paperVal // Directly maps the valid UUID component
+                    };
+                });
+
+            if (entries.length === 0) return alert("No scores entered! Please record at least one grade.");
 
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
@@ -767,6 +795,7 @@
             saveMarksBtn.innerText = "💾 Save All Marks";
         });
 
+            
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
