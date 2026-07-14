@@ -410,8 +410,8 @@
             if (!students || students.length === 0) { studentListRows.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">No entries.</td></tr>`; return; }
             studentListRows.innerHTML = students.map(s => `
                 <tr class="hover">
-                    <td class="font-mono text-xs font-bold text-slate-500 py-2.5 px-3">${s.id.substring(0, 8).toUpperCase()}</td>
-                    <td class="font-bold text-slate-800 py-2.5 px-3">${s.name}</td>
+                 <td class="font-mono text-xs font-bold text-slate-500 py-2.5 px-3">${s.login_id || s.id.substring(0, 8).toUpperCase()}</td>
+                <td class="font-bold text-slate-800 py-2.5 px-3">${s.name}</td>
                     <td class="text-center py-2.5 px-3">${gradeMap[s.grade] || s.grade}</td>
                     <td class="text-center py-2.5 px-3"><span class="badge font-mono font-medium">${s.stream}</span></td>
                     <td class="text-center py-2.5 px-3"><span class="badge font-bold text-xs">${s.maths_club_family || 'None'}</span></td>
