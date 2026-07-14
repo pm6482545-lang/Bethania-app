@@ -627,21 +627,31 @@
             
             saveMarksBtn.disabled = systemIsLocked;
         });
-saveMarksBtn.addEventListener('click', async () => {
-    // 1. Get all score inputs
-    const allInputs = document.querySelectorAll('.score-field');
-    
-    // 2. Alert how many inputs the computer found
-    alert("Step 1 check: I found " + allInputs.length + " score boxes on your screen.");
 
-    // 3. Let's see the first value
-    if (allInputs.length > 0) {
-        alert("The first score box has this value: '" + allInputs[0].value + "'");
+        saveMarksBtn.addEventListener('click', async () => {
+    // 1. Collect entries
+    const entries = Array.from(document.querySelectorAll('.score-field'))
+        .filter(input => input.value.trim() !== "") 
+        .map(input => ({
+            student_id: input.getAttribute('data-sid'),
+            test_name: activeExamContextName,
+            raw_score: parseFloat(input.value) || 0.00,
+            paper_id: filterPaper.value !== 'DIRECT_ENTRY' ? filterPaper.value : null
+        }));
+
+    // 2. Alert the EXACT data that is about to be sent
+    alert("Sending this data: " + JSON.stringify(entries));
+
+    // 3. Perform the save
+    const { data, error } = await _supabase.from('marks_entry').insert(entries);
+    
+    if (error) {
+        alert("❌ Error: " + error.message);
+    } else {
+        alert("✨ Marks successfully captured!");
     }
 });
 
-    
-        
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
