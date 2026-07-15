@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&family=JetBrains+Mono:wght=400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -43,7 +43,7 @@
 
     <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
 
-        <!-- ADVANCED VISIBLE BUTTONS TABS SYSTEM (Perfect on Phone/PC) -->
+        <!-- ADVANCED VISIBLE BUTTONS TABS SYSTEM -->
         <div class="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
             <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
                 <span class="text-base sm:text-lg">👤</span>
@@ -119,7 +119,7 @@
                         <div class="alert alert-info bg-sky-50 border border-sky-200 text-xs text-sky-900 rounded-xl py-3.5 px-4 flex gap-2">
                             <span>💡</span>
                             <div>
-                                <strong class="font-bold">Instructions:</strong> Copy columns or list rows of student names from your Excel file and paste them here (one name per line). The system will register them to the chosen target grade and standard default stream automatically.
+                                <strong class="font-bold">Instructions:</strong> Copy columns or list rows of student names from your Excel file and paste them here (one name per line). The system will register them to the chosen target grade and stream automatically.
                             </div>
                         </div>
                         
@@ -393,21 +393,15 @@
 
         // Visible buttons navigation toggle logic
         tabRoster.addEventListener('click', () => { 
-            // Activate Student Roster Button Styling
             tabRoster.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
-            // Deactivate Marks Entry Button Styling
             tabMarks.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
-            
             screenRoster.classList.remove('hidden'); 
             screenMarks.classList.add('hidden'); 
         });
 
         tabMarks.addEventListener('click', () => { 
-            // Activate Marks Entry Button Styling
             tabMarks.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
-            // Deactivate Student Roster Button Styling
             tabRoster.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
-
             screenMarks.classList.remove('hidden'); 
             screenRoster.classList.add('hidden'); 
             fetchSubjects(); 
@@ -496,292 +490,306 @@
             }
         });
 
-     // Trigger and parse Batch list
-    btnTriggerBatch.addEventListener('click', async () => {
-        const selectedGrade = batchGradeInput.value;
-        if(!selectedGrade) return alert("Please select a target Grade level for this batch roster!");
+        // Trigger and parse Batch list
+        btnTriggerBatch.addEventListener('click', async () => {
+            const selectedGrade = batchGradeInput.value;
+            if(!selectedGrade) return alert("Please select a target Grade level for this batch roster!");
 
-        const rawContent = batchNamesArea.value.trim();
-        if(!rawContent) return alert("Please copy and paste student names into the text area first!");
+            const rawContent = batchNamesArea.value.trim();
+            if(!rawContent) return alert("Please copy and paste student names into the text area first!");
 
-        const lines = rawContent.split('\n');
-        const insertPayload = [];
+            const lines = rawContent.split('\n');
+            const insertPayload = [];
 
-        for(let line of lines) {
-            const nameParsed = line.trim();
-            if(!nameParsed) continue; 
+            for(let line of lines) {
+                const nameParsed = line.trim();
+                if(!nameParsed) continue; 
 
-            insertPayload.push({
-                name: nameParsed,
-                grade: parseInt(selectedGrade),
-                stream: batchDefaultStream.value.trim() || 'A',
-                maths_club_family: null
-            });
-        }
-
-        if(insertPayload.length === 0) return alert("No valid student profiles parsed.");
-
-        btnTriggerBatch.disabled = true;
-        btnTriggerBatch.innerText = `⏳ Registering ${insertPayload.length} students...`;
-
-        const { data, error } = await _supabase.from('students').insert(insertPayload).select();
-
-        if(error) {
-            console.error("Batch insertion error: ", error);
-            alert("Failed to perform batch registration: " + error.message);
-        } else {
-            alert(`🎉 Successfully added ${data.length} student profiles into your DB!`);
-            batchNamesArea.value = "";
-            localStudentsCache = [...data, ...localStudentsCache];
-            renderTable(localStudentsCache);
-        }
-
-        btnTriggerBatch.disabled = false;
-        btnTriggerBatch.innerText = "🚀 Pull & Import Student Roster";
-    });
-
-    // Initialize Student inline editor panel
-    window.initiateStudentEdit = function(id) {
-        const student = localStudentsCache.find(s => s.id === id);
-        if(!student) return;
-
-        editStudentId.value = student.id;
-        editDisplayName.innerText = student.name;
-        editStudName.value = student.name;
-        editStudGrade.value = student.grade;
-        editStudStream.value = student.stream || 'A';
-        editStudFamily.value = student.maths_club_family || "";
-
-        editStudentBox.classList.remove('hidden');
-        editStudentBox.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    // Close editor panel
-    btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
-
-    // Save inline adjustments to DB
-    btnSaveStudentEdit.addEventListener('click', async () => {
-        const id = editStudentId.value;
-        const updatedName = editStudName.value.trim();
-        const updatedGrade = parseInt(editStudGrade.value);
-        const updatedStream = editStudStream.value.trim();
-        const updatedFamily = editStudFamily.value || null;
-
-        if(!updatedName) return alert("Student name field cannot be empty.");
-
-        btnSaveStudentEdit.disabled = true;
-        btnSaveStudentEdit.innerText = "Saving Changes...";
-
-        const { error } = await _supabase.from('students')
-            .update({
-                name: updatedName,
-                grade: updatedGrade,
-                stream: updatedStream,
-                maths_club_family: updatedFamily
-            })
-            .eq('id', id);
-
-        if (error) {
-            console.error("Error updating profile:", error);
-            alert("Update failed: " + error.message);
-        } else {
-            const index = localStudentsCache.findIndex(s => s.id === id);
-            if (index !== -1) {
-                localStudentsCache[index].name = updatedName;
-                localStudentsCache[index].grade = updatedGrade;
-                localStudentsCache[index].stream = updatedStream;
-                localStudentsCache[index].maths_club_family = updatedFamily;
+                insertPayload.push({
+                    name: nameParsed,
+                    grade: parseInt(selectedGrade),
+                    stream: batchDefaultStream.value.trim() || 'A',
+                    maths_club_family: null
+                });
             }
-            renderTable(localStudentsCache);
-            editStudentBox.classList.add('hidden');
-            alert("✨ Student profile updated successfully!");
+
+            if(insertPayload.length === 0) return alert("No valid student profiles parsed.");
+
+            btnTriggerBatch.disabled = true;
+            btnTriggerBatch.innerText = `⏳ Registering ${insertPayload.length} students...`;
+
+            const { data, error } = await _supabase.from('students').insert(insertPayload).select();
+
+            if(error) {
+                console.error("Batch insertion error: ", error);
+                alert("Failed to perform batch registration: " + error.message);
+            } else {
+                alert(`🎉 Successfully added ${data.length} student profiles into your DB!`);
+                batchNamesArea.value = "";
+                localStudentsCache = [...data, ...localStudentsCache];
+                renderTable(localStudentsCache);
+            }
+
+            btnTriggerBatch.disabled = false;
+            btnTriggerBatch.innerText = "🚀 Pull & Import Student Roster";
+        });
+
+        // Initialize Student inline editor panel
+        window.initiateStudentEdit = function(id) {
+            const student = localStudentsCache.find(s => s.id === id);
+            if(!student) return;
+
+            editStudentId.value = student.id;
+            editDisplayName.innerText = student.name;
+            editStudName.value = student.name;
+            editStudGrade.value = student.grade;
+            editStudStream.value = student.stream || 'A';
+            editStudFamily.value = student.maths_club_family || "";
+
+            editStudentBox.classList.remove('hidden');
+            editStudentBox.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        // Close editor panel
+        btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
+
+        // Save inline adjustments to DB
+        btnSaveStudentEdit.addEventListener('click', async () => {
+            const id = editStudentId.value;
+            const updatedName = editStudName.value.trim();
+            const updatedGrade = parseInt(editStudGrade.value);
+            const updatedStream = editStudStream.value.trim();
+            const updatedFamily = editStudFamily.value || null;
+
+            if(!updatedName) return alert("Student name field cannot be empty.");
+
+            btnSaveStudentEdit.disabled = true;
+            btnSaveStudentEdit.innerText = "Saving Changes...";
+
+            const { error } = await _supabase.from('students')
+                .update({
+                    name: updatedName,
+                    grade: updatedGrade,
+                    stream: updatedStream,
+                    maths_club_family: updatedFamily
+                })
+                .eq('id', id);
+
+            if (error) {
+                console.error("Error updating profile:", error);
+                alert("Update failed: " + error.message);
+            } else {
+                const index = localStudentsCache.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    localStudentsCache[index].name = updatedName;
+                    localStudentsCache[index].grade = updatedGrade;
+                    localStudentsCache[index].stream = updatedStream;
+                    localStudentsCache[index].maths_club_family = updatedFamily;
+                }
+                renderTable(localStudentsCache);
+                editStudentBox.classList.add('hidden');
+                alert("✨ Student profile updated successfully!");
+            }
+            btnSaveStudentEdit.disabled = false;
+            btnSaveStudentEdit.innerText = "Save Updates";
+        });
+
+        async function fetchSubjects() {
+            const { data: subjectData, error: subjectError } = await _supabase.from('subjects').select('*').order('subject_name');
+            if (subjectError) console.error("Error fetching subjects:", subjectError);
+
+            const { data: paperData, error: paperError } = await _supabase.from('papers').select('*');
+            if (paperError) console.error("Error fetching papers:", paperError);
+            papersCache = paperData || [];
+            
+            if(activeExamContextName && activeExamContextName.toLowerCase().includes('maths contest')) {
+                subjectsCache = (subjectData || []).filter(s => s.subject_name.toLowerCase().includes('math'));
+            } else {
+                subjectsCache = subjectData || [];
+            }
+            filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
-        btnSaveStudentEdit.disabled = false;
-        btnSaveStudentEdit.innerText = "Save Updates";
-    });
 
-    async function fetchSubjects() {
-        const { data: subjectData, error: subjectError } = await _supabase.from('subjects').select('*').order('subject_name');
-        if (subjectError) console.error("Error fetching subjects:", subjectError);
+        filterGrade.addEventListener('change', () => {
+            const selectedGrade = filterGrade.value;
+            const tier = getGradeTier(selectedGrade);
+            const allowedSubjects = CBC_SUBJECT_TIERS[tier];
 
-        const { data: paperData, error: paperError } = await _supabase.from('papers').select('*');
-        if (paperError) console.error("Error fetching papers:", paperError);
-        papersCache = paperData || [];
-        
-        if(activeExamContextName && activeExamContextName.toLowerCase().includes('maths contest')) {
-            subjectsCache = (subjectData || []).filter(s => s.subject_name.toLowerCase().includes('math'));
-        } else {
-            subjectsCache = subjectData || [];
-        }
-        filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
-    }
+            const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
 
-    filterGrade.addEventListener('change', () => {
-        const selectedGrade = filterGrade.value;
-        const tier = getGradeTier(selectedGrade);
-        const allowedSubjects = CBC_SUBJECT_TIERS[tier];
-
-        const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
-
-        if (filteredSubjects.length === 0) {
-            filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No matches for this grade tier</option>';
-            filterSubject.disabled = true;
-        } else {
-            filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Learning Area...</option>' + 
-                filteredSubjects.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
-            filterSubject.disabled = false; 
-        }
-        filterPaper.disabled = true;
-        filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
-        marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
-    });
-
-    // 1. Triggered when Subject selection changes
-    filterSubject.addEventListener('change', () => {
-        const subId = filterSubject.value;
-        if(!subId) {
-            filterPaper.innerHTML = '<option value="">-- Choose Paper Component --</option>';
+            if (filteredSubjects.length === 0) {
+                filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No matches for this grade tier</option>';
+                filterSubject.disabled = true;
+            } else {
+                filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Learning Area...</option>' + 
+                    filteredSubjects.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                filterSubject.disabled = false; 
+            }
             filterPaper.disabled = true;
-            marksEntryRows.innerHTML = '';
-            return;
-        }
+            filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
+            marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
+        });
 
-        const papers = papersCache.filter(p => p.subject_id === subId);
+        // Triggered when Subject selection changes
+        filterSubject.addEventListener('change', () => {
+            const subId = filterSubject.value;
+            if(!subId) {
+                filterPaper.innerHTML = '<option value="">-- Choose Paper Component --</option>';
+                filterPaper.disabled = true;
+                marksEntryRows.innerHTML = '';
+                return;
+            }
+
+            const papers = papersCache.filter(p => p.subject_id === subId);
+            
+            if(papers.length === 0) {
+                filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default: 100 Marks)</option>';
+                filterPaper.disabled = false;
+                filterPaper.dispatchEvent(new Event('change'));
+            } else {
+                let html = '<option value="" disabled selected>-- Select Paper Component --</option>';
+                papers.forEach(p => {
+                    html += `<option value="${p.id}" data-max="${p.max_marks || 50}">${p.paper_name} (Max Marks: ${p.max_marks || 50})</option>`;
+                });
+                filterPaper.innerHTML = html;
+                filterPaper.disabled = false;
+            }
+            marksEntryRows.innerHTML = ''; 
+        });
+
+        // Triggered when Paper/Component selection changes
+        filterPaper.addEventListener('change', async () => {
+            const selectedOption = filterPaper.options[filterPaper.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return;
+
+            const maxMarks = selectedOption.getAttribute('data-max') || "100";
+            paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
+
+            const selectedGrade = parseInt(filterGrade.value);
+            const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+            
+            if (filteredStudents.length === 0) {
+                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-amber-600 font-bold bg-amber-50 rounded-xl">⚠️ No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
+                saveMarksBtn.disabled = true;
+                return;
+            }
+
+            // Fetch existing marks
+            const studentIds = filteredStudents.map(s => s.id);
+            const paperVal = filterPaper.value;
+            
+            let query = _supabase
+                .from('marks_entry')
+                .select('student_id, raw_score')
+                .eq('test_name', activeExamContextName)
+                .in('student_id', studentIds);
+
+            if (paperVal === 'DIRECT_ENTRY') {
+                query = query.is('paper_id', null);
+            } else {
+                query = query.eq('paper_id', paperVal);
+            }
+
+            const { data: savedMarks, error } = await query;
+            if (error) console.error("Error loading existing marks:", error);
+
+            const marksMap = {};
+            if (savedMarks) {
+                savedMarks.forEach(m => {
+                    marksMap[m.student_id] = m.raw_score;
+                });
+            }
+
+            // Build input scores roster dynamically
+            marksEntryRows.innerHTML = filteredStudents.map(s => {
+                const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
+                return `
+                    <tr class="hover">
+                        <td class="font-bold text-slate-800 py-3.5 px-3 text-left">${s.name}</td>
+                        <td class="text-center py-3.5 px-3"><span class="badge bg-slate-100 text-slate-700 font-code font-bold border-none">${s.stream}</span></td>
+                        <td class="py-2.5 px-3">
+                            <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
+                                class="input input-bordered input-sm w-full max-w-[150px] mx-auto score-field font-code text-center focus:border-amber-400 focus:outline-none" 
+                                placeholder="0-${maxMarks}" 
+                                value="${existingScore}" 
+                                ${systemIsLocked ? 'disabled' : ''}/>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            saveMarksBtn.disabled = systemIsLocked;
+        });
         
-        if(papers.length === 0) {
-            filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default: 100 Marks)</option>';
-            filterPaper.disabled = false;
-            filterPaper.dispatchEvent(new Event('change'));
-        } else {
-            let html = '<option value="" disabled selected>-- Select Paper Component --</option>';
-            papers.forEach(p => {
-                html += `<option value="${p.id}" data-max="${p.max_marks || 50}">${p.paper_name} (Max Marks: ${p.max_marks || 50})</option>`;
-            });
-            filterPaper.innerHTML = html;
-            filterPaper.disabled = false;
-        }
-        marksEntryRows.innerHTML = ''; 
-    });
+        // Consolidated Save All Marks Submit Event with verification & locks check
+        saveMarksBtn.addEventListener('click', async () => {
+            if (systemIsLocked) {
+                return alert("⚠️ System is currently Closed. Data submission rejected.");
+            }
+            
+            // SAFEGUARD: Ensure we have an active exam session context loaded
+            if (!activeExamContextName) {
+                return alert("⚠️ Error: No active exam session context found. Please refresh the page and try again.");
+            }
+            
+            const paperVal = filterPaper.value;
 
-    // 2. Triggered when Paper/Component selection changes
-    filterPaper.addEventListener('change', async () => {
-        const selectedOption = filterPaper.options[filterPaper.selectedIndex];
-        if (!selectedOption || !selectedOption.value) return;
+            // SAFEGUARD: Stop submission if paper selection is completely missing or invalid
+            if (!paperVal || paperVal === "undefined" || paperVal === "null" || paperVal === "") {
+                return alert("⚠️ Please select a valid Paper Component from the dropdown before saving.");
+            }
 
-        const maxMarks = selectedOption.getAttribute('data-max') || "100";
-        paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
+            // Prevent database crash if DIRECT_ENTRY is selected but is not a valid UUID in marks_entry
+            if (paperVal === 'DIRECT_ENTRY') {
+                return alert("⚠️ Direct Entry is active. Please configure at least one Paper Component (e.g., 'Theory' or 'Paper 1') in your Admin Dashboard first for this subject.");
+            }
 
-        const selectedGrade = parseInt(filterGrade.value);
-        const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
-        
-        if (filteredStudents.length === 0) {
-            marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-amber-600 font-bold bg-amber-50 rounded-xl">⚠️ No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
+            const entries = Array.from(document.querySelectorAll('.score-field'))
+                .filter(input => input.value.trim() !== "") 
+                .map(input => {
+                    return {
+                        student_id: input.getAttribute('data-sid'),
+                        test_name: activeExamContextName,
+                        raw_score: parseFloat(input.value) || 0.00,
+                        paper_id: paperVal
+                    };
+                });
+
+            if (entries.length === 0) {
+                return alert("⚠️ No scores entered! Please record at least one grade.");
+            }
+
             saveMarksBtn.disabled = true;
-            return;
-        }
+            saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-        // Fetch existing marks
-        const studentIds = filteredStudents.map(s => s.id);
-        const paperVal = filterPaper.value;
-        
-        let query = _supabase
-            .from('marks_entry')
-            .select('student_id, raw_score')
-            .eq('test_name', activeExamContextName)
-            .in('student_id', studentIds);
+            // Use .select() to enforce that Supabase returns the rows written
+            const { data, error } = await _supabase
+                .from('marks_entry')
+                .upsert(entries, { onConflict: 'student_id,test_name,paper_id' })
+                .select();
+            
+            if (error) {
+                alert("❌ Database Error: " + error.message);
+                console.error("Upsert Error Details:", error);
+            } else if (!data || data.length === 0) {
+                alert("⚠️ Warning: Marks were submitted but the database rejected the write. This usually happens if your unique constraint or Row Level Security (RLS) policies are configured incorrectly.");
+            } else {
+                alert(`✨ Success! ${data.length} marks successfully captured & saved inside the database!`); 
+            }
+            
+            saveMarksBtn.disabled = false;
+            saveMarksBtn.innerText = "💾 Save All Marks";
+        });
+            
+        searchBar.addEventListener('input', (e) => {
+            renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
+        });
 
-        if (paperVal === 'DIRECT_ENTRY') {
-            query = query.is('paper_id', null);
-        } else {
-            query = query.eq('paper_id', paperVal);
-        }
-
-        const { data: savedMarks, error } = await query;
-        if (error) console.error("Error loading existing marks:", error);
-
-        const marksMap = {};
-        if (savedMarks) {
-            savedMarks.forEach(m => {
-                marksMap[m.student_id] = m.raw_score;
-            });
-        }
-
-        // Build input scores roster dynamically
-        marksEntryRows.innerHTML = filteredStudents.map(s => {
-            const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
-            return `
-                <tr class="hover">
-                    <td class="font-bold text-slate-800 py-3.5 px-3 text-left">${s.name}</td>
-                    <td class="text-center py-3.5 px-3"><span class="badge bg-slate-100 text-slate-700 font-code font-bold border-none">${s.stream}</span></td>
-                    <td class="py-2.5 px-3">
-                        <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
-                            class="input input-bordered input-sm w-full max-w-[150px] mx-auto score-field font-code text-center focus:border-amber-400 focus:outline-none" 
-                            placeholder="0-${maxMarks}" 
-                            value="${existingScore}" 
-                            ${systemIsLocked ? 'disabled' : ''}/>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-        
-        saveMarksBtn.disabled = systemIsLocked;
-    });
-    
-    // Consolidated Save All Marks Submit Event
-    saveMarksBtn.addEventListener('click', async () => {
-        if(systemIsLocked) return alert("System is currently Closed. Data submission rejected.");
-        
-        const paperVal = filterPaper.value;
-
-        // SAFEGUARD: Stop submission if paper selection is completely missing or invalid
-        if (!paperVal || paperVal === "undefined" || paperVal === "null" || paperVal === "") {
-            return alert("⚠️ Please select a valid Paper Component from the dropdown before saving.");
-        }
-
-        // Prevent database crash if DIRECT_ENTRY is selected but is not a valid UUID in marks_entry
-        if (paperVal === 'DIRECT_ENTRY') {
-            return alert("⚠️ Direct Entry is active. Please configure at least one Paper Component (e.g., 'Theory' or 'Paper 1') in your Admin Dashboard first for this subject.");
-        }
-
-        const entries = Array.from(document.querySelectorAll('.score-field'))
-            .filter(input => input.value.trim() !== "") 
-            .map(input => {
-                return {
-                    student_id: input.getAttribute('data-sid'),
-                    test_name: activeExamContextName,
-                    raw_score: parseFloat(input.value) || 0.00,
-                    paper_id: paperVal // Directly maps the valid UUID component
-                };
-            });
-
-        if (entries.length === 0) return alert("No scores entered! Please record at least one grade.");
-
-        saveMarksBtn.disabled = true;
-        saveMarksBtn.innerText = "⏳ Capturing Grades...";
-
-        const { data, error } = await _supabase
-            .from('marks_entry')
-            .upsert(entries, { onConflict: 'student_id,test_name,paper_id' });
-        
-        if (error) {
-            alert("❌ Database Error: " + error.message);
-            console.error("Upsert Error Details:", error);
-        } else {
-            alert("✨ Marks successfully captured & updated inside the ledger database!"); 
-        }
-        saveMarksBtn.disabled = false;
-        saveMarksBtn.innerText = "💾 Save All Marks";
-    });
-        
-    searchBar.addEventListener('input', (e) => {
-        renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
-    });
-
-    window.addEventListener('DOMContentLoaded', async () => {
-        await pullActiveCycleState();
-        await loadStudentRoster();
-        await fetchSubjects();
-    });
+        window.addEventListener('DOMContentLoaded', async () => {
+            await pullActiveCycleState();
+            await loadStudentRoster();
+            await fetchSubjects();
+        });
     </script>
 </body>
 </html>
