@@ -7,102 +7,174 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <style>
+        /* Custom scrollbar adjustments for a cleaner UI footprint */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
-    <!-- EXECUTIVE HEADER WITH BRANDING VALIDATION -->
-    <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 sticky top-0 z-50 border-b border-amber-500/30">
+        /* Print styling block for generating clean school-wide PDF results */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-report-container, #print-report-container * {
+                visibility: visible;
+            }
+            #print-report-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: #000;
+                font-family: 'Times New Roman', Times, serif;
+            }
+            .no-print {
+                display: none !important;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px !important;
+            }
+            th {
+                background-color: #f3f4f6 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
+
+    <!-- EXECUTIVE HEADER -->
+    <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20 no-print">
         <div class="flex-1">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3.5">
                 <!-- Official School Logo Badge -->
-                <div class="avatar bg-white p-1 rounded-full border-2 border-amber-400">
+                <div class="avatar bg-white p-1 rounded-full ring-2 ring-amber-400/50">
                     <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
-                        <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=100&auto=format&fit=crop" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-sm sm:text-md font-black tracking-wider uppercase text-amber-400" id="school-title">Bethania Academy</h1>
-                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-widest uppercase">Executive CBA Management Portal</p>
+                    <h1 class="text-sm sm:text-base font-extrabold tracking-wider uppercase text-amber-400" id="school-title">Bethania Academy</h1>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-widest uppercase">Executive CBA Management Portal</p>
                 </div>
             </div>
         </div>
         <div class="flex-none gap-2">
-            <span class="text-[10px] sm:text-xs font-mono bg-slate-800 border border-slate-700 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
+            <span class="text-[10px] sm:text-xs font-mono bg-slate-800/80 border border-slate-700/60 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Syncing Server...
             </span>
         </div>
+    </header>
+
+    <!-- PRINT-PREVIEW AREA (Only active during print rendering, hidden by default in UI) -->
+    <div id="print-report-container" class="hidden print:block p-8 bg-white text-slate-900">
+        <!-- Dynamically injected printable report content -->
     </div>
 
-    <main class="container mx-auto p-3 sm:p-4 max-w-6xl space-y-6 mt-4">
+    <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2 no-print">
 
         <!-- 👥 MANAGE LEARNERS BOARD -->
-        <div class="card bg-white shadow-xl border border-blue-100">
-            <div class="card-body p-4 sm:p-6">
-                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">👥 Manage Learners</h2>
+        <section class="card bg-white shadow-md border border-slate-200/60">
+            <div class="card-body p-5 sm:p-6">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <span class="text-xl">👥</span>
+                    <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Manage Learners</h2>
+                </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="label-text font-bold text-xs text-slate-700 mb-1 block">Select Grade to Edit</label>
-                        <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium">
-                            <option value="" disabled selected>Choose Grade...</option>
-                            <option value="-2">PP1</option><option value="-1">PP2</option>
-                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                            <option value="7">Grade 7</option><option value="8">Grade 8</option>
-                            <option value="9">Grade 9</option>
-                        </select>
-                        <div id="manage-learner-list" class="mt-3 max-h-60 overflow-y-auto border rounded-lg p-2 bg-slate-50 space-y-1">
-                            <p class="text-xs text-slate-400 text-center py-4">Select a grade to load learners...</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Select Grade to Edit</label>
+                            <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium focus:outline-none focus:border-slate-400">
+                                <option value="" disabled selected>Choose Grade...</option>
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                        <div id="manage-learner-list" class="max-h-60 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100">
+                            <p class="text-xs text-slate-400 text-center py-8 italic">Select a grade to load learners...</p>
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                        <div>
-                            <label class="label-text font-bold text-xs text-slate-700 mb-2 block font-semibold text-slate-700">Register New Learner</label>
-                            <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full mb-2" />
-                            <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full mb-3" />
+                    
+                    <div class="bg-slate-50/80 p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Register New Learner</span>
+                            <div class="form-control">
+                                <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                            </div>
+                            <div class="form-control">
+                                <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                            </div>
                         </div>
-                        <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold">✨ Save Learner</button>
+                        <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold mt-4 shadow-sm">
+                            ✨ Save Learner
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ASSESSMENT CYCLE DEPLOYER -->
-        <div class="card bg-white shadow-xl border border-slate-200">
-            <div class="card-body p-4 sm:p-6">
-                <div class="flex items-center gap-2 mb-2">
+        <section class="card bg-white shadow-md border border-slate-200/60">
+            <div class="card-body p-5 sm:p-6">
+                <div class="flex items-center gap-2.5 mb-2">
                     <span class="text-xl">🚀</span>
-                    <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
+                    <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
                 </div>
                 <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts and targets only the specified evaluation model.</p>
 
-                <div class="divider my-2"></div>
+                <div class="divider my-3"></div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-2">
-                    <div class="form-control bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4">
-                        <label class="label-text font-bold text-slate-700">1. Select Assessment Classification Type</label>
-                        <div class="flex gap-2 sm:gap-4">
-                            <label class="label cursor-pointer gap-2 bg-white px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm w-1/2 hover:bg-slate-100 transition">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+                    <div class="form-control bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4">
+                        <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase">1. Select Assessment Type</label>
+                        <div class="flex gap-3">
+                            <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
                                 <input type="radio" name="exam_class" value="main" class="radio radio-xs sm:radio-sm radio-primary" checked id="radio-main" />
-                                <span class="label-text text-xs sm:text-sm font-bold text-slate-700">🏫 Main Exam</span>
+                                <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🏫 Main Exam</span>
                             </label>
-                            <label class="label cursor-pointer gap-2 bg-white px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm w-1/2 hover:bg-slate-100 transition">
+                            <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
                                 <input type="radio" name="exam_class" value="contest" class="radio radio-xs sm:radio-sm radio-secondary" id="radio-contest" />
-                                <span class="label-text text-xs sm:text-sm font-bold text-slate-700">🧮 Contest</span>
+                                <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🧮 Contest</span>
                             </label>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-2 gap-3">
                             <div class="form-control">
-                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Calendar Year</label>
-                                <select id="cycle-year" class="select select-bordered select-sm w-full font-medium">
+                                <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Calendar Year</label>
+                                <select id="cycle-year" class="select select-bordered select-sm w-full font-medium focus:outline-none">
                                     <option value="2026">2026</option>
                                     <option value="2027">2027</option>
                                 </select>
                             </div>
                             <div class="form-control">
-                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1">Target Term</label>
-                                <select id="cycle-term" class="select select-bordered select-sm w-full font-medium">
+                                <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Target Term</label>
+                                <select id="cycle-term" class="select select-bordered select-sm w-full font-medium focus:outline-none">
                                     <option value="Term 1">Term 1</option>
                                     <option value="Term 2" selected>Term 2</option>
                                     <option value="Term 3">Term 3</option>
@@ -111,10 +183,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 space-y-4 flex flex-col justify-between">
+                    <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4 flex flex-col justify-between">
                         <div id="main-exam-options" class="space-y-2">
-                            <label class="label-text font-bold text-slate-700 block">2. Main Exam Series</label>
-                            <select id="main-series" class="select select-bordered select-sm w-full font-medium">
+                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Main Exam Series</label>
+                            <select id="main-series" class="select select-bordered select-sm w-full font-medium focus:outline-none">
                                 <option value="Opener Exam">Opener Exam</option>
                                 <option value="Mid Term Exam" selected>Mid Term Exam</option>
                                 <option value="End Term Exam">End Term Exam</option>
@@ -122,24 +194,24 @@
                         </div>
 
                         <div id="contest-options" class="space-y-2 hidden">
-                            <label class="label-text font-bold text-slate-700 block">2. Contest Identifier Series</label>
+                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Contest Identifier Series</label>
                             <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
                         </div>
 
                         <div class="form-control">
-                            <label class="label-text font-bold text-slate-700 text-xs mb-1">3. Closing Submission Deadline</label>
+                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase mb-1">3. Closing Submission Deadline</label>
                             <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
                         </div>
                     </div>
                 </div>
 
-                <div class="card-actions justify-end mt-4">
-                    <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto">
+                <div class="card-actions justify-end mt-5">
+                    <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto transition-colors duration-150">
                         ⚡ Publish Active Exam Context
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- THREE-COLUMN ACTION LAYOUT -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -148,18 +220,18 @@
             <div class="space-y-6 lg:col-span-1">
                 
                 <!-- SUBMISSION MONITOR -->
-                <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card bg-white shadow-md border border-slate-200/60">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">📡</span>
-                            <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Submission Tracker</h3>
+                            <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Submission Tracker</h3>
                         </div>
                         <p class="text-xs text-slate-500">Analyze real-time data uploads. Subjects filter automatically according to the grade tier selected.</p>
 
                         <div class="divider my-1"></div>
 
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Level</label>
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Class Level</label>
                             <select id="tracker-grade" class="select select-bordered select-sm w-full font-medium">
                                 <option value="" disabled selected>Choose Class...</option>
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
@@ -171,67 +243,67 @@
                         </div>
 
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Subject Component</label>
-                            <select id="tracker-subject" class="select select-bordered select-sm w-full" disabled>
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Subject Component</label>
+                            <select id="tracker-subject" class="select select-bordered select-sm w-full font-medium" disabled>
                                 <option value="" disabled selected>Choose class level first...</option>
                             </select>
                         </div>
 
                         <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
 
-                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-                            <div class="bg-slate-100 p-2 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600">
+                        <div class="border border-slate-200/80 rounded-lg overflow-hidden bg-slate-50">
+                            <div class="bg-slate-100/80 p-2.5 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600 tracking-wider uppercase">
                                 <span>Learner Name</span>
                                 <span>Upload Status</span>
                             </div>
                             <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
-                                <p class="text-center py-6 text-xs italic text-slate-400">Select parameters to audit...</p>
+                                <p class="text-center py-8 text-xs italic text-slate-400">Select parameters to audit...</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- LEARNING AREA MANAGER -->
-                <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card bg-white shadow-md border border-slate-200/60">
                     <div class="card-body p-4 sm:p-5 space-y-4">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">🛠️</span>
-                            <h3 class="card-title text-sm sm:text-base font-extrabold text-slate-900 uppercase">Manage Learning Areas</h3>
+                            <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Manage Learning Areas</h3>
                         </div>
                         <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam papers/components, or remove outdated selections from the portals.</p>
 
                         <div class="divider my-1"></div>
 
-                        <div class="tabs tabs-boxed bg-slate-100 p-1 mb-2">
-                            <button class="tab tab-active tab-xs w-1/2 font-bold" id="tab-add-sub">Add Content</button>
-                            <button class="tab tab-xs w-1/2 font-bold" id="tab-del-sub">Remove Content</button>
+                        <div class="tabs tabs-boxed bg-slate-100/80 p-1 mb-2">
+                            <button class="tab tab-active tab-xs w-1/2 font-bold transition-all" id="tab-add-sub">Add Content</button>
+                            <button class="tab tab-xs w-1/2 font-bold transition-all" id="tab-del-sub">Remove Content</button>
                         </div>
 
                         <div id="sub-panel-add" class="space-y-3">
                             <div class="form-control">
-                                <label class="label-text text-[11px] font-bold text-slate-700 mb-1">1. Subject / Learning Area Title</label>
+                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">1. Subject / Learning Area Title</label>
                                 <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
                             </div>
 
-                            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-2">
-                                <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500">Optional Component Paper Setup</span>
-                                <div class="grid grid-cols-2 gap-1.5">
+                            <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                                <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block mb-1">Optional Component Paper Setup</span>
+                                <div class="grid grid-cols-2 gap-2">
                                     <input type="text" id="cfg-paper-name" placeholder="Paper name (e.g. Paper 1)" class="input input-bordered input-xs w-full" />
                                     <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
                                 </div>
                             </div>
-                            <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold">✨ Save Subjects & Components</button>
+                            <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold shadow-sm">✨ Save Subjects & Components</button>
                         </div>
 
                         <div id="sub-panel-del" class="space-y-3 hidden">
                             <div class="form-control">
-                                <label class="label-text text-[11px] font-bold text-slate-700 mb-1">Target Subject to Delete</label>
+                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Target Subject to Delete</label>
                                 <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
                                     <option value="" disabled selected>Select from database...</option>
                                 </select>
                             </div>
-                            <p class="text-[10px] text-red-600 font-semibold italic">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
-                            <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold">🗑️ Delete Selected Subject</button>
+                            <p class="text-[10px] text-red-500 font-semibold italic bg-red-50 p-2 rounded-lg border border-red-100">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
+                            <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold shadow-sm">🗑️ Delete Selected Subject</button>
                         </div>
                     </div>
                 </div>
@@ -239,22 +311,22 @@
             </div>
 
             <!-- BROAD SHEET LEDGER GENERATOR -->
-            <div class="card bg-white shadow-xl border border-slate-200 lg:col-span-2">
+            <div class="card bg-white shadow-md border border-slate-200/60 lg:col-span-2">
                 <div class="card-body p-4 sm:p-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2">
                         <div class="flex items-center gap-2">
                             <span class="text-xl">📊</span>
-                            <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                            <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase">Performance Analytical Engine</h2>
                         </div>
-                        <span class="badge badge-warning text-[9px] sm:text-[10px] font-black uppercase text-slate-900" id="detected-active-label">No Deployed Exam Series Found</span>
+                        <span class="badge badge-warning text-[9px] sm:text-[10px] font-bold uppercase py-2.5 px-3 tracking-wide" id="detected-active-label">No Deployed Exam Series Found</span>
                     </div>
                     <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
 
-                    <div class="divider my-1"></div>
+                    <div class="divider my-2"></div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200/80 items-end">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 items-end">
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1">Class Cohort</label>
+                            <label class="label-text font-bold text-slate-600 text-[11px] tracking-wider uppercase mb-1.5">Class Cohort</label>
                             <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
                                 <option value="" disabled selected>Choose Grade...</option>
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
@@ -265,33 +337,38 @@
                             </select>
                         </div>
 
-                        <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full">
+                        <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full transition-all">
                             📊 Compile Broad Sheet
                         </button>
                     </div>
 
-                    <div class="overflow-x-auto rounded-xl border border-slate-200 mt-4">
+                    <div class="overflow-x-auto rounded-xl border border-slate-200/80 mt-5">
                         <table class="table table-xs table-zebra w-full font-medium text-slate-700">
                             <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
                                 <tr>
-                                    <th>Learner Name</th>
-                                    <th>Stream / Arm</th>
-                                    <th>Loading Column Configuration...</th>
+                                    <th class="py-3 px-4">Learner Name</th>
+                                    <th class="py-3 px-4 text-center">Stream / Arm</th>
+                                    <th class="py-3 px-4 text-left">Loading Column Configuration...</th>
                                 </tr>
                             </thead>
                             <tbody id="broadsheet-rows" class="font-mono text-xs">
                                 <tr>
-                                    <td colspan="3" class="text-center py-10 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
+                                    <td colspan="3" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
-                        <div id="analytical-summary-badges" class="flex flex-wrap gap-1.5 justify-center sm:justify-start"></div>
-                        <button id="download-csv-btn" class="btn btn-success text-white btn-sm font-bold w-full sm:w-auto" disabled>
-                            📥 Export Ledger (.CSV)
-                        </button>
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5">
+                        <div id="analytical-summary-badges" class="flex flex-wrap gap-2 justify-center sm:justify-start"></div>
+                        <div class="flex gap-2.5 w-full sm:w-auto">
+                            <button id="download-csv-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                📥 Export Ledger (.CSV)
+                            </button>
+                            <button id="download-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                📄 Export Report (PDF)
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -337,7 +414,9 @@
         const broadsheetHeader = document.getElementById('broadsheet-header');
         const broadsheetRows = document.getElementById('broadsheet-rows');
         const downloadCsvBtn = document.getElementById('download-csv-btn');
+        const downloadPdfBtn = document.getElementById('download-pdf-btn');
         const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
+        const printReportContainer = document.getElementById('print-report-container');
 
         // Config Elements
         const tabAddSub = document.getElementById('tab-add-sub');
@@ -355,6 +434,7 @@
         let globalPapersList = [];
         let localStudentsCache = [];
         let activeBroadSheetCsvData = "";
+        let printableReportHtml = "";
 
         // Official CBC Curriculum Rules (Compulsory Lists)
         const CBC_SUBJECT_TIERS = {
@@ -380,6 +460,13 @@
             if (g >= 4 && g <= 6) return "upper_primary";
             if (g >= 7 && g <= 9) return "junior_school";
             return "upper_primary";
+        }
+
+        function getGradeLabel(grade) {
+            const val = parseInt(grade);
+            if (val === -2) return "PP1";
+            if (val === -1) return "PP2";
+            return `Grade ${val}`;
         }
 
         // --- MATH RECKONING SCHEMES ---
@@ -440,15 +527,15 @@
         async function fetchManageList() {
             const grade = parseInt(manageGradeSelect.value);
             if (!grade) return;
-            manageList.innerHTML = '<p class="text-xs text-center py-2">Loading...</p>';
+            manageList.innerHTML = '<p class="text-xs text-center py-4">Loading learners...</p>';
             const { data } = await _supabase.from('students').select('*').eq('grade', grade);
             manageList.innerHTML = (data || []).map(s => `
-                <div class="flex justify-between items-center text-xs p-2 bg-white border-b border-slate-100">
+                <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
                     <div class="flex flex-col">
-                        <span class="font-medium">${s.name} <span class="text-slate-400 font-mono italic">(${s.stream})</span></span>
-                        <span class="text-[10px] text-slate-500 font-mono">ID: ${s.login_id || 'NO ID'}</span>
+                        <span class="font-semibold text-slate-800">${s.name} <span class="text-slate-400 font-mono italic">(${s.stream})</span></span>
+                        <span class="text-[10px] text-slate-400 font-mono mt-0.5">ID: ${s.login_id || 'NO ID'}</span>
                     </div>
-                    <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white">Delete</button>
+                    <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white px-2.5">Delete</button>
                 </div>
             `).join('');
         }
@@ -569,7 +656,7 @@
 
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
             if(targetStudents.length === 0) {
-                trackerOutput.innerHTML = `<p class="p-4 text-center text-xs text-error font-semibold">No students in this grade.</p>`;
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">No students in this grade.</p>`;
                 return;
             }
 
@@ -592,10 +679,10 @@
                     }).join(', ');
 
                 return `
-                    <div class="flex items-center justify-between p-2.5 text-xs border-b border-slate-100">
+                    <div class="flex items-center justify-between p-3 text-xs border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
                         <div class="flex flex-col">
-                            <span class="font-bold text-slate-800">${s.name}</span>
-                            <span class="text-[9px] text-slate-400 font-mono">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
+                            <span class="font-semibold text-slate-800">${s.name}</span>
+                            <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
                         </div>
                         <div>
                             ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
@@ -623,7 +710,7 @@
 
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
             if(targetStudents.length === 0) {
-                broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
+                broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
                 return;
             }
 
@@ -700,30 +787,30 @@
             });
 
             // Build Broadsheet Table Headers
-            let headerHtml = `<tr><th class="p-3 text-left">Learner Name</th><th class="p-3 text-center">Stream</th>`;
+            let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
             filteredSubjects.forEach(sub => {
-                headerHtml += `<th class="p-3 text-center">${sub.subject_name}</th>`;
+                headerHtml += `<th class="py-3 px-4 text-center">${sub.subject_name}</th>`;
             });
-            headerHtml += `<th class="p-3 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
-            headerHtml += `<th class="p-3 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
-            headerHtml += `<th class="p-3 text-center">Rating</th>`;
-            headerHtml += `<th class="p-3 text-center">Pos</th></tr>`;
+            headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
+            headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
+            headerHtml += `<th class="py-3 px-4 text-center">Rating</th>`;
+            headerHtml += `<th class="py-3 px-4 text-center">Pos</th></tr>`;
             broadsheetHeader.innerHTML = headerHtml;
 
             // Generate Table Rows
             broadsheetRows.innerHTML = calculatedStudents.map(cs => {
-                let cells = `<td class="text-left font-bold py-2.5 px-3 text-slate-900">${cs.name}</td>`;
-                cells += `<td class="text-center py-2.5 px-3"><span class="badge badge-outline">${cs.stream}</span></td>`;
+                let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
+                cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
                 
                 filteredSubjects.forEach(sub => {
-                    cells += `<td class="text-center py-2.5 px-3 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
                 });
 
-                cells += `<td class="text-center py-2.5 px-3 font-bold">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
-                cells += `<td class="text-center py-2.5 px-3 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
-                cells += `<td class="text-center py-2.5 px-3"><span class="badge font-black ${cs.rating.class}">${cs.rating.text}</span></td>`;
-                cells += `<td class="text-center py-2.5 px-3 font-black text-slate-950">${cs.position}</td>`;
-                return `<tr>${cells}</tr>`;
+                cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
+                cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
+                cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] ${cs.rating.class}">${cs.rating.text}</span></td>`;
+                cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
+                return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
             }).join('');
 
             // CSV Export Assembly
@@ -748,9 +835,81 @@
             const totalRanked = calculatedStudents.length;
             const classMean = (calculatedStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
             analyticalSummaryBadges.innerHTML = `
-                <span class="badge badge-neutral p-3 font-bold text-xs uppercase">Class Cohort Size: ${totalRanked}</span>
-                <span class="badge badge-primary p-3 font-bold text-xs uppercase">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
+                <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
+                <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
             `;
+
+            // HTML PDF REPORT TEMPLATE ASSEMBLY
+            let printableHeaderHtml = `
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 30px;">
+                    <div style="flex: 0 0 120px;">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" style="width: 100%; height: auto; max-height: 100px; object-fit: contain;" />
+                    </div>
+                    <div style="flex: 1; text-align: center; padding: 0 20px;">
+                        <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; font-family: 'Times New Roman', Times, serif;">Bethania Academy</h1>
+                        <p style="font-style: italic; font-size: 14px; color: #555; margin-bottom: 5px;">"Determination is Nobility"</p>
+                        <p style="font-size: 12px; color: #444;">P.O. Box 12345, City, Country | Tel: +123 456 789<br>Email: info@bethaniaacademy.edu</p>
+                    </div>
+                    <div style="flex: 0 0 120px;"></div>
+                </div>
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 style="font-size: 20px; text-transform: uppercase; text-decoration: underline; margin-bottom: 5px; font-weight: bold;">General Performance Summary Ledger</h2>
+                    <p style="font-size: 14px; font-weight: bold;">Assessment Cycle: ${currentActiveExamName} | Grade Level: ${getGradeLabel(grade)}</p>
+                </div>
+            `;
+
+            let printableTableHtml = `
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; font-family: 'Times New Roman', Times, serif;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #000; padding: 8px; text-align: left;">Learner Name</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">Stream</th>
+                            ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; padding: 8px; text-align: center;">${sub.subject_name}</th>`).join('')}
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Total Pts' : 'Total Marks'}</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Mean Pts' : 'Mean (%)'}</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rating</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${calculatedStudents.map(cs => `
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">${cs.name}</td>
+                                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.stream}</td>
+                                ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.subjectScores[sub.subject_name] || '-'}</td>`).join('')}
+                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>
+                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; color: #1e3a8a;">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>
+                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.rating.text}</td>
+                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.position}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            let printableSummaryBadgesHtml = `
+                <div style="display: flex; gap: 20px; justify-content: flex-start; margin-bottom: 40px; font-family: 'Times New Roman', Times, serif; font-size: 13px;">
+                    <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold;">Class Cohort Size: ${totalRanked} Students</div>
+                    <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold; background-color: #f9fafb;">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</div>
+                </div>
+            `;
+
+            let printableFooterSignaturesHtml = `
+                <div style="margin-top: 60px; display: flex; justify-content: space-between; font-family: 'Times New Roman', Times, serif; page-break-inside: avoid;">
+                    <div style="width: 220px; text-align: center;">
+                        <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Class Teacher's Signature</div>
+                    </div>
+                    <div style="width: 150px; text-align: center;">
+                        <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Date</div>
+                    </div>
+                    <div style="width: 220px; text-align: center;">
+                        <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Principal's Signature & Stamp</div>
+                    </div>
+                </div>
+            `;
+
+            printableReportHtml = printableHeaderHtml + printableSummaryBadgesHtml + printableTableHtml + printableFooterSignaturesHtml;
+            downloadPdfBtn.disabled = false;
         });
 
         downloadCsvBtn.addEventListener('click', () => {
@@ -761,6 +920,12 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        });
+
+        downloadPdfBtn.addEventListener('click', () => {
+            if(!printableReportHtml) return;
+            printReportContainer.innerHTML = printableReportHtml;
+            window.print();
         });
 
         window.addEventListener('DOMContentLoaded', initAdminEngine);
