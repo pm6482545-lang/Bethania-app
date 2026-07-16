@@ -463,17 +463,19 @@
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
-                "Psychomotor and Creative Activities", "Religious Education Activities", "Literacy",
-                "English Language Activities", "Kiswahili Language Activities"
+                "Psychomotor Activities", "Religious Education Activities",
+                "Indigenous Language Activities", "Kiswahili Language Activities"
             ],
             upper_primary: [
                 "English", "Kiswahili", "Mathematics", "Science and Technology",
-                "Agriculture and Nutrition", "Creative Arts", "Social Studies", "Religious Education"
+                "Agriculture and Nutrition", "Creative Arts", "Social Studies", 
+                "Christian Religious Education (C.R.E)", "Islamic Religious Education (I.R.E)", "Hindu Religious Education (H.R.E)"
             ],
             junior_school: [
                 "English", "Kiswahili", "Mathematics", "Integrated Science",
                 "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
-                "Creative Arts and Sports", "Religious Education"
+                "Creative Arts and Sports", "Christian Religious Education (C.R.E)", 
+                "Islamic Religious Education (I.R.E)", "Hindu Religious Education (H.R.E)"
             ]
         };
 
@@ -784,7 +786,7 @@
             }
         });
 
-        // Submission Tracker with Dynamic Schema Query Alignment
+        // Submission Tracker - UPDATED QUERY RELATION TO MATCH SUBJECT_ID ONLY
         trackerGrade.addEventListener('change', async () => {
             trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
             const selectedGrade = trackerGrade.value;
@@ -819,35 +821,29 @@
             trackerOutput.innerHTML = '<p class="text-center py-8 text-xs italic text-slate-400">Computing Matrix...</p>';
 
             try {
-                const targetPapers = globalPapersList.filter(p => p.subject_id === subId);
                 const studIds = targetStudents.map(s => s.id);
                 
-                let uploadedMarks = [];
-                if (targetPapers.length > 0) {
-                    const { data, error } = await _supabase.from('marks_entry')
-                        .select('*')
-                        .eq(dbSchemaCache.examColumn, currentActiveExamName)
-                        .in('student_id', studIds)
-                        .in('paper_id', targetPapers.map(p => p.id));
-                    if (error) throw error;
-                    uploadedMarks = data || [];
-                }
+                // Fetch direct subject entries (where paper_id is null as sent from Index.html)
+                const { data, error } = await _supabase.from('marks_entry')
+                    .select('*')
+                    .eq(dbSchemaCache.examColumn, currentActiveExamName)
+                    .in('student_id', studIds)
+                    .eq('subject_id', subId)
+                    .is('paper_id', null);
+
+                if (error) throw error;
+                const uploadedMarks = data || [];
 
                 trackerOutput.innerHTML = targetStudents.map(s => {
-                    const marksForStudent = uploadedMarks.filter(m => m.student_id === s.id);
-                    const hasUploaded = targetPapers.length > 0 && marksForStudent.length >= targetPapers.length;
-                    let scoreDetails = targetPapers.length === 0 ? "No papers set up" : 
-                        marksForStudent.map(m => {
-                            const pap = targetPapers.find(tp => tp.id === m.paper_id);
-                            const actualScore = m[dbSchemaCache.scoreColumn];
-                            return pap ? `${pap.paper_name}: ${actualScore}` : `Score: ${actualScore}`;
-                        }).join(', ');
+                    const studentMark = uploadedMarks.find(m => m.student_id === s.id);
+                    const hasUploaded = studentMark !== undefined;
+                    let scoreDetails = hasUploaded ? `Score: ${studentMark[dbSchemaCache.scoreColumn]}` : "No Data";
 
                     return `
                         <div class="flex items-center justify-between p-3 text-xs border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
                             <div class="flex flex-col">
                                 <span class="font-semibold text-slate-800">${s.name}</span>
-                                <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
+                                <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails}</span>
                             </div>
                             <div>
                                 ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
@@ -860,7 +856,7 @@
             }
         });
 
-        // REPORT COMPILATION & POSITION MATRIX ENGINE (Using sniffed schema columns)
+        // REPORT COMPILATION & POSITION MATRIX ENGINE (Using Sniffed subject_id layout alignment)
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
             if (isNaN(grade)) return alert("Select target grade cohort!");
@@ -892,19 +888,17 @@
 
                 const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
                 const subjectIds = filteredSubjects.map(s => s.id);
-
-                // Filter relevant papers
-                const relevantPapers = globalPapersList.filter(p => subjectIds.includes(p.subject_id));
                 const studentIds = targetStudents.map(s => s.id);
 
-                // Fetch scores using Sniffed Exam Column Name
+                // Fetch scores directly mapped to subject_id (paper_id = null)
                 const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
                     .in('student_id', studentIds)
-                    .in('paper_id', relevantPapers.map(p => p.id));
+                    .in('subject_id', subjectIds)
+                    .is('paper_id', null);
+
                 if (marksErr) throw marksErr;
-                
                 const marksData = marks || [];
 
                 // Compute Student Metrics to determine Class Positions
@@ -914,33 +908,18 @@
                     let subjectScores = {};
 
                     filteredSubjects.forEach(sub => {
-                        const papersForSub = relevantPapers.filter(p => p.subject_id === sub.id);
-                        if (papersForSub.length === 0) return;
-
-                        let subRawSum = 0;
-                        let subMaxSum = 0;
-                        let recordExists = false;
-
-                        papersForSub.forEach(p => {
-                            const m = marksData.find(md => md.student_id === s.id && md.paper_id === p.id);
-                            if (m) {
-                                subRawSum += parseFloat(m[dbSchemaCache.scoreColumn]);
-                                recordExists = true;
-                            }
-                            subMaxSum += parseFloat(p.max_marks);
-                        });
-
-                        if (recordExists) {
+                        const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
+                        if (m) {
+                            const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
                             if (isJuniorSchool) {
-                                // Instant conversion from raw scores to 8-Point scale points (Grades 7-9)
-                                const points = convertScoreToPoints(subRawSum, subMaxSum);
+                                // Conversion from raw score to 8-Point scale points (Grades 7-9)
+                                const points = convertScoreToPoints(subScore, 100);
                                 totals += points;
                                 subjectScores[sub.subject_name] = `${points} Pts`;
                             } else {
-                                // Core raw marks totals for Primary School (PP1 to Grade 6)
-                                const percentage = (subRawSum / subMaxSum) * 100;
-                                totals += percentage;
-                                subjectScores[sub.subject_name] = `${percentage.toFixed(1)}%`;
+                                // Core raw marks totals for Primary School
+                                totals += subScore;
+                                subjectScores[sub.subject_name] = `${subScore.toFixed(1)}%`;
                             }
                             count++;
                         } else {
