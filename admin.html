@@ -6,7 +6,7 @@
     <title>Bethania Academy - Executive Admin Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://tailwindcss.com"></script>
     <!-- Standard PDF Compilation & Rendering Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
@@ -905,7 +905,10 @@
             cells.forEach(c => {
                 c.style.border = '1px solid #1e293b';
                 c.style.padding = '4px 5px';
-                c.style.textAlign = 'center';
+                // Center-align columns except for names or custom left-aligned headers/footers
+                if (c.style.textAlign !== 'left') {
+                    c.style.textAlign = 'center';
+                }
             });
             const headers = pdfRenderCanvas.querySelectorAll('th');
             headers.forEach(h => {
@@ -973,7 +976,9 @@
                 page1.querySelectorAll('th, td').forEach(cell => {
                     cell.style.border = '1px solid #000000';
                     cell.style.padding = '4px 5px';
-                    cell.style.textAlign = 'center';
+                    if (cell.style.textAlign !== 'left') {
+                        cell.style.textAlign = 'center';
+                    }
                 });
                 page1.querySelectorAll('th').forEach(th => {
                     th.style.backgroundColor = '#f1f5f9';
@@ -1014,7 +1019,9 @@
                 page2.querySelectorAll('th, td').forEach(cell => {
                     cell.style.border = '1px solid #000000';
                     cell.style.padding = '4px 5px';
-                    cell.style.textAlign = 'center';
+                    if (cell.style.textAlign !== 'left') {
+                        cell.style.textAlign = 'center';
+                    }
                 });
 
                 // Generate Canvas 2
@@ -1271,21 +1278,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${calculatedMarksStudents.map((cs, index) => {
-                            // Strip extra whitespaces, double spacing and line-breaks from student names
-                            const cleanedName = cs.name.replace(/\s+/g, ' ').trim();
-                            return `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanedName}</td>
-                                    ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
-                                    <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
-                                    <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
-                                    <td style="font-weight: bold;">${cs.rating}</td>
-                                    <td style="font-weight: 900;">${cs.position}</td>
-                                </tr>
-                            `;
-                        }).join('')}
+                        ${calculatedMarksStudents.map((cs, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
+                                ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
+                                <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
+                                <td style="font-weight: bold;">${cs.rating}</td>
+                                <td style="font-weight: 900;">${cs.position}</td>
+                            </tr>
+                        `).join('')}
                         <tr style="background-color: #f8fafc; font-weight: bold;">
                             <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
                             ${filteredSubjects.map(sub => `<td>${subjectMarksStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
@@ -1365,21 +1368,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${calculatedPointsStudents.map((cs, index) => {
-                                // Strip extra whitespaces, double spacing and line-breaks from student names
-                                const cleanedName = cs.name.replace(/\s+/g, ' ').trim();
-                                return `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanedName}</td>
-                                        ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
-                                        <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
-                                        <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
-                                        <td style="font-weight: bold;">${cs.rating}</td>
-                                        <td style="font-weight: 900;">${cs.position}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
+                            ${calculatedPointsStudents.map((cs, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
+                                    ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                    <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
+                                    <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
+                                    <td style="font-weight: bold;">${cs.rating}</td>
+                                    <td style="font-weight: 900;">${cs.position}</td>
+                                </tr>
+                            `).join('')}
                             <tr style="background-color: #f8fafc; font-weight: bold;">
                                 <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
                                 ${filteredSubjects.map(sub => `<td>${subjectPointsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
