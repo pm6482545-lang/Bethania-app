@@ -63,8 +63,8 @@
             
             <!-- Embedded PDF Preview Area (A4 Landscape aspect ratio representation) -->
             <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
-                <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px;">
-                    <!-- Dynamically populated PDF view -->
+                <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative; overflow: hidden;">
+                    <!-- Dynamically populated PDF view with watermark -->
                 </div>
             </div>
 
@@ -353,14 +353,13 @@
                         <table class="table table-xs table-zebra w-full font-medium text-slate-700">
                             <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
                                 <tr>
-                                    <th class="py-3 px-4">Learner Name</th>
-                                    <th class="py-3 px-4 text-center">Stream / Arm</th>
+                                    <th class="py-3 px-4 text-left">Learner Name</th>
                                     <th class="py-3 px-4 text-left">Loading Column Configuration...</th>
                                 </tr>
                             </thead>
                             <tbody id="broadsheet-rows" class="font-mono text-xs">
                                 <tr>
-                                    <td colspan="3" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
+                                    <td colspan="2" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -841,7 +840,7 @@
                     `;
                 }).join('');
             } catch (err) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>';`;
             }
         });
 
@@ -852,33 +851,45 @@
             cachedPdfData = { title, header: headerHtml, body: bodyHtml, stats: statsHtml };
             currentPdfTitle = title;
 
-            // Render exact landscape view structure inside the modal sandbox
+            // Render exact landscape view structure inside the modal sandbox with centered watermark background styling
             pdfRenderCanvas.innerHTML = `
-                <div style="width: 100%; box-sizing: border-box; margin-bottom: 2rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        <div style="text-align: center; flex: 1;">
-                            <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                            <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                <!-- Page 1 Container -->
+                <div style="width: 100%; box-sizing: border-box; margin-bottom: 2rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1.5rem; position: relative; min-height: 520px; overflow: hidden;">
+                    <!-- Centered Watermark Layer with Adjusted Opacity -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="margin-top: 15px;">${headerHtml}</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
+                            ${bodyHtml}
+                        </table>
                     </div>
-                    <div style="margin-top: 15px;">${headerHtml}</div>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
-                        ${bodyHtml}
-                    </table>
                 </div>
 
-                <div style="width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        <div style="text-align: center; flex: 1;">
-                            <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                            <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                <!-- Page 2 Container -->
+                <div style="width: 100%; box-sizing: border-box; position: relative; min-height: 520px; overflow: hidden;">
+                    <!-- Centered Watermark Layer with Adjusted Opacity -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="margin-top: 15px;">${statsHtml}</div>
                     </div>
-                    <div style="margin-top: 15px;">${statsHtml}</div>
                 </div>
             `;
 
@@ -930,23 +941,31 @@
 
                 const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
 
-                // PAGE 1 Compilation
+                // PAGE 1 Compilation with dynamic centered watermark styling
                 const page1 = document.createElement('div');
                 page1.style.padding = '40px';
                 page1.style.color = '#000000';
+                page1.style.position = 'relative';
+                page1.style.minHeight = '650px';
+                page1.style.overflow = 'hidden';
                 page1.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        <div style="text-align: center; flex: 1;">
-                            <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
-                            <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                    <!-- Background Watermark Layer -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        ${cachedPdfData.header}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
+                            ${cachedPdfData.body}
+                        </table>
                     </div>
-                    ${cachedPdfData.header}
-                    <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
-                        ${cachedPdfData.body}
-                    </table>
                 `;
                 offscreenContainer.appendChild(page1);
 
@@ -966,21 +985,29 @@
                 const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
                 doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
 
-                // PAGE 2 Compilation
+                // PAGE 2 Compilation with background watermark styling
                 offscreenContainer.innerHTML = ""; // Clear page 1 nodes
                 const page2 = document.createElement('div');
                 page2.style.padding = '40px';
                 page2.style.color = '#000000';
+                page2.style.position = 'relative';
+                page2.style.minHeight = '650px';
+                page2.style.overflow = 'hidden';
                 page2.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        <div style="text-align: center; flex: 1;">
-                            <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
-                            <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                    <!-- Background Watermark Layer -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        ${cachedPdfData.stats}
                     </div>
-                    ${cachedPdfData.stats}
                 `;
                 offscreenContainer.appendChild(page2);
 
@@ -1056,7 +1083,7 @@
 
                 const targetStudents = localStudentsCache.filter(s => s.grade === grade);
                 if (targetStudents.length === 0) {
-                    broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
+                    broadsheetRows.innerHTML = `<tr><td colspan="4" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
                     return;
                 }
 
@@ -1118,7 +1145,6 @@
                     return {
                         id: s.id,
                         name: s.name,
-                        stream: s.stream,
                         subjectScores,
                         totals: totalMarks,
                         average: average,
@@ -1156,7 +1182,6 @@
                     return {
                         id: s.id,
                         name: s.name,
-                        stream: s.stream,
                         subjectScores,
                         totals: totalPoints,
                         average: average,
@@ -1172,7 +1197,7 @@
                     calculatedPointsStudents.forEach((cs, i) => { cs.position = i + 1; });
                 }
 
-                let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
+                let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th>`;
                 filteredSubjects.forEach(sub => {
                     headerHtml += `<th class="py-3 px-4 text-center">${getSubjectShorthand(sub.subject_name)}</th>`;
                 });
@@ -1187,7 +1212,6 @@
 
                 broadsheetRows.innerHTML = liveRenderStudents.map(cs => {
                     let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
-                    cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
                     
                     filteredSubjects.forEach(sub => {
                         const val = cs.subjectScores[sub.subject_name];
@@ -1239,12 +1263,11 @@
                         <tr>
                             <th style="width: 40px;">NO.</th>
                             <th style="text-align: left;">LEARNER FULL NAME</th>
-                            <th style="width: 70px;">STREAM</th>
-                            ${filteredSubjects.map(sub => `<th style="width: 60px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                            <th style="width: 60px;">TOTAL</th>
-                            <th style="width: 60px;">AVRG</th>
-                            <th style="width: 65px;">RATE</th>
-                            <th style="width: 55px;">POS</th>
+                            ${filteredSubjects.map(sub => `<th style="width: 65px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                            <th style="width: 65px;">TOTAL</th>
+                            <th style="width: 65px;">AVRG</th>
+                            <th style="width: 70px;">RATE</th>
+                            <th style="width: 60px;">POS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1252,7 +1275,6 @@
                             <tr>
                                 <td>${index + 1}</td>
                                 <td style="text-align: left; font-weight: bold;">${cs.name}</td>
-                                <td>${cs.stream}</td>
                                 ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                 <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                 <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
@@ -1261,13 +1283,13 @@
                             </tr>
                         `).join('')}
                         <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="3" style="text-align: left; padding-left: 10px;">TOTAL</td>
+                            <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
                             ${filteredSubjects.map(sub => `<td>${subjectMarksStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
                             <td>${calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
                             <td colspan="3"></td>
                         </tr>
                         <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="3" style="text-align: left; padding-left: 10px;">AVERAGE</td>
+                            <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
                             ${filteredSubjects.map(sub => {
                                 const stats = subjectMarksStats[sub.subject_name];
                                 return `<td>${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
@@ -1276,7 +1298,7 @@
                             <td colspan="3"></td>
                         </tr>
                         <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="3" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
+                            <td colspan="2" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
                             ${filteredSubjects.map(sub => {
                                 const rank = subjectMarksList.findIndex(x => x.name === sub.subject_name) + 1;
                                 return `<td>${rank}</td>`;
@@ -1331,12 +1353,11 @@
                             <tr>
                                 <th style="width: 40px;">NO.</th>
                                 <th style="text-align: left;">LEARNER FULL NAME</th>
-                                <th style="width: 70px;">STREAM</th>
-                                ${filteredSubjects.map(sub => `<th style="width: 60px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                                <th style="width: 60px;">TOTAL</th>
-                                <th style="width: 60px;">AVRG</th>
-                                <th style="width: 65px;">RATE</th>
-                                <th style="width: 55px;">POS</th>
+                                ${filteredSubjects.map(sub => `<th style="width: 65px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                                <th style="width: 65px;">TOTAL</th>
+                                <th style="width: 65px;">AVRG</th>
+                                <th style="width: 70px;">RATE</th>
+                                <th style="width: 60px;">POS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1344,7 +1365,6 @@
                                 <tr>
                                     <td>${index + 1}</td>
                                     <td style="text-align: left; font-weight: bold;">${cs.name}</td>
-                                    <td>${cs.stream}</td>
                                     ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                     <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                     <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
@@ -1353,13 +1373,13 @@
                                 </tr>
                             `).join('')}
                             <tr style="background-color: #f8fafc; font-weight: bold;">
-                                <td colspan="3" style="text-align: left; padding-left: 10px;">TOTAL</td>
+                                <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
                                 ${filteredSubjects.map(sub => `<td>${subjectPointsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
                                 <td>${calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
                                 <td colspan="3"></td>
                             </tr>
                             <tr style="background-color: #f8fafc; font-weight: bold;">
-                                <td colspan="3" style="text-align: left; padding-left: 10px;">AVERAGE</td>
+                                <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
                                 ${filteredSubjects.map(sub => {
                                     const stats = subjectPointsStats[sub.subject_name];
                                     return `<td>${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
@@ -1368,7 +1388,7 @@
                                 <td colspan="3"></td>
                             </tr>
                             <tr style="background-color: #f8fafc; font-weight: bold;">
-                                <td colspan="3" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
+                                <td colspan="2" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
                                 ${filteredSubjects.map(sub => {
                                     const rank = subjectPointsList.findIndex(x => x.name === sub.subject_name) + 1;
                                     return `<td>${rank}</td>`;
