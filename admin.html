@@ -871,172 +871,180 @@
             }
         });
 
-        // OVERLEAF PREMIUM PDF PORTAL VIEWER INJECTOR
+        // OVERLEAF PREMIUM PDF PORTAL VIEWER & FILE DOWNLOAD TRIGGER
         function openPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
-            const previewWindow = window.open("", "_blank");
-            if (!previewWindow) {
-                alert("Pop-up blocked! Please allow pop-ups to preview/download the premium PDF reports.");
-                return;
-            }
-
             const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
 
-            previewWindow.document.write(`
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${title}</title>
-                    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-                    <script src="https://cdn.tailwindcss.com"><\/script>
-                    <style>
-                        @media print {
-                            body {
-                                background: white !important;
-                                color: black !important;
-                            }
-                            .no-print {
-                                display: none !important;
-                            }
-                            .page-container {
-                                box-shadow: none !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                height: auto !important;
-                                background: transparent !important;
-                            }
-                            @page {
-                                size: A4 landscape;
-                                margin: 0.8cm 1cm;
-                            }
-                            tr {
-                                page-break-inside: avoid;
-                            }
-                        }
+            // Complete standard document structure for PDF delivery
+            const rawDocumentHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0.8cm 1cm;
+        }
+        body {
+            background: white !important;
+            color: #0f172a !important;
+            font-family: 'Times New Roman', Times, serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .page-container {
+            width: 100%;
+            position: relative;
+            box-sizing: border-box;
+        }
+        /* Strict Page budgeting: push statistics box explicitly onto page 2 */
+        .page-break {
+            page-break-before: always;
+        }
+        .pdf-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            width: 450px;
+            height: 450px;
+            opacity: 0.04;
+            background-image: url('${logoUrl}');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 1;
+            pointer-events: none;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .pdf-content {
+            position: relative;
+            z-index: 10;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 10.5px;
+        }
+        th, td {
+            border: 1px solid #1e293b !important;
+            padding: 5px 6px !important;
+            text-align: center;
+        }
+        th {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            font-size: 9px;
+        }
+        .learner-name-col {
+            text-align: left !important;
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
+            font-weight: bold;
+        }
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-b: 2px solid #0f172a;
+            padding-bottom: 8px;
+        }
+        .brand-title {
+            text-align: center;
+            flex: 1;
+        }
+        .brand-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0;
+            text-transform: uppercase;
+            font-family: 'Georgia', serif;
+        }
+        .brand-title p {
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            margin: 4px 0 0 0;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .logo-img {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <!-- PAGE 1: LEDGER COVERED FULLY -->
+    <div class="page-container">
+        <div class="pdf-watermark"></div>
+        <div class="pdf-content">
+            <div class="brand-header">
+                <img src="${logoUrl}" alt="Logo" class="logo-img" />
+                <div class="brand-title">
+                    <h1>F.P.F.K BETHANIA ACADEMY</h1>
+                    <p>Determination is Nobility</p>
+                </div>
+                <img src="${logoUrl}" alt="Logo" class="logo-img" />
+            </div>
+            ${headerHtml}
+            <table>
+                ${bodyHtml}
+            </table>
+        </div>
+    </div>
 
-                        body {
-                            background-color: #0f172a;
-                            color: #f8fafc;
-                        }
+    <!-- PAGE 2: STATISTICAL ANALYSIS MATRICES -->
+    <div class="page-container page-break">
+        <div class="pdf-watermark"></div>
+        <div class="pdf-content">
+            <div class="brand-header">
+                <img src="${logoUrl}" alt="Logo" class="logo-img" />
+                <div class="brand-title">
+                    <h1>F.P.F.K BETHANIA ACADEMY</h1>
+                    <p>Determination is Nobility</p>
+                </div>
+                <img src="${logoUrl}" alt="Logo" class="logo-img" />
+            </div>
+            ${statsHtml}
+        </div>
+    </div>
+</body>
+</html>`;
 
-                        /* Page Setup replicating a Landscape PDF page */
-                        .page-container {
-                            background: white;
-                            color: #0f172a;
-                            width: 297mm;
-                            min-height: 210mm;
-                            padding: 1.5cm;
-                            margin: 2rem auto;
-                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-                            position: relative;
-                            box-sizing: border-box;
-                        }
+            // Prompt clean physical/system level file download 
+            const blob = new Blob([rawDocumentHtml], { type: "application/pdf-helper-html;charset=utf-8" });
+            const downloadUrl = URL.createObjectURL(blob);
+            const virtualAnchor = document.createElement("a");
+            virtualAnchor.href = downloadUrl;
+            
+            // Re-identify exact complete session text for direct matching
+            const safeFileName = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            virtualAnchor.download = `${safeFileName}.html`;
+            document.body.appendChild(virtualAnchor);
+            virtualAnchor.click();
+            document.body.removeChild(virtualAnchor);
+            URL.revokeObjectURL(downloadUrl);
 
-                        /* Distinct Repeating Subtle Background Watermark on each page */
-                        .pdf-watermark {
-                            position: absolute;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%) rotate(-25deg);
-                            width: 480px;
-                            height: 480px;
-                            opacity: 0.04;
-                            background-image: url('${logoUrl}');
-                            background-size: contain;
-                            background-repeat: no-repeat;
-                            background-position: center;
-                            z-index: 1;
-                            pointer-events: none;
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
-                        }
-
-                        .pdf-content {
-                            position: relative;
-                            z-index: 10;
-                            font-family: 'Times New Roman', Times, serif;
-                        }
-
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 12px;
-                            font-size: 11px;
-                        }
-
-                        th, td {
-                            border: 1px solid #1e293b !important;
-                            padding: 5px 6px !important;
-                            text-align: center;
-                        }
-
-                        th {
-                            background-color: #f1f5f9 !important;
-                            color: #0f172a !important;
-                            font-weight: bold !important;
-                            text-transform: uppercase;
-                            font-size: 9px;
-                        }
-
-                        /* Absolute Row Safety to prevent overlaying of Learner Names */
-                        .learner-name-col {
-                            text-align: left !important;
-                            white-space: nowrap !important;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            max-width: 240px;
-                            font-weight: bold;
-                        }
-                    </style>
-                </head>
-                <body class="flex flex-col min-h-screen">
-                    <!-- Premium Overleaf Control Bar -->
-                    <header class="no-print bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between shadow-xl">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-emerald-600 text-white p-2 rounded-lg shadow-md ring-1 ring-white/10">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            </div>
-                            <div>
-                                <h1 class="text-sm font-extrabold text-white tracking-wider uppercase">${title}</h1>
-                                <p class="text-[10px] text-slate-400 font-mono">Premium Analytical CBA PDF Engine &bull; Landscape Mode</p>
-                            </div>
-                        </div>
-                        <button onclick="window.print()" class="no-print btn btn-success btn-sm text-white font-bold px-5 shadow-lg flex items-center gap-2 hover:scale-105 transition-all">
-                            <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Download / Open PDF
-                        </button>
-                    </header>
-
-                    <!-- Main Previewer Area -->
-                    <main class="flex-1 overflow-auto bg-slate-950/60 py-8 px-4 flex justify-center">
-                        <div class="page-container">
-                            <div class="pdf-watermark"></div>
-                            <div class="pdf-content">
-                                <!-- Dual Corner Branding Logos -->
-                                <div class="flex justify-between items-center mb-5 border-b-2 border-slate-900 pb-4">
-                                    <img src="${logoUrl}" alt="Left Logo" class="w-16 h-16 object-contain rounded-full shadow-md border border-slate-100" />
-                                    <div class="text-center flex-1 mx-6">
-                                        <h1 class="text-2xl font-extrabold tracking-wider text-slate-950 uppercase" style="font-family: 'Georgia', serif;">F.P.F.K BETHANIA ACADEMY</h1>
-                                        <p class="text-[10px] tracking-widest text-slate-600 font-bold uppercase mt-1">Nurturing Excellence, Integrity, and Academic Distinction</p>
-                                    </div>
-                                    <img src="${logoUrl}" alt="Right Logo" class="w-16 h-16 object-contain rounded-full shadow-md border border-slate-100" />
-                                </div>
-
-                                <!-- Dynamic Report Content -->
-                                ${headerHtml}
-                                <table>
-                                    ${bodyHtml}
-                                </table>
-                                ${statsHtml}
-                            </div>
-                        </div>
-                    </main>
-                </body>
-                </html>
-            `);
-            previewWindow.document.close();
+            // Double action: Fallback open to immediately trigger system printing on target devices
+            const previewWindow = window.open("", "_blank");
+            if (previewWindow) {
+                previewWindow.document.write(rawDocumentHtml);
+                previewWindow.document.close();
+                previewWindow.focus();
+                // Let user seamlessly choose print options
+                setTimeout(() => { previewWindow.print(); }, 600);
+            }
         }
 
         // REPORT COMPILATION & POSITION MATRIX ENGINE
@@ -1245,9 +1253,9 @@
 
                 // ==================== GENERATING PDF 1: MARKS MASTER LEDGER ====================
                 let marksHeaderHtml = `
-                    <div style="text-align: center; margin-bottom: 20px; line-height: 1.4;">
-                        <h2 style="font-size: 14px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
-                        <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - MARKS MASTER LEDGER (LANDSCAPE LAYOUT)</h3>
+                    <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
+                        <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${currentActiveExamName.toUpperCase()}</h2>
+                        <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - MARKS MASTER LEDGER</h3>
                     </div>
                 `;
 
@@ -1304,8 +1312,8 @@
                 `;
 
                 let marksStatsHtml = `
-                    <div style="margin-top: 25px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
-                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider">PERFORMANCE ANALYSIS LEVEL MATRIX</div>
+                    <div style="font-weight: bold; font-size: 10px;">
+                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
                         ${ratingKeys.map(key => {
                             const count = marksDistribution[key] || 0;
                             const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
@@ -1338,9 +1346,9 @@
                 // ==================== GENERATING PDF 2: POINTS MASTER LEDGER ====================
                 if (tier !== "lower_primary") {
                     let pointsHeaderHtml = `
-                        <div style="text-align: center; margin-bottom: 20px; line-height: 1.4;">
-                            <h2 style="font-size: 14px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
-                            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - POINTS MASTER LEDGER (LANDSCAPE LAYOUT)</h3>
+                        <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
+                            <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${currentActiveExamName.toUpperCase()}</h2>
+                            <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - POINTS MASTER LEDGER</h3>
                         </div>
                     `;
 
@@ -1397,8 +1405,8 @@
                     `;
 
                     let pointsStatsHtml = `
-                        <div style="margin-top: 25px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
-                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider">PERFORMANCE ANALYSIS LEVEL MATRIX</div>
+                        <div style="font-weight: bold; font-size: 10px;">
+                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
                             ${ratingKeys.map(key => {
                                 const count = pointsDistribution[key] || 0;
                                 const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
@@ -1441,7 +1449,7 @@
         downloadMarksPdfBtn.addEventListener('click', () => {
             if (!printableMarksReportHtml) return;
             openPdfPreview(
-                "Raw Marks Master Ledger - Bethania Academy",
+                `${currentActiveExamName} - Raw Marks Master Ledger`,
                 printableMarksReportHtml.marksHeaderHtml,
                 printableMarksReportHtml.marksBodyHtml,
                 printableMarksReportHtml.marksStatsHtml
@@ -1451,7 +1459,7 @@
         downloadPointsPdfBtn.addEventListener('click', () => {
             if (!printablePointsReportHtml) return;
             openPdfPreview(
-                "Points Master Ledger - Bethania Academy",
+                `${currentActiveExamName} - Points Master Ledger`,
                 printablePointsReportHtml.pointsHeaderHtml,
                 printablePointsReportHtml.pointsBodyHtml,
                 printablePointsReportHtml.pointsStatsHtml
