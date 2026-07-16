@@ -6,7 +6,9 @@
     <title>Bethania Academy - Executive Admin Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://tailwindcss.com"></script>
+    <!-- html2pdf.js Bundle for professional, client-side LaTeX-style rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* Custom scrollbar adjustments for a cleaner UI footprint */
         ::-webkit-scrollbar {
@@ -24,51 +26,60 @@
             background: #94a3b8;
         }
 
-        /* Print styling block for generating clean school-wide PDF results */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #print-report-container, #print-report-container * {
-                visibility: visible;
-            }
-            #print-report-container {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                color: #000;
-                font-family: 'Times New Roman', Times, serif;
-            }
-            .no-print {
-                display: none !important;
-            }
-            tr {
-                page-break-inside: avoid;
-            }
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-            }
-            th, td {
-                border: 1px solid #000 !important;
-                padding: 6px 8px !important;
-            }
-            th {
-                background-color: #f3f4f6 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+        /* LaTeX High-Fidelity Professional Document Styling rules */
+        .latex-doc {
+            font-family: "Latin Modern Roman", "Times New Roman", Times, serif;
+            color: #000000;
+            background-color: #ffffff;
+            line-height: 1.2;
+            position: relative;
+        }
+        .latex-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            width: 70%;
+            opacity: 0.055;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .latex-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            z-index: 5;
+            position: relative;
+        }
+        .latex-table th, .latex-table td {
+            border: 0.8px solid #000000;
+            padding: 5px 6px;
+            white-space: nowrap;
+        }
+        .latex-table th {
+            font-weight: bold;
+            background-color: #f2f2f2;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+        /* Page breaks matching LaTeX conventions */
+        .latex-page {
+            page-break-after: always;
+            box-sizing: border-box;
+            position: relative;
+            background-color: #ffffff;
+        }
+        .latex-page:last-child {
+            page-break-after: avoid;
         }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
 
     <!-- EXECUTIVE HEADER -->
-    <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20 no-print">
+    <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20">
         <div class="flex-1">
             <div class="flex items-center gap-3.5">
-                <!-- Official School Logo Badge -->
                 <div class="avatar bg-white p-1 rounded-full ring-2 ring-amber-400/50">
                     <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
                         <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
@@ -87,12 +98,7 @@
         </div>
     </header>
 
-    <!-- PRINT-PREVIEW AREA -->
-    <div id="print-report-container" class="hidden print:block p-8 bg-white text-slate-900">
-        <!-- Dynamically injected printable report content -->
-    </div>
-
-    <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2 no-print">
+    <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2">
 
         <!-- 👥 MANAGE LEARNERS BOARD -->
         <section class="card bg-white shadow-md border border-slate-200/60">
@@ -130,7 +136,7 @@
                         <div class="space-y-3">
                             <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Register New Learner</span>
                             <div class="form-control">
-                                <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                                <input type="text" id="new-name" placeholder="Full Name (e.g. Peter Musau)" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
                             </div>
                             <div class="form-control">
                                 <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
@@ -293,7 +299,7 @@
                         <div id="sub-panel-add" class="space-y-3">
                             <div class="form-control">
                                 <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">1. Subject / Learning Area Title</label>
-                                <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
+                                <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts" class="input input-bordered input-sm w-full" />
                             </div>
 
                             <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
@@ -331,7 +337,7 @@
                         </div>
                         <span class="badge badge-warning text-[9px] sm:text-[10px] font-bold uppercase py-2.5 px-3 tracking-wide" id="detected-active-label">No Deployed Exam Series Found</span>
                     </div>
-                    <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
+                    <p class="text-xs text-slate-500">Compile high-fidelity, dual-format curriculum reports directly from the school archives matching CBA evaluation rules.</p>
 
                     <div class="divider my-2"></div>
 
@@ -355,42 +361,28 @@
                         </div>
 
                         <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full transition-all">
-                            📊 Compile Broad Sheet
+                            📊 Compile Executive Marks Sheets
                         </button>
                     </div>
 
-                    <div class="overflow-x-auto rounded-xl border border-slate-200/80 mt-5">
-                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
-                            <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
-                                <tr>
-                                    <th class="py-3 px-4">Learner Name</th>
-                                    <th class="py-3 px-4 text-center">Stream / Arm</th>
-                                    <th class="py-3 px-4 text-left">Loading Column Configuration...</th>
-                                </tr>
-                            </thead>
-                            <tbody id="broadsheet-rows" class="font-mono text-xs">
-                                <tr>
-                                    <td colspan="3" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- PREVIEW PANELS -->
+                    <div class="mt-6 space-y-8" id="analysis-preview-panel">
+                        <!-- Preview placeholders load here dynamically -->
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5 border-t border-slate-100 pt-5">
                         <div id="analytical-summary-badges" class="flex flex-wrap gap-2 justify-center sm:justify-start"></div>
-                        <div class="flex gap-2.5 w-full sm:w-auto">
-                            <button id="download-csv-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
-                                📥 Export Ledger (.CSV)
-                            </button>
-                            <button id="download-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
-                                📄 Export Report (PDF)
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
 
         </div>
+
+        <!-- HIDDEN SANDBOX AREA FOR HTML2PDF RENDERING -->
+        <div id="report-render-sandbox" class="absolute -top-[9999px] -left-[9999px]">
+            <!-- Perfect LaTeX pages will compile here instantly inside landscape templates -->
+        </div>
+
     </main>
 
     <script>
@@ -428,12 +420,9 @@
 
         const reportGrade = document.getElementById('report-grade');
         const compileReportsBtn = document.getElementById('compile-reports-btn');
-        const broadsheetHeader = document.getElementById('broadsheet-header');
-        const broadsheetRows = document.getElementById('broadsheet-rows');
-        const downloadCsvBtn = document.getElementById('download-csv-btn');
-        const downloadPdfBtn = document.getElementById('download-pdf-btn');
         const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
-        const printReportContainer = document.getElementById('print-report-container');
+        const analysisPreviewPanel = document.getElementById('analysis-preview-panel');
+        const renderSandbox = document.getElementById('report-render-sandbox');
 
         // Config Elements
         const tabAddSub = document.getElementById('tab-add-sub');
@@ -450,42 +439,23 @@
         let currentActiveExamName = "";
         let globalPapersList = [];
         let localStudentsCache = [];
-        let activeBroadSheetCsvData = "";
-        let printableReportHtml = "";
-
-        // Dynamic DB Schema Cache for mismatch protection
         let dbSchemaCache = {
-            examColumn: 'test_name', // fallback
-            scoreColumn: 'raw_score' // fallback
+            examColumn: 'test_name',
+            scoreColumn: 'raw_score'
         };
 
-        // Official CBC Curriculum Rules (Compulsory Lists)
-        const CBC_SUBJECT_TIERS = {
-            lower_primary: [
-                "Language Activities", "Mathematical Activities", "Environmental Activities",
-                "Psychomotor Activities", "Religious Education Activities",
-                "Indigenous Language Activities", "Kiswahili Language Activities"
-            ],
-            upper_primary: [
-                "English", "Kiswahili", "Mathematics", "Science and Technology",
-                "Agriculture and Nutrition", "Creative Arts", "Social Studies", 
-                "Christian Religious Education (C.R.E)", "Islamic Religious Education (I.R.E)", "Hindu Religious Education (H.R.E)"
-            ],
-            junior_school: [
-                "English", "Kiswahili", "Mathematics", "Integrated Science",
-                "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
-                "Creative Arts and Sports", "Christian Religious Education (C.R.E)", 
-                "Islamic Religious Education (I.R.E)", "Hindu Religious Education (H.R.E)"
-            ]
-        };
-
-        function getGradeTier(grade) {
-            const g = parseInt(grade);
-            if (g <= 3) return "lower_primary";
-            if (g >= 4 && g <= 6) return "upper_primary";
-            if (g >= 7 && g <= 9) return "junior_school";
-            return "upper_primary";
-        }
+        // STRICT 9 JUNIOR SCHOOL CBC SUBJECT LIST - OTHERS REJECTED
+        const COMPULSORY_JUNIOR_SUBJECTS = [
+            "Maths", 
+            "Kiswahili", 
+            "English", 
+            "Integrated Science", 
+            "Agriculture", 
+            "Social Studies", 
+            "Christian Religion Education", 
+            "Pre-Technical", 
+            "Creative Arts"
+        ];
 
         function getGradeLabel(grade) {
             const val = parseInt(grade);
@@ -494,9 +464,7 @@
             return `Grade ${val}`;
         }
 
-        // --- MATH RECKONING SCHEMES ---
-
-        // 8-Point Scale points conversion for Junior School (Grades 7-9)
+        // 8-Point Scale points conversion for Junior School
         function convertScoreToPoints(score, max) {
             const pct = (score / max) * 100;
             if (pct >= 90) return 8; // EE1
@@ -509,13 +477,16 @@
             return 1;                // BE2
         }
 
-        // Grading Scale for Primary (Average Percent) & Junior (Average Points)
         function getCompetencyLevel(average, type) {
             if (type === 'points') {
-                if (average >= 6.5) return { text: "EE", class: "bg-emerald-100 text-emerald-800" };
-                if (average >= 5.0) return { text: "ME", class: "bg-sky-100 text-sky-800" };
-                if (average >= 3.0) return { text: "AE", class: "bg-amber-100 text-amber-800" };
-                return { text: "BE", class: "bg-rose-100 text-rose-800" };
+                if (average >= 7.5) return { text: "EE1", class: "bg-emerald-200 text-emerald-900 font-bold" };
+                if (average >= 6.5) return { text: "EE2", class: "bg-emerald-100 text-emerald-800" };
+                if (average >= 5.5) return { text: "ME1", class: "bg-sky-200 text-sky-900 font-bold" };
+                if (average >= 4.5) return { text: "ME2", class: "bg-sky-100 text-sky-800" };
+                if (average >= 3.5) return { text: "AE1", class: "bg-amber-200 text-amber-900 font-bold" };
+                if (average >= 2.5) return { text: "AE2", class: "bg-amber-100 text-amber-800" };
+                if (average >= 1.5) return { text: "BE1", class: "bg-rose-200 text-rose-900 font-bold" };
+                return { text: "BE2", class: "bg-rose-100 text-rose-800" };
             } else {
                 if (average >= 80) return { text: "EE", class: "bg-emerald-100 text-emerald-800" };
                 if (average >= 50) return { text: "ME", class: "bg-sky-100 text-sky-800" };
@@ -524,29 +495,22 @@
             }
         }
 
-        // Dynamic Schema Sniffer Routine
+        // Auto Schema Sniffer Routine
         async function detectMarksSchema() {
             try {
-                const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
+                const { data } = await _supabase.from('marks_entry').select('*').limit(1);
                 if (data && data.length > 0) {
                     const row = data[0];
-                    if ('exam_name' in row) dbSchemaCache.examColumn = 'exam_name';
-                    else if ('exam_session' in row) dbSchemaCache.examColumn = 'exam_session';
-                    else dbSchemaCache.examColumn = 'test_name';
-
-                    if ('score' in row) dbSchemaCache.scoreColumn = 'score';
-                    else if ('marks' in row) dbSchemaCache.scoreColumn = 'marks';
-                    else dbSchemaCache.scoreColumn = 'raw_score';
+                    dbSchemaCache.examColumn = ('exam_name' in row) ? 'exam_name' : (('exam_session' in row) ? 'exam_session' : 'test_name');
+                    dbSchemaCache.scoreColumn = ('score' in row) ? 'score' : (('marks' in row) ? 'marks' : 'raw_score');
                 }
             } catch (err) {
                 console.warn("Schema detection warning: using default fallbacks.", err);
             }
         }
 
-        // Core Admin Init
         async function initAdminEngine() {
             try {
-                // Auto detect marks schema before querying
                 await detectMarksSchema();
 
                 const { data: students, error: studentErr } = await _supabase.from('students').select('*');
@@ -574,7 +538,6 @@
             }
         }
 
-        // ID Generator matching 2-letter + 4-digit format
         function generateStudentID() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
@@ -583,7 +546,6 @@
             return `${l1}${l2}${nums}`;
         }
 
-        // Manage Learners UI Logic
         async function fetchManageList() {
             const grade = parseInt(manageGradeSelect.value);
             if (!grade) return;
@@ -616,13 +578,11 @@
                 if (error) throw error;
                 alert("Learner removed successfully.");
                 fetchManageList();
-                // Refresh local cache
                 initAdminEngine();
             } catch (err) {
                 alert("Deletion failure: " + err.message);
             }
         }
-        // Expose to window context for global markup references
         window.removeLearner = removeLearner;
 
         manageGradeSelect.addEventListener('change', fetchManageList);
@@ -659,7 +619,6 @@
             }
         });
 
-        // Config Toggles
         tabAddSub.addEventListener('click', () => { 
             tabAddSub.classList.add('tab-active'); 
             tabDelSub.classList.remove('tab-active'); 
@@ -742,7 +701,6 @@
             cfgBtnDelete.innerText = "Deleting...";
 
             try {
-                // Delete associated component papers first
                 await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
                 const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
                 if (error) throw error;
@@ -786,18 +744,13 @@
             }
         });
 
-        // Submission Tracker - UPDATED QUERY RELATION TO MATCH SUBJECT_ID ONLY
         trackerGrade.addEventListener('change', async () => {
             trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
-            const selectedGrade = trackerGrade.value;
-            const tier = getGradeTier(selectedGrade);
-            const allowed = CBC_SUBJECT_TIERS[tier];
-
             try {
                 const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
                 if (error) throw error;
                 if (data) {
-                    const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
+                    const filteredList = data.filter(s => COMPULSORY_JUNIOR_SUBJECTS.includes(s.subject_name.trim()));
                     trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' : 
                         '<option value="" disabled selected>Choose Component Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
                     trackerSubject.disabled = false;
@@ -822,8 +775,6 @@
 
             try {
                 const studIds = targetStudents.map(s => s.id);
-                
-                // Fetch direct subject entries (where paper_id is null as sent from Index.html)
                 const { data, error } = await _supabase.from('marks_entry')
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
@@ -856,12 +807,12 @@
             }
         });
 
-        // REPORT COMPILATION & POSITION MATRIX ENGINE (Using Sniffed subject_id layout alignment)
+
+        // EXCECUTIVE COMPILATION SYSTEM WITH WATERMARKED DUAL PDF AND ARROW DOWNLOADS
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
             if (isNaN(grade)) return alert("Select target grade cohort!");
 
-            // BRANDING AND LOGO VALIDATION
             const schoolLogo = document.getElementById('school-logo');
             const schoolNameText = document.getElementById('school-title').innerText.trim();
             if (!schoolLogo.complete || schoolLogo.naturalWidth === 0 || !schoolNameText) {
@@ -869,28 +820,34 @@
             }
 
             compileReportsBtn.disabled = true;
-            compileReportsBtn.innerText = "Compiling Database records...";
+            compileReportsBtn.innerText = "Compiling Dual Reports...";
 
             try {
-                const tier = getGradeTier(grade);
-                const allowed = CBC_SUBJECT_TIERS[tier];
-                const isJuniorSchool = (tier === "junior_school");
-
                 const targetStudents = localStudentsCache.filter(s => s.grade === grade);
                 if (targetStudents.length === 0) {
-                    broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
+                    analysisPreviewPanel.innerHTML = `<p class="text-center py-12 text-rose-500 italic font-bold">No student profiles registered in this grade.</p>`;
                     return;
                 }
 
-                // Fetch dynamic valid subjects
+                // Query Database for active registered subjects matching our strict set
                 const { data: dbSubjects, error: subErr } = await _supabase.from('subjects').select('*');
                 if (subErr) throw subErr;
 
-                const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
-                const subjectIds = filteredSubjects.map(s => s.id);
+                // Restrict and order matching subjects exactly to requested ones
+                const matchedSubjects = [];
+                COMPULSORY_JUNIOR_SUBJECTS.forEach(name => {
+                    const match = (dbSubjects || []).find(s => s.subject_name.trim().toLowerCase().includes(name.toLowerCase()));
+                    if (match) matchedSubjects.push(match);
+                });
+
+                if (matchedSubjects.length === 0) {
+                    analysisPreviewPanel.innerHTML = `<p class="text-center py-12 text-amber-600 italic font-bold">Please define the 9 Junior School subjects in "Manage Learning Areas" first!</p>`;
+                    return;
+                }
+
+                const subjectIds = matchedSubjects.map(s => s.id);
                 const studentIds = targetStudents.map(s => s.id);
 
-                // Fetch scores directly mapped to subject_id (paper_id = null)
                 const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
@@ -901,29 +858,21 @@
                 if (marksErr) throw marksErr;
                 const marksData = marks || [];
 
-                // Compute Student Metrics to determine Class Positions
-                const calculatedStudents = targetStudents.map(s => {
+                // 1. COMPUTE RAW MARKS LEDGER (RAW PERSISTENCE DATA)
+                const studentsWithRawMarks = targetStudents.map(s => {
                     let totals = 0;
                     let count = 0;
                     let subjectScores = {};
 
-                    filteredSubjects.forEach(sub => {
+                    matchedSubjects.forEach(sub => {
                         const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
                         if (m) {
                             const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
-                            if (isJuniorSchool) {
-                                // Conversion from raw score to 8-Point scale points (Grades 7-9)
-                                const points = convertScoreToPoints(subScore, 100);
-                                totals += points;
-                                subjectScores[sub.subject_name] = `${points} Pts`;
-                            } else {
-                                // Core raw marks totals for Primary School
-                                totals += subScore;
-                                subjectScores[sub.subject_name] = `${subScore.toFixed(1)}%`;
-                            }
+                            totals += subScore;
+                            subjectScores[sub.subject_name] = subScore;
                             count++;
                         } else {
-                            subjectScores[sub.subject_name] = "-";
+                            subjectScores[sub.subject_name] = 0;
                         }
                     });
 
@@ -932,166 +881,357 @@
                         id: s.id,
                         name: s.name,
                         stream: s.stream,
-                        subjectScores,
+                        scores: subjectScores,
                         totals,
                         average,
-                        rating: getCompetencyLevel(average, isJuniorSchool ? 'points' : 'marks')
+                        rating: getCompetencyLevel(average, 'marks')
                     };
                 });
 
-                // Sort descending to assign Position ranks
-                calculatedStudents.sort((a, b) => b.totals - a.totals);
-                calculatedStudents.forEach((cs, i) => {
-                    cs.position = i + 1;
-                });
+                // Assign Rank
+                studentsWithRawMarks.sort((a, b) => b.totals - a.totals);
+                studentsWithRawMarks.forEach((cs, i) => cs.position = i + 1);
 
-                // Build Broadsheet Table Headers
-                let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
-                filteredSubjects.forEach(sub => {
-                    headerHtml += `<th class="py-3 px-4 text-center">${sub.subject_name}</th>`;
-                });
-                headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
-                headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
-                headerHtml += `<th class="py-3 px-4 text-center">Rating</th>`;
-                headerHtml += `<th class="py-3 px-4 text-center">Pos</th></tr>`;
-                broadsheetHeader.innerHTML = headerHtml;
+                // 2. COMPUTE 8-POINT COMPETENCY SCALED POINTS LEDGER
+                const studentsWithPoints = targetStudents.map(s => {
+                    let totals = 0;
+                    let count = 0;
+                    let subjectScores = {};
 
-                // Generate Table Rows
-                broadsheetRows.innerHTML = calculatedStudents.map(cs => {
-                    let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
-                    cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
-                    
-                    filteredSubjects.forEach(sub => {
-                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
+                    matchedSubjects.forEach(sub => {
+                        const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
+                        if (m) {
+                            const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
+                            const points = convertScoreToPoints(subScore, 100);
+                            totals += points;
+                            subjectScores[sub.subject_name] = points;
+                            count++;
+                        } else {
+                            subjectScores[sub.subject_name] = 1; // Minimum point award
+                            totals += 1;
+                            count++;
+                        }
                     });
 
-                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
-                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
-                    cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] ${cs.rating.class}">${cs.rating.text}</span></td>`;
-                    cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
-                    return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
-                }).join('');
-
-                // CSV Export Assembly
-                let csvHeaders = ["Learner Name", "Stream", ...filteredSubjects.map(s => s.subject_name), isJuniorSchool ? "Total Points" : "Total Marks", isJuniorSchool ? "Mean Points" : "Mean Marks (%)", "Rating", "Class Position"];
-                let csvRows = [csvHeaders];
-                calculatedStudents.forEach(cs => {
-                    csvRows.push([
-                        cs.name,
-                        cs.stream,
-                        ...filteredSubjects.map(s => cs.subjectScores[s.subject_name] || '-'),
-                        isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1),
-                        cs.average.toFixed(1),
-                        cs.rating.text,
-                        cs.position
-                    ]);
+                    const average = count > 0 ? (totals / count) : 1;
+                    return {
+                        id: s.id,
+                        name: s.name,
+                        stream: s.stream,
+                        scores: subjectScores,
+                        totals,
+                        average,
+                        rating: getCompetencyLevel(average, 'points')
+                    };
                 });
 
-                activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
-                downloadCsvBtn.disabled = false;
+                // Assign Rank
+                studentsWithPoints.sort((a, b) => b.totals - a.totals);
+                studentsWithPoints.forEach((cs, i) => cs.position = i + 1);
 
-                // Aggregate metrics indicators
-                const totalRanked = calculatedStudents.length;
-                const classMean = (calculatedStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                // COMPUTE SUBJECT WISE METRICS (Total, Average, Subjects Position) FOR RAW MARKS
+                let subTotalsRaw = {};
+                let subAvgRaw = {};
+                let subPosRaw = {};
+                matchedSubjects.forEach(sub => {
+                    let sum = 0;
+                    studentsWithRawMarks.forEach(s => { sum += s.scores[sub.subject_name] || 0; });
+                    subTotalsRaw[sub.subject_name] = sum;
+                    subAvgRaw[sub.subject_name] = studentsWithRawMarks.length > 0 ? (sum / studentsWithRawMarks.length) : 0;
+                });
+                let orderedAvgRaw = Object.keys(subAvgRaw).map(k => ({ name: k, val: subAvgRaw[k] })).sort((a, b) => b.val - a.val);
+                orderedAvgRaw.forEach((obj, idx) => { subPosRaw[obj.name] = idx + 1; });
+
+                // COMPUTE SUBJECT WISE METRICS FOR POINTS
+                let subTotalsPts = {};
+                let subAvgPts = {};
+                let subPosPts = {};
+                matchedSubjects.forEach(sub => {
+                    let sum = 0;
+                    studentsWithPoints.forEach(s => { sum += s.scores[sub.subject_name] || 0; });
+                    subTotalsPts[sub.subject_name] = sum;
+                    subAvgPts[sub.subject_name] = studentsWithPoints.length > 0 ? (sum / studentsWithPoints.length) : 0;
+                });
+                let orderedAvgPts = Object.keys(subAvgPts).map(k => ({ name: k, val: subAvgPts[k] })).sort((a, b) => b.val - a.val);
+                orderedAvgPts.forEach((obj, idx) => { subPosPts[obj.name] = idx + 1; });
+
+
+                // --- GENERATE PREVIEW HTML MARKUP ---
+                analysisPreviewPanel.innerHTML = `
+                    <!-- 1. RAW MARKS SUMMARY LEDGER SECTION -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                <span>📈</span> Raw Marks Executive Analysis Table
+                            </h3>
+                            <button onclick="downloadPDFReport('raw')" class="btn btn-primary btn-sm text-white flex items-center gap-1.5 font-bold shadow-sm">
+                                <span>📥 Download PDF</span> <span class="text-xs">➔</span>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="table table-xs table-zebra w-full font-sans text-slate-700">
+                                <thead class="bg-slate-800 text-white text-[10px] font-bold uppercase">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Name</th>
+                                        ${matchedSubjects.map(s => `<th class="py-2.5 px-3 text-center">${s.subject_name}</th>`).join('')}
+                                        <th class="py-2.5 px-3 text-center">Total</th>
+                                        <th class="py-2.5 px-3 text-center">Avrg</th>
+                                        <th class="py-2.5 px-3 text-center">Rate</th>
+                                        <th class="py-2.5 px-3 text-center">Pos</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-xs">
+                                    ${studentsWithRawMarks.map(cs => `
+                                        <tr>
+                                            <td class="font-bold text-slate-900">${cs.name}</td>
+                                            ${matchedSubjects.map(sub => `<td class="text-center font-mono">${(cs.scores[sub.subject_name] || 0).toFixed(1)}%</td>`).join('')}
+                                            <td class="text-center font-bold">${cs.totals.toFixed(1)}</td>
+                                            <td class="text-center font-semibold text-blue-800">${cs.average.toFixed(1)}%</td>
+                                            <td class="text-center"><span class="badge badge-xs font-bold border-none ${cs.rating.class}">${cs.rating.text}</span></td>
+                                            <td class="text-center font-extrabold text-slate-900">${cs.position}</td>
+                                        </tr>
+                                    `).join('')}
+                                    <!-- STATS AT THE BASE -->
+                                    <tr class="bg-slate-100 font-bold border-t border-slate-300">
+                                        <td>Total</td>
+                                        ${matchedSubjects.map(sub => `<td class="text-center">${subTotalsRaw[sub.subject_name].toFixed(1)}</td>`).join('')}
+                                        <td colspan="4" class="bg-slate-200"></td>
+                                    </tr>
+                                    <tr class="bg-slate-100 font-bold">
+                                        <td>Average</td>
+                                        ${matchedSubjects.map(sub => `<td class="text-center text-blue-900">${subAvgRaw[sub.subject_name].toFixed(1)}%</td>`).join('')}
+                                        <td colspan="4" class="bg-slate-200"></td>
+                                    </tr>
+                                    <tr class="bg-slate-100 font-bold text-emerald-950">
+                                        <td>Subjects Position</td>
+                                        ${matchedSubjects.map(sub => `<td class="text-center font-extrabold text-emerald-800">${subPosRaw[sub.subject_name]}</td>`).join('')}
+                                        <td colspan="4" class="bg-slate-200"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. SCALED POINTS ANALYSIS LEDGER SECTION -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                <span>🎯</span> Competency Scaled Points Executive Table
+                            </h3>
+                            <button onclick="downloadPDFReport('points')" class="btn btn-secondary btn-sm text-white flex items-center gap-1.5 font-bold shadow-sm">
+                                <span>📥 Download PDF</span> <span class="text-xs">➔</span>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="table table-xs table-zebra w-full font-sans text-slate-700">
+                                <thead class="bg-slate-800 text-white text-[10px] font-bold uppercase">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Name</th>
+                                        ${matchedSubjects.map(s => `<th class="py-2.5 px-3 text-center">${s.subject_name}</th>`).join('')}
+                                        <th class="py-2.5 px-3 text-center">Total</th>
+                                        <th class="py-2.5 px-3 text-center">Avrg</th>
+                                        <th class="py-2.5 px-3 text-center">Rate</th>
+                                        <th class="py-2.5 px-3 text-center">Pos</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-xs">
+                                    ${studentsWithPoints.map(cs => `
+                                        <tr>
+                                            <td class="font-bold text-slate-900">${cs.name}</td>
+                                            ${matchedSubjects.map(sub => `<td class="text-center font-mono">${cs.scores[sub.subject_name]} Pts</td>`).join('')}
+                                            <td class="text-center font-bold">${cs.totals}</td>
+                                            <td class="text-center font-semibold text-sky-800">${cs.average.toFixed(2)}</td>
+                                            <td class="text-center"><span class="badge badge-xs font-bold border-none ${cs.rating.class}">${cs.rating.text}</span></td>
+                                            <td class="text-center font-extrabold text-slate-900">${cs.position}</td>
+                                        </tr>
+                                    `).join('')}
+                                    <!-- STATS AT THE BASE -->
+                                    <tr class="bg-slate-100 font-bold border-t border-slate-300">
+                                        <td>Total</td>
+                                        ${matchedSubjects.map(sub => `<td class="text-center">${subTotalsPts[sub.subject_name].toFixed(0)}</td>`).join('')}
+                                        <td colspan="4" class="bg-slate-200"></td>
+                                    </tr>
+                                    <tr class="bg-slate-100 font-bold">
+                                        <td>Average</td>
+                                        ${matchedSubjects.map(sub => `<td class="text-center text-sky-900">${subAvgPts[sub.subject_name].toFixed(1)}</td>`).join('')}
+                                        <td colspan="4" class="bg-slate-200"></td>
+                                    </tr>
+                                    <tr class="bg-slate-100 font-bold text-emerald-950">
+                                        <td>Subjects Position</td>
+                                        ${matchedSubjects.map(sub => `<td class="text-center font-extrabold text-emerald-800">${subPosPts[sub.subject_name]}</td>`).join('')}
+                                        <td colspan="4" class="bg-slate-200"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                // Global attachments for execution inside window instance
+                window.studentsWithRawMarks = studentsWithRawMarks;
+                window.studentsWithPoints = studentsWithPoints;
+                window.matchedSubjects = matchedSubjects;
+                window.subTotalsRaw = subTotalsRaw;
+                window.subAvgRaw = subAvgRaw;
+                window.subPosRaw = subPosRaw;
+                window.subTotalsPts = subTotalsPts;
+                window.subAvgPts = subAvgPts;
+                window.subPosPts = subPosPts;
+
+                const cohortTotal = targetStudents.length;
                 analyticalSummaryBadges.innerHTML = `
-                    <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
-                    <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
+                    <span class="badge badge-neutral border-none p-3.5 font-bold text-xs uppercase tracking-wider">Class Cohort Size: ${cohortTotal} Students</span>
+                    <span class="badge badge-accent border-none p-3.5 font-bold text-xs text-white uppercase tracking-wider">Subjects Screened: 9 Junior Areas Active</span>
                 `;
 
-                // HTML PDF REPORT TEMPLATE ASSEMBLY
-                let printableHeaderHtml = `
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 30px;">
-                        <div style="flex: 0 0 120px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" style="width: 100%; height: auto; max-height: 100px; object-fit: contain;" />
-                        </div>
-                        <div style="flex: 1; text-align: center; padding: 0 20px;">
-                            <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; font-family: 'Times New Roman', Times, serif;">Bethania Academy</h1>
-                            <p style="font-style: italic; font-size: 14px; color: #555; margin-bottom: 5px;">"Determination is Nobility"</p>
-                            <p style="font-size: 12px; color: #444;">P.O. Box 12345, City, Country | Tel: +123 456 789<br>Email: info@bethaniaacademy.edu</p>
-                        </div>
-                        <div style="flex: 0 0 120px;"></div>
-                    </div>
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <h2 style="font-size: 20px; text-transform: uppercase; text-decoration: underline; margin-bottom: 5px; font-weight: bold;">General Performance Summary Ledger</h2>
-                        <p style="font-size: 14px; font-weight: bold;">Assessment Cycle: ${currentActiveExamName} | Grade Level: ${getGradeLabel(grade)}</p>
-                    </div>
-                `;
-
-                let printableTableHtml = `
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; font-family: 'Times New Roman', Times, serif;">
-                        <thead>
-                            <tr style="background-color: #f2f2f2;">
-                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Learner Name</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">Stream</th>
-                                ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; padding: 8px; text-align: center;">${sub.subject_name}</th>`).join('')}
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Total Pts' : 'Total Marks'}</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Mean Pts' : 'Mean (%)'}</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rating</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rank</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${calculatedStudents.map(cs => `
-                                <tr>
-                                    <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">${cs.name}</td>
-                                    <td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.stream}</td>
-                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.subjectScores[sub.subject_name] || '-'}</td>`).join('')}
-                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>
-                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; color: #1e3a8a;">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>
-                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.rating.text}</td>
-                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.position}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-
-                let printableSummaryBadgesHtml = `
-                    <div style="display: flex; gap: 20px; justify-content: flex-start; margin-bottom: 40px; font-family: 'Times New Roman', Times, serif; font-size: 13px;">
-                        <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold;">Class Cohort Size: ${totalRanked} Students</div>
-                        <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold; background-color: #f9fafb;">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</div>
-                    </div>
-                `;
-
-                let printableFooterSignaturesHtml = `
-                    <div style="margin-top: 60px; display: flex; justify-content: space-between; font-family: 'Times New Roman', Times, serif; page-break-inside: avoid;">
-                        <div style="width: 220px; text-align: center;">
-                            <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Class Teacher's Signature</div>
-                        </div>
-                        <div style="width: 150px; text-align: center;">
-                            <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Date</div>
-                        </div>
-                        <div style="width: 220px; text-align: center;">
-                            <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Principal's Signature & Stamp</div>
-                        </div>
-                    </div>
-                `;
-
-                printableReportHtml = printableHeaderHtml + printableSummaryBadgesHtml + printableTableHtml + printableFooterSignaturesHtml;
-                downloadPdfBtn.disabled = false;
             } catch (err) {
                 alert("Error compiling broadsheet: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
-                compileReportsBtn.innerText = "📊 Compile Broad Sheet";
+                compileReportsBtn.innerText = "📊 Compile Executive Marks Sheets";
             }
         });
 
-        downloadCsvBtn.addEventListener('click', () => {
-            const encodedUri = encodeURI(activeBroadSheetCsvData);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Bethania_Academy_BroadSheet_Grade_${reportGrade.value}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
+        // HIGH PERFORMANCE EXCEL-STYLE LATEX PDF GENERATOR FUNCTION
+        async function downloadPDFReport(reportType) {
+            const logoSrc = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+            const currentGrade = reportGrade.value;
+            const subjects = window.matchedSubjects;
+            const students = (reportType === 'raw') ? window.studentsWithRawMarks : window.studentsWithPoints;
+            
+            const isRaw = (reportType === 'raw');
+            const totalRow = isRaw ? window.subTotalsRaw : window.subTotalsPts;
+            const avgRow = isRaw ? window.subAvgRaw : window.subAvgPts;
+            const posRow = isRaw ? window.subPosRaw : window.subPosPts;
 
-        downloadPdfBtn.addEventListener('click', () => {
-            if (!printableReportHtml) return;
-            printReportContainer.innerHTML = printableReportHtml;
-            window.print();
-        });
+            // Generate clean standard LaTeX printable markup pages
+            let latexPagesHtml = "";
+            const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+            
+            // Output chunk split of 10 students per page max on landscape to maintain professional styling and spacing
+            const studentBatches = chunk(students, 10);
+
+            studentBatches.forEach((batch, pageIdx) => {
+                const isLastPage = (pageIdx === studentBatches.length - 1);
+
+                latexPagesHtml += `
+                    <div class="latex-page p-10 latex-doc min-h-[780px]" style="position: relative; box-sizing: border-box;">
+                        <!-- Transparent Centered Watermark -->
+                        <img src="${logoSrc}" class="latex-watermark" />
+
+                        <!-- Header Layout -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2.5px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
+                            <div style="flex: 0 0 100px;">
+                                <img src="${logoSrc}" style="width: 100%; max-height: 80px; object-fit: contain;" />
+                            </div>
+                            <div style="flex: 1; text-align: center; padding: 0 15px;">
+                                <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin: 0; font-family: 'Times New Roman', serif; letter-spacing: 1px;">Bethania Academy</h1>
+                                <p style="font-style: italic; font-size: 11px; margin: 2px 0 4px 0; color: #333;">"Determination is Nobility"</p>
+                                <p style="font-size: 10px; color: #444; margin: 0; font-family: 'Times New Roman', serif;">P.O. Box 12345, City, Country | Tel: +123 456 789 | info@bethaniaacademy.edu</p>
+                            </div>
+                            <div style="flex: 0 0 100px; text-align: right; font-size: 10px; font-weight: bold; font-family: 'Times New Roman', serif;">
+                                PAGE ${pageIdx + 1} OF ${studentBatches.length}
+                            </div>
+                        </div>
+
+                        <!-- Report Summary Context -->
+                        <div style="text-align: center; margin-bottom: 15px; font-family: 'Times New Roman', serif;">
+                            <h2 style="font-size: 15px; text-transform: uppercase; margin: 0; font-weight: bold; text-decoration: underline;">
+                                ${isRaw ? 'Executive General Performance Raw Marks Ledger' : 'Executive Competency-Scaled Points Ledger'}
+                            </h2>
+                            <p style="font-size: 11px; font-weight: bold; margin: 4px 0 0 0;">
+                                Assessment Cycle: ${currentActiveExamName} | Target Cohort: ${getGradeLabel(currentGrade)}
+                            </p>
+                        </div>
+
+                        <!-- Main LaTeX Academic Table -->
+                        <table class="latex-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; width: 180px;">Learner Name</th>
+                                    ${subjects.map(s => `<th style="text-align: center;">${s.subject_name}</th>`).join('')}
+                                    <th style="text-align: center; width: 70px;">Total</th>
+                                    <th style="text-align: center; width: 70px;">Average</th>
+                                    <th style="text-align: center; width: 50px;">Rating</th>
+                                    <th style="text-align: center; width: 40px;">Rank</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${batch.map(cs => `
+                                    <tr>
+                                        <!-- Keep Names exactly on a single line with full professional presentation -->
+                                        <td style="font-weight: bold; text-align: left; font-size: 11px;">${cs.name}</td>
+                                        ${subjects.map(sub => `
+                                            <td style="text-align: center; font-family: monospace; font-size: 10px;">
+                                                ${isRaw ? (cs.scores[sub.subject_name] ? cs.scores[sub.subject_name].toFixed(1) + '%' : '-') : (cs.scores[sub.subject_name] ? cs.scores[sub.subject_name] + ' Pts' : '-')}
+                                            </td>
+                                        `).join('')}
+                                        <td style="text-align: center; font-weight: bold;">${isRaw ? cs.totals.toFixed(1) : cs.totals.toFixed(0)}</td>
+                                        <td style="text-align: center; font-weight: bold; color: #1e3a8a;">${isRaw ? cs.average.toFixed(1) + '%' : cs.average.toFixed(2)}</td>
+                                        <td style="text-align: center; font-weight: bold; font-size: 10px;">${cs.rating.text}</td>
+                                        <td style="text-align: center; font-weight: bold; font-size: 11px;">${cs.position}</td>
+                                    </tr>
+                                `).join('')}
+
+                                <!-- If it's the last page batch, append full institutional summary stats at the base -->
+                                ${isLastPage ? `
+                                    <tr style="background-color: #fafafa; font-weight: bold; border-top: 1.5px solid #000;">
+                                        <td style="text-align: left;">Total</td>
+                                        ${subjects.map(sub => `<td style="text-align: center; font-family: monospace; font-size: 10px;">${totalRow[sub.subject_name].toFixed(isRaw ? 1 : 0)}</td>`).join('')}
+                                        <td colspan="4" style="background-color: #eaeaea;"></td>
+                                    </tr>
+                                    <tr style="background-color: #fafafa; font-weight: bold;">
+                                        <td style="text-align: left;">Average</td>
+                                        ${subjects.map(sub => `<td style="text-align: center; font-family: monospace; font-size: 10px; color: #1e3a8a;">${avgRow[sub.subject_name].toFixed(1)}${isRaw ? '%' : ''}</td>`).join('')}
+                                        <td colspan="4" style="background-color: #eaeaea;"></td>
+                                    </tr>
+                                    <tr style="background-color: #f0f0f0; font-weight: bold;">
+                                        <td style="text-align: left; font-size: 10px;">Subjects position</td>
+                                        ${subjects.map(sub => `<td style="text-align: center; font-weight: bold; font-size: 11px; color: #047857;">${posRow[sub.subject_name]}</td>`).join('')}
+                                        <td colspan="4" style="background-color: #eaeaea;"></td>
+                                    </tr>
+                                ` : ''}
+                            </tbody>
+                        </table>
+
+                        <!-- If it's the last page batch, append professional physical signatures blocks -->
+                        ${isLastPage ? `
+                            <div style="margin-top: 45px; display: flex; justify-content: space-between; font-family: 'Times New Roman', serif;">
+                                <div style="width: 200px; text-align: center;">
+                                    <div style="border-top: 1px solid #000; margin-top: 30px; padding-top: 4px; font-size: 11px; font-weight: bold;">Class Teacher's Signature</div>
+                                </div>
+                                <div style="width: 120px; text-align: center;">
+                                    <div style="border-top: 1px solid #000; margin-top: 30px; padding-top: 4px; font-size: 11px; font-weight: bold;">Date</div>
+                                </div>
+                                <div style="width: 220px; text-align: center;">
+                                    <div style="border-top: 1px solid #000; margin-top: 30px; padding-top: 4px; font-size: 11px; font-weight: bold;">Principal's Signature & Stamp</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            renderSandbox.innerHTML = latexPagesHtml;
+
+            // Configure professional landscape layout targeting print parameters
+            const pdfConfig = {
+                margin: 0,
+                filename: `Bethania_Academy_Executive_${reportType.toUpperCase()}_Ledger_Grade_${currentGrade}.pdf`,
+                image: { type: 'jpeg', quality: 1.0 },
+                html2canvas: { 
+                    scale: 3, 
+                    useCORS: true, 
+                    logging: false,
+                    letterRendering: true
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+
+            // Trigger silent export render and download immediately
+            html2pdf().set(pdfConfig).from(renderSandbox).save();
+        }
 
         window.addEventListener('DOMContentLoaded', initAdminEngine);
     </script>
