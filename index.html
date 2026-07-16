@@ -704,9 +704,10 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
+            // Match conflict resolution target constraint: student_id, test_name, paper_id
             const { data, error } = await _supabase
                 .from('marks_entry')
-                .upsert(entries, { onConflict: 'student_id,test_name,subject_id' }) // ✅ Changed unique conflict check key to include subject_id
+                .upsert(entries, { onConflict: 'student_id,test_name,paper_id' }) 
                 .select();
             
             if (error) {
