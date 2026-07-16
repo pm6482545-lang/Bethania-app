@@ -39,6 +39,7 @@
                 width: 100%;
                 color: #000;
                 font-family: 'Times New Roman', Times, serif;
+                background-color: #fff;
             }
             .no-print {
                 display: none !important;
@@ -52,10 +53,10 @@
             }
             th, td {
                 border: 1px solid #000 !important;
-                padding: 6px 8px !important;
+                padding: 5px 6px !important;
             }
             th {
-                background-color: #f3f4f6 !important;
+                background-color: #f2f2f2 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -379,11 +380,11 @@
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5">
                         <div id="analytical-summary-badges" class="flex flex-wrap gap-2 justify-center sm:justify-start"></div>
                         <div class="flex gap-2.5 w-full sm:w-auto">
-                            <button id="download-csv-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
-                                📥 Export Ledger (.CSV)
+                            <button id="download-marks-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                📄 Export Marks (PDF)
                             </button>
-                            <button id="download-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
-                                📄 Export Report (PDF)
+                            <button id="download-points-pdf-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                📄 Export Points (PDF)
                             </button>
                         </div>
                     </div>
@@ -430,8 +431,8 @@
         const compileReportsBtn = document.getElementById('compile-reports-btn');
         const broadsheetHeader = document.getElementById('broadsheet-header');
         const broadsheetRows = document.getElementById('broadsheet-rows');
-        const downloadCsvBtn = document.getElementById('download-csv-btn');
-        const downloadPdfBtn = document.getElementById('download-pdf-btn');
+        const downloadMarksPdfBtn = document.getElementById('download-marks-pdf-btn');
+        const downloadPointsPdfBtn = document.getElementById('download-points-pdf-btn');
         const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
         const printReportContainer = document.getElementById('print-report-container');
 
@@ -450,8 +451,8 @@
         let currentActiveExamName = "";
         let globalPapersList = [];
         let localStudentsCache = [];
-        let activeBroadSheetCsvData = "";
-        let printableReportHtml = "";
+        let printableMarksReportHtml = "";
+        let printablePointsReportHtml = "";
 
         // Dynamic DB Schema Cache for mismatch protection
         let dbSchemaCache = {
@@ -479,6 +480,22 @@
             ]
         };
 
+        const SUBJECT_SHORTHANDS = {
+            "Language Activities": "LAN", "Mathematical Activities": "MAT", "Environmental Activities": "ENV",
+            "Psychomotor Activities": "PSY", "Religious Education Activities": "REA",
+            "Indigenous Language Activities": "IND", "Kiswahili Language Activities": "KIS",
+            "English": "ENG", "Kiswahili": "KIS", "Mathematics": "MAT", "Science and Technology": "SCI",
+            "Agriculture and Nutrition": "AGR", "Creative Arts": "ART", "Social Studies": "SST",
+            "Christian Religious Education (C.R.E)": "CRE", "Islamic Religious Education (I.R.E)": "IRE",
+            "Hindu Religious Education (H.R.E)": "HRE", "Integrated Science": "INT",
+            "Pre-Technical Studies": "PRE", "Creative Arts and Sports": "CAS"
+        };
+
+        function getSubjectShorthand(fullName) {
+            const trimmed = fullName.trim();
+            return SUBJECT_SHORTHANDS[trimmed] || trimmed.substring(0, 3).toUpperCase();
+        }
+
         function getGradeTier(grade) {
             const g = parseInt(grade);
             if (g <= 3) return "lower_primary";
@@ -494,34 +511,41 @@
             return `Grade ${val}`;
         }
 
-        // --- MATH RECKONING SCHEMES ---
-
-        // 8-Point Scale points conversion with correct labels (EE1, EE2, ME1, ME2, AE1, AE2, BE1, BE2)
+        // Convert Score to 8-Point Scale points
         function convertScoreToPoints(score, max) {
             const pct = (score / max) * 100;
-            if (pct >= 90) return { points: 8, text: "EE1" };
-            if (pct >= 75) return { points: 7, text: "EE2" };
-            if (pct >= 58) return { points: 6, text: "ME1" };
-            if (pct >= 40) return { points: 5, text: "ME2" };
-            if (pct >= 30) return { points: 4, text: "AE1" };
-            if (pct >= 20) return { points: 3, text: "AE2" };
-            if (pct >= 10) return { points: 2, text: "BE1" };
-            return { points: 1, text: "BE2" };
+            if (pct >= 90) return 8; // EE1
+            if (pct >= 75) return 7; // EE2
+            if (pct >= 58) return 6; // ME1
+            if (pct >= 40) return 5; // ME2
+            if (pct >= 30) return 4; // AE1
+            if (pct >= 20) return 3; // AE2
+            if (pct >= 10) return 2; // BE1
+            return 1;                // BE2
         }
 
-        // Grading Scale for Primary (Average Percent) & Junior (Average Points)
-        function getCompetencyLevel(average, type) {
-            if (type === 'points') {
-                if (average >= 6.5) return { text: "EE", class: "bg-emerald-100 text-emerald-800" };
-                if (average >= 5.0) return { text: "ME", class: "bg-sky-100 text-sky-800" };
-                if (average >= 3.0) return { text: "AE", class: "bg-amber-100 text-amber-800" };
-                return { text: "BE", class: "bg-rose-100 text-rose-800" };
-            } else {
-                if (average >= 80) return { text: "EE", class: "bg-emerald-100 text-emerald-800" };
-                if (average >= 50) return { text: "ME", class: "bg-sky-100 text-sky-800" };
-                if (average >= 30) return { text: "AE", class: "bg-amber-100 text-amber-800" };
-                return { text: "BE", class: "bg-rose-100 text-rose-800" };
-            }
+        // Get rating text based on Average Points
+        function getPointsRating(avg) {
+            if (avg >= 7.5 && avg <= 8.0) return "EE1";
+            if (avg >= 6.5 && avg < 7.5) return "EE2";
+            if (avg >= 5.5 && avg < 6.5) return "ME1";
+            if (avg >= 4.5 && avg < 5.5) return "ME2";
+            if (avg >= 3.5 && avg < 4.5) return "AE1";
+            if (avg >= 2.5 && avg < 3.5) return "AE2";
+            if (avg >= 1.5 && avg < 2.5) return "BE1";
+            if (avg >= 1.0 && avg < 1.5) return "BE2";
+            return "BE2";
+        }
+
+        // Get rating text based on Average Marks Percentage
+        function getMarksRating(pct) {
+            if (pct >= 80) return "EE2";
+            if (pct >= 50) return "ME1";
+            if (pct >= 40) return "ME2";
+            if (pct >= 30) return "AE1";
+            if (pct >= 20) return "AE2";
+            if (pct >= 10) return "BE1";
+            return "BE2";
         }
 
         // Dynamic Schema Sniffer Routine
@@ -546,7 +570,6 @@
         // Core Admin Init
         async function initAdminEngine() {
             try {
-                // Auto detect marks schema before querying
                 await detectMarksSchema();
 
                 const { data: students, error: studentErr } = await _supabase.from('students').select('*');
@@ -574,7 +597,6 @@
             }
         }
 
-        // ID Generator matching 2-letter + 4-digit format
         function generateStudentID() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
@@ -583,7 +605,6 @@
             return `${l1}${l2}${nums}`;
         }
 
-        // Manage Learners UI Logic
         async function fetchManageList() {
             const grade = parseInt(manageGradeSelect.value);
             if (!grade) return;
@@ -616,13 +637,11 @@
                 if (error) throw error;
                 alert("Learner removed successfully.");
                 fetchManageList();
-                // Refresh local cache
                 initAdminEngine();
             } catch (err) {
                 alert("Deletion failure: " + err.message);
             }
         }
-        // Expose to window context for global markup references
         window.removeLearner = removeLearner;
 
         manageGradeSelect.addEventListener('change', fetchManageList);
@@ -659,7 +678,6 @@
             }
         });
 
-        // Config Toggles
         tabAddSub.addEventListener('click', () => { 
             tabAddSub.classList.add('tab-active'); 
             tabDelSub.classList.remove('tab-active'); 
@@ -742,7 +760,6 @@
             cfgBtnDelete.innerText = "Deleting...";
 
             try {
-                // Delete associated component papers first
                 await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
                 const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
                 if (error) throw error;
@@ -786,7 +803,6 @@
             }
         });
 
-        // Submission Tracker - UPDATED QUERY RELATION TO MATCH SUBJECT_ID ONLY
         trackerGrade.addEventListener('change', async () => {
             trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
             const selectedGrade = trackerGrade.value;
@@ -823,7 +839,6 @@
             try {
                 const studIds = targetStudents.map(s => s.id);
                 
-                // Fetch direct subject entries (where paper_id is null as sent from Index.html)
                 const { data, error } = await _supabase.from('marks_entry')
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
@@ -856,12 +871,11 @@
             }
         });
 
-        // REPORT COMPILATION & POSITION MATRIX ENGINE (Using Sniffed subject_id layout alignment)
+        // REPORT COMPILATION & POSITION MATRIX ENGINE
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
             if (isNaN(grade)) return alert("Select target grade cohort!");
 
-            // BRANDING AND LOGO VALIDATION
             const schoolLogo = document.getElementById('school-logo');
             const schoolNameText = document.getElementById('school-title').innerText.trim();
             if (!schoolLogo.complete || schoolLogo.naturalWidth === 0 || !schoolNameText) {
@@ -874,7 +888,6 @@
             try {
                 const tier = getGradeTier(grade);
                 const allowed = CBC_SUBJECT_TIERS[tier];
-                const isJuniorSchool = (tier === "junior_school");
 
                 const targetStudents = localStudentsCache.filter(s => s.grade === grade);
                 if (targetStudents.length === 0) {
@@ -882,7 +895,6 @@
                     return;
                 }
 
-                // Fetch dynamic valid subjects
                 const { data: dbSubjects, error: subErr } = await _supabase.from('subjects').select('*');
                 if (subErr) throw subErr;
 
@@ -890,7 +902,6 @@
                 const subjectIds = filteredSubjects.map(s => s.id);
                 const studentIds = targetStudents.map(s => s.id);
 
-                // Fetch scores directly mapped to subject_id (paper_id = null)
                 const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
@@ -901,9 +912,22 @@
                 if (marksErr) throw marksErr;
                 const marksData = marks || [];
 
-                // Compute Student Metrics to determine Class Positions
-                const calculatedStudents = targetStudents.map(s => {
-                    let totals = 0;
+                // Math/Science structures initialization for stats analysis[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span)
+                const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
+                const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+                const pointsDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+
+                const subjectMarksStats = {};
+                const subjectPointsStats = {};
+
+                filteredSubjects.forEach(sub => {
+                    subjectMarksStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                    subjectPointsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                });
+
+                // Compute Student Profiles & Rankings[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span)
+                const calculatedMarksStudents = targetStudents.map(s => {
+                    let totalMarks = 0;
                     let count = 0;
                     let subjectScores = {};
 
@@ -911,164 +935,303 @@
                         const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
                         if (m) {
                             const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
-                            if (isJuniorSchool) {
-                                // Conversion from raw score to 8-Point scale points (Grades 7-9)
-                                const scheme = convertScoreToPoints(subScore, 100);
-                                totals += scheme.points;
-                                subjectScores[sub.subject_name] = `${scheme.text} (${scheme.points} Pts)`;
-                            } else {
-                                // Core raw marks totals for Primary School
-                                totals += subScore;
-                                subjectScores[sub.subject_name] = `${subScore.toFixed(1)}%`;
-                            }
+                            totalMarks += subScore;
+                            subjectScores[sub.subject_name] = subScore;
                             count++;
+
+                            subjectMarksStats[sub.subject_name].total += subScore;
+                            subjectMarksStats[sub.subject_name].count++;
+                            const individualRating = getMarksRating(subScore);
+                            subjectMarksStats[sub.subject_name].dist[individualRating]++;
                         } else {
-                            subjectScores[sub.subject_name] = "-";
+                            subjectScores[sub.subject_name] = null;
                         }
                     });
 
-                    const average = count > 0 ? (totals / count) : 0;
+                    const average = count > 0 ? (totalMarks / count) : 0;
+                    const rating = getMarksRating(average);
+                    marksDistribution[rating]++;
+
                     return {
                         id: s.id,
                         name: s.name,
                         stream: s.stream,
                         subjectScores,
-                        totals,
-                        average,
-                        rating: getCompetencyLevel(average, isJuniorSchool ? 'points' : 'marks')
+                        totals: totalMarks,
+                        average: average,
+                        rating: rating
                     };
                 });
 
-                // Sort descending to assign Position ranks
-                calculatedStudents.sort((a, b) => b.totals - a.totals);
-                calculatedStudents.forEach((cs, i) => {
-                    cs.position = i + 1;
+                const calculatedPointsStudents = targetStudents.map(s => {
+                    let totalPoints = 0;
+                    let count = 0;
+                    let subjectScores = {};
+
+                    filteredSubjects.forEach(sub => {
+                        const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
+                        if (m) {
+                            const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
+                            const points = convertScoreToPoints(subScore, 100);
+                            totalPoints += points;
+                            subjectScores[sub.subject_name] = points;
+                            count++;
+
+                            subjectPointsStats[sub.subject_name].total += points;
+                            subjectPointsStats[sub.subject_name].count++;
+                            const individualRating = getPointsRating(points);
+                            subjectPointsStats[sub.subject_name].dist[individualRating]++;
+                        } else {
+                            subjectScores[sub.subject_name] = null;
+                        }
+                    });
+
+                    const average = count > 0 ? (totalPoints / count) : 0;
+                    const rating = getPointsRating(average);
+                    pointsDistribution[rating]++;
+
+                    return {
+                        id: s.id,
+                        name: s.name,
+                        stream: s.stream,
+                        subjectScores,
+                        totals: totalPoints,
+                        average: average,
+                        rating: rating
+                    };
                 });
 
-                // Build Broadsheet Table Headers
+                // Assign Rank Positions[span_10](start_span)[span_10](end_span)[span_11](start_span)[span_11](end_span)
+                calculatedMarksStudents.sort((a, b) => b.totals - a.totals);
+                calculatedMarksStudents.forEach((cs, i) => { cs.position = i + 1; });
+
+                calculatedPointsStudents.sort((a, b) => b.totals - a.totals);
+                calculatedPointsStudents.forEach((cs, i) => { cs.position = i + 1; });
+
+                // Render Live UI Broadsheet preview[span_12](start_span)[span_12](end_span)
                 let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
                 filteredSubjects.forEach(sub => {
-                    headerHtml += `<th class="py-3 px-4 text-center">${sub.subject_name}</th>`;
+                    headerHtml += `<th class="py-3 px-4 text-center">${getSubjectShorthand(sub.subject_name)}</th>`;
                 });
-                headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
-                headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
-                headerHtml += `<th class="py-3 px-4 text-center">Rating</th>`;
-                headerHtml += `<th class="py-3 px-4 text-center">Pos</th></tr>`;
+                headerHtml += `<th class="py-3 px-4 text-center">Total Points</th><th class="py-3 px-4 text-center">Mean Points</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
                 broadsheetHeader.innerHTML = headerHtml;
 
-                // Generate Table Rows
-                broadsheetRows.innerHTML = calculatedStudents.map(cs => {
+                broadsheetRows.innerHTML = calculatedPointsStudents.map(cs => {
                     let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
                     cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
                     
                     filteredSubjects.forEach(sub => {
-                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
+                        const val = cs.subjectScores[sub.subject_name];
+                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? val : '-'}</td>`;
                     });
 
-                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
-                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
-                    cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] ${cs.rating.class}">${cs.rating.text}</span></td>`;
+                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${cs.totals}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${cs.average.toFixed(1)}</td>`;
+                    cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] bg-slate-100">${cs.rating}</span></td>`;
                     cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
                     return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
                 }).join('');
 
-                // CSV Export Assembly
-                let csvHeaders = ["Learner Name", "Stream", ...filteredSubjects.map(s => s.subject_name), isJuniorSchool ? "Total Points" : "Total Marks", isJuniorSchool ? "Mean Points" : "Mean Marks (%)", "Rating", "Class Position"];
-                let csvRows = [csvHeaders];
-                calculatedStudents.forEach(cs => {
-                    csvRows.push([
-                        cs.name,
-                        cs.stream,
-                        ...filteredSubjects.map(s => cs.subjectScores[s.subject_name] || '-'),
-                        isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1),
-                        cs.average.toFixed(1),
-                        cs.rating.text,
-                        cs.position
-                    ]);
-                });
-
-                activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
-                downloadCsvBtn.disabled = false;
-
-                // Aggregate metrics indicators
-                const totalRanked = calculatedStudents.length;
-                const classMean = (calculatedStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                const totalRanked = targetStudents.length;
+                const classMeanPoints = (calculatedPointsStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
                 analyticalSummaryBadges.innerHTML = `
                     <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
-                    <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
+                    <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Points Mean: ${classMeanPoints} Pts</span>
                 `;
 
-                // HTML PDF REPORT TEMPLATE ASSEMBLY (Formatted Professionally for Official Printing)
-                let printableHeaderHtml = `
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 25px;">
-                        <div style="flex: 0 0 100px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" style="width: 100px; height: 100px; object-fit: contain;" />
-                        </div>
-                        <div style="flex: 1; text-align: center; padding: 0 15px;">
-                            <h1 style="font-size: 26px; font-weight: 800; text-transform: uppercase; margin: 0 0 4px 0; font-family: 'Times New Roman', Times, serif; letter-spacing: 1px;">Bethania Academy</h1>
-                            <p style="font-style: italic; font-size: 13px; color: #333; margin: 0 0 6px 0; font-weight: 500;">"Determination is Nobility"</p>
-                            <p style="font-size: 11px; color: #444; margin: 0; line-height: 1.4;">P.O. Box 12345, City, Country | Tel: +123 456 789<br>Email: info@bethaniaacademy.edu | Website: www.bethaniaacademy.edu</p>
-                        </div>
-                        <div style="flex: 0 0 100px;"></div>
-                    </div>
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="font-size: 18px; text-transform: uppercase; text-decoration: underline; margin: 0 0 6px 0; font-weight: bold; font-family: 'Times New Roman', Times, serif; letter-spacing: 0.5px;">General Performance Summary Ledger</h2>
-                        <p style="font-size: 13px; font-weight: bold; margin: 0; color: #111;">Assessment Cycle: ${currentActiveExamName} | Grade Level: ${getGradeLabel(grade)}</p>
-                    </div>
-                `;
+                // Sub-Subject Rankings[span_13](start_span)[span_13](end_span)[span_14](start_span)[span_14](end_span)
+                const subjectMarksList = filteredSubjects.map(sub => {
+                    const stats = subjectMarksStats[sub.subject_name];
+                    return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
+                }).sort((a, b) => b.avg - a.avg);
+                
+                const subjectPointsList = filteredSubjects.map(sub => {
+                    const stats = subjectPointsStats[sub.subject_name];
+                    return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
+                }).sort((a, b) => b.avg - a.avg);
 
-                let printableTableHtml = `
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 11px; font-family: 'Times New Roman', Times, serif;">
-                        <thead>
-                            <tr style="background-color: #f5f5f7;">
-                                <th style="border: 1px solid #000; padding: 6px 8px; text-align: left; font-weight: bold;">Learner Name</th>
-                                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">Stream</th>
-                                ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${sub.subject_name}</th>`).join('')}
-                                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? 'Total Pts' : 'Total Marks'}</th>
-                                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? 'Mean Pts' : 'Mean (%)'}</th>
-                                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">Rating</th>
-                                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">Rank</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${calculatedStudents.map(cs => `
-                                <tr>
-                                    <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">${cs.name}</td>
-                                    <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${cs.stream}</td>
-                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${cs.subjectScores[sub.subject_name] || '-'}</td>`).join('')}
-                                    <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>
-                                    <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; color: #1e3a8a;">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>
-                                    <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${cs.rating.text}</td>
-                                    <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${cs.position}</td>
+                // ==================== GENERATING PDF 1: MARKS MASTER LEDGER ====================[span_15](start_span)[span_15](end_span)
+                let marksBodyHtml = calculatedMarksStudents.map((cs, index) => `
+                    <tr style="height: 25px;">
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${index + 1}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${cs.name}</td>
+                        ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : ''}</td>`).join('')}
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.totals.toFixed(0)}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.average.toFixed(0)}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.rating}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.position}</td>
+                    </tr>
+                `).join('');
+
+                printableMarksReportHtml = `
+                    <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; padding: 10px; color: #000; background-color: #fff;">
+                        <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
+                            <h1 style="font-size: 18px; font-weight: bold; margin: 0; text-transform: uppercase; tracking-wider">F.P.F.K BETHANIA ACADEMY</h1>
+                            <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
+                            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px;">MID-TERM ASSESSMENT - MARKS MASTER LEDGER (SORTED BY PERFORMANCE)</h3>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px;">
+                            <thead>
+                                <tr style="background-color: #f2f2f2; height: 25px;">
+                                    <th style="border: 1px solid #000; width: 30px; text-align: center;">NO.</th>
+                                    <th style="border: 1px solid #000; text-align: left; padding-left: 6px;">NAME</th>
+                                    ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; width: 45px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">TOTAL</th>
+                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">AVRG</th>
+                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">RATE</th>
+                                    <th style="border: 1px solid #000; width: 45px; text-align: center;">POS</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                            </thead>
+                            <tbody>
+                                ${marksBodyHtml}
+                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
+                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">TOTAL</td>
+                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; text-align: center;">${subjectMarksStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
+                                    <td style="border: 1px solid #000; text-align: center;">${calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
+                                    <td colspan="3" style="border: 1px solid #000;"></td>
+                                </tr>
+                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
+                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">AVERAGE</td>
+                                    ${filteredSubjects.map(sub => {
+                                        const stats = subjectMarksStats[sub.subject_name];
+                                        return `<td style="border: 1px solid #000; text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(2) : '0.00'}</td>`;
+                                    }).join('')}
+                                    <td style="border: 1px solid #000; text-align: center;">${(calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(2)}</td>
+                                    <td colspan="3" style="border: 1px solid #000;"></td>
+                                </tr>
+                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
+                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">SUB. POS.</td>
+                                    ${filteredSubjects.map(sub => {
+                                        const rank = subjectMarksList.findIndex(x => x.name === sub.subject_name) + 1;
+                                        return `<td style="border: 1px solid #000; text-align: center;">${rank}</td>`;
+                                    }).join('')}
+                                    <td colspan="4" style="border: 1px solid #000;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                let printableSummaryBadgesHtml = `
-                    <div style="display: flex; gap: 15px; justify-content: flex-start; margin-bottom: 35px; font-family: 'Times New Roman', Times, serif; font-size: 12px;">
-                        <div style="border: 1px solid #000; padding: 6px 12px; font-weight: bold;">Class Cohort Size: ${totalRanked} Students</div>
-                        <div style="border: 1px solid #000; padding: 6px 12px; font-weight: bold; background-color: #fcfcfc;">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</div>
+                        <div style="margin-top: 15px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
+                            <div style="margin-bottom: 5px; text-decoration: underline; font-size: 11px;">PERFORMANCE LEVEL</div>
+                            ${ratingKeys.map(key => {
+                                const count = marksDistribution[key] || 0;
+                                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(2) : "0.00";
+                                const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
+                                                   key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
+                                                   key === "ME1" ? "Meeting Expectation 1 (ME1)" :
+                                                   key === "ME2" ? "Meeting Expectation 2 (ME2)" :
+                                                   key === "AE1" ? "Approaching Expectation 1 (AE1)" :
+                                                   key === "AE2" ? "Approaching Expectation 2 (AE2)" :
+                                                   key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
+
+                                return `
+                                    <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center;">
+                                        <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">${levelLabel}</div>
+                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                        <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${count} Students (${pct}%)</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center; background-color: #f2f2f2;">
+                                <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">TOTAL STUDENTS</div>
+                                ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].count}</div>`).join('')}
+                                <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${totalRanked} Students (100%)</div>
+                            </div>
+                        </div>
                     </div>
                 `;
 
-                let printableFooterSignaturesHtml = `
-                    <div style="margin-top: 50px; display: flex; justify-content: space-between; font-family: 'Times New Roman', Times, serif; page-break-inside: avoid;">
-                        <div style="width: 200px; text-align: center;">
-                            <div style="border-top: 1px solid #000; margin-top: 35px; padding-top: 4px; font-size: 12px; font-weight: bold;">Class Teacher's Signature</div>
+                // ==================== GENERATING PDF 2: POINTS MASTER LEDGER ====================[span_16](start_span)[span_16](end_span)
+                let pointsBodyHtml = calculatedPointsStudents.map((cs, index) => `
+                    <tr style="height: 25px;">
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${index + 1}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${cs.name}</td>
+                        ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : ''}</td>`).join('')}
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.totals.toFixed(0)}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.average.toFixed(1)}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.rating}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.position}</td>
+                    </tr>
+                `).join('');
+
+                printablePointsReportHtml = `
+                    <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; padding: 10px; color: #000; background-color: #fff;">
+                        <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
+                            <h1 style="font-size: 18px; font-weight: bold; margin: 0; text-transform: uppercase; tracking-wider">F.P.F.K BETHANIA ACADEMY</h1>
+                            <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
+                            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px;">MID-TERM ASSESSMENT - POINTS MASTER LEDGER (SORTED BY PERFORMANCE)</h3>
                         </div>
-                        <div style="width: 120px; text-align: center;">
-                            <div style="border-top: 1px solid #000; margin-top: 35px; padding-top: 4px; font-size: 12px; font-weight: bold;">Date</div>
-                        </div>
-                        <div style="width: 200px; text-align: center;">
-                            <div style="border-top: 1px solid #000; margin-top: 35px; padding-top: 4px; font-size: 12px; font-weight: bold;">Principal's Signature & Stamp</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px;">
+                            <thead>
+                                <tr style="background-color: #f2f2f2; height: 25px;">
+                                    <th style="border: 1px solid #000; width: 30px; text-align: center;">NO.</th>
+                                    <th style="border: 1px solid #000; text-align: left; padding-left: 6px;">NAME</th>
+                                    ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; width: 45px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">TOTAL</th>
+                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">AVRG</th>
+                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">RATE</th>
+                                    <th style="border: 1px solid #000; width: 45px; text-align: center;">POS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${pointsBodyHtml}
+                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
+                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">TOTAL</td>
+                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; text-align: center;">${subjectPointsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
+                                    <td style="border: 1px solid #000; text-align: center;">${calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
+                                    <td colspan="3" style="border: 1px solid #000;"></td>
+                                </tr>
+                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
+                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">AVERAGE</td>
+                                    ${filteredSubjects.map(sub => {
+                                        const stats = subjectPointsStats[sub.subject_name];
+                                        return `<td style="border: 1px solid #000; text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
+                                    }).join('')}
+                                    <td style="border: 1px solid #000; text-align: center;">${(calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(1)}</td>
+                                    <td colspan="3" style="border: 1px solid #000;"></td>
+                                </tr>
+                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
+                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">SUB. POS.</td>
+                                    ${filteredSubjects.map(sub => {
+                                        const rank = subjectPointsList.findIndex(x => x.name === sub.subject_name) + 1;
+                                        return `<td style="border: 1px solid #000; text-align: center;">${rank}</td>`;
+                                    }).join('')}
+                                    <td colspan="4" style="border: 1px solid #000;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 15px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
+                            <div style="margin-bottom: 5px; text-decoration: underline; font-size: 11px;">PERFORMANCE LEVEL</div>
+                            ${ratingKeys.map(key => {
+                                const count = pointsDistribution[key] || 0;
+                                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(2) : "0.00";
+                                const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
+                                                   key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
+                                                   key === "ME1" ? "Meeting Expectation 1 (ME1)" :
+                                                   key === "ME2" ? "Meeting Expectation 2 (ME2)" :
+                                                   key === "AE1" ? "Approaching Expectation 1 (AE1)" :
+                                                   key === "AE2" ? "Approaching Expectation 2 (AE2)" :
+                                                   key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
+
+                                return `
+                                    <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center;">
+                                        <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">${levelLabel}</div>
+                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                        <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${count} Students (${pct}%)</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center; background-color: #f2f2f2;">
+                                <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">TOTAL STUDENTS</div>
+                                ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].count}</div>`).join('')}
+                                <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${totalRanked} Students (100%)</div>
+                            </div>
                         </div>
                     </div>
                 `;
 
-                printableReportHtml = printableHeaderHtml + printableSummaryBadgesHtml + printableTableHtml + printableFooterSignaturesHtml;
-                downloadPdfBtn.disabled = false;
+                downloadMarksPdfBtn.disabled = false;
+                downloadPointsPdfBtn.disabled = false;
             } catch (err) {
                 alert("Error compiling broadsheet: " + err.message);
             } finally {
@@ -1077,19 +1240,15 @@
             }
         });
 
-        downloadCsvBtn.addEventListener('click', () => {
-            const encodedUri = encodeURI(activeBroadSheetCsvData);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Bethania_Academy_BroadSheet_Grade_${reportGrade.value}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        downloadMarksPdfBtn.addEventListener('click', () => {
+            if (!printableMarksReportHtml) return;
+            printReportContainer.innerHTML = printableMarksReportHtml;
+            window.print();
         });
 
-        downloadPdfBtn.addEventListener('click', () => {
-            if (!printableReportHtml) return;
-            printReportContainer.innerHTML = printableReportHtml;
+        downloadPointsPdfBtn.addEventListener('click', () => {
+            if (!printablePointsReportHtml) return;
+            printReportContainer.innerHTML = printablePointsReportHtml;
             window.print();
         });
 
