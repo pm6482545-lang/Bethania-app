@@ -6,7 +6,7 @@
     <title>Bethania Academy - Executive Admin Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://tailwindcss.com"></script>
     <!-- Standard PDF Compilation & Rendering Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
@@ -1262,7 +1262,7 @@
                     <thead>
                         <tr>
                             <th style="width: 35px;">NO.</th>
-                            <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
+                            <th style="text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
                             ${filteredSubjects.map(sub => `<th style="width: 50px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
                             <th style="width: 55px;">TOTAL</th>
                             <th style="width: 55px;">AVRG</th>
@@ -1274,7 +1274,7 @@
                         ${calculatedMarksStudents.map((cs, index) => `
                             <tr>
                                 <td>${index + 1}</td>
-                                <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
+                                <td style="text-align: left; font-weight: bold; white-space: nowrap; padding-right: 15px;">${cs.name}</td>
                                 ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                 <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                 <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
@@ -1352,7 +1352,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 40px;">NO.</th>
-                                <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
+                                <th style="text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
                                 ${filteredSubjects.map(sub => `<th style="width: 50px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
                                 <th style="width: 55px;">TOTAL</th>
                                 <th style="width: 55px;">AVRG</th>
@@ -1364,7 +1364,7 @@
                             ${calculatedPointsStudents.map((cs, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
+                                    <td style="text-align: left; font-weight: bold; white-space: nowrap; padding-right: 15px;">${cs.name}</td>
                                     ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                     <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                     <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
