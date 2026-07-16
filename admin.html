@@ -904,7 +904,7 @@
             const cells = pdfRenderCanvas.querySelectorAll('th, td');
             cells.forEach(c => {
                 c.style.border = '1px solid #1e293b';
-                c.style.padding = '5px 6px';
+                c.style.padding = '4px 5px';
                 c.style.textAlign = 'center';
             });
             const headers = pdfRenderCanvas.querySelectorAll('th');
@@ -972,7 +972,7 @@
                 // Re-apply styled borders inside the canvas compile container
                 page1.querySelectorAll('th, td').forEach(cell => {
                     cell.style.border = '1px solid #000000';
-                    cell.style.padding = '5px 6px';
+                    cell.style.padding = '4px 5px';
                     cell.style.textAlign = 'center';
                 });
                 page1.querySelectorAll('th').forEach(th => {
@@ -1013,7 +1013,7 @@
 
                 page2.querySelectorAll('th, td').forEach(cell => {
                     cell.style.border = '1px solid #000000';
-                    cell.style.padding = '5px 6px';
+                    cell.style.padding = '4px 5px';
                     cell.style.textAlign = 'center';
                 });
 
@@ -1261,20 +1261,20 @@
                 let marksBodyHtml = `
                     <thead>
                         <tr>
-                            <th style="width: 40px;">NO.</th>
-                            <th style="text-align: left;">LEARNER FULL NAME</th>
-                            ${filteredSubjects.map(sub => `<th style="width: 65px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                            <th style="width: 65px;">TOTAL</th>
-                            <th style="width: 65px;">AVRG</th>
-                            <th style="width: 70px;">RATE</th>
-                            <th style="width: 60px;">POS</th>
+                            <th style="width: 35px;">NO.</th>
+                            <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
+                            ${filteredSubjects.map(sub => `<th style="width: 50px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                            <th style="width: 55px;">TOTAL</th>
+                            <th style="width: 55px;">AVRG</th>
+                            <th style="width: 60px;">RATE</th>
+                            <th style="width: 50px;">POS</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${calculatedMarksStudents.map((cs, index) => `
                             <tr>
                                 <td>${index + 1}</td>
-                                <td style="text-align: left; font-weight: bold;">${cs.name}</td>
+                                <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
                                 ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                 <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                 <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
@@ -1352,19 +1352,19 @@
                         <thead>
                             <tr>
                                 <th style="width: 40px;">NO.</th>
-                                <th style="text-align: left;">LEARNER FULL NAME</th>
-                                ${filteredSubjects.map(sub => `<th style="width: 65px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                                <th style="width: 65px;">TOTAL</th>
-                                <th style="width: 65px;">AVRG</th>
-                                <th style="width: 70px;">RATE</th>
-                                <th style="width: 60px;">POS</th>
+                                <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
+                                ${filteredSubjects.map(sub => `<th style="width: 50px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                                <th style="width: 55px;">TOTAL</th>
+                                <th style="width: 55px;">AVRG</th>
+                                <th style="width: 60px;">RATE</th>
+                                <th style="width: 50px;">POS</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${calculatedPointsStudents.map((cs, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td style="text-align: left; font-weight: bold;">${cs.name}</td>
+                                    <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
                                     ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                     <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                     <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
