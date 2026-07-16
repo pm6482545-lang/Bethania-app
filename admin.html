@@ -871,6 +871,174 @@
             }
         });
 
+        // OVERLEAF PREMIUM PDF PORTAL VIEWER INJECTOR
+        function openPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
+            const previewWindow = window.open("", "_blank");
+            if (!previewWindow) {
+                alert("Pop-up blocked! Please allow pop-ups to preview/download the premium PDF reports.");
+                return;
+            }
+
+            const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${title}</title>
+                    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <style>
+                        @media print {
+                            body {
+                                background: white !important;
+                                color: black !important;
+                            }
+                            .no-print {
+                                display: none !important;
+                            }
+                            .page-container {
+                                box-shadow: none !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                width: 100% !important;
+                                max-width: 100% !important;
+                                height: auto !important;
+                                background: transparent !important;
+                            }
+                            @page {
+                                size: A4 landscape;
+                                margin: 0.8cm 1cm;
+                            }
+                            tr {
+                                page-break-inside: avoid;
+                            }
+                        }
+
+                        body {
+                            background-color: #0f172a;
+                            color: #f8fafc;
+                        }
+
+                        /* Page Setup replicating a Landscape PDF page */
+                        .page-container {
+                            background: white;
+                            color: #0f172a;
+                            width: 297mm;
+                            min-height: 210mm;
+                            padding: 1.5cm;
+                            margin: 2rem auto;
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+                            position: relative;
+                            box-sizing: border-box;
+                        }
+
+                        /* Distinct Repeating Subtle Background Watermark on each page */
+                        .pdf-watermark {
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%) rotate(-25deg);
+                            width: 480px;
+                            height: 480px;
+                            opacity: 0.04;
+                            background-image: url('${logoUrl}');
+                            background-size: contain;
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            z-index: 1;
+                            pointer-events: none;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+
+                        .pdf-content {
+                            position: relative;
+                            z-index: 10;
+                            font-family: 'Times New Roman', Times, serif;
+                        }
+
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 12px;
+                            font-size: 11px;
+                        }
+
+                        th, td {
+                            border: 1px solid #1e293b !important;
+                            padding: 5px 6px !important;
+                            text-align: center;
+                        }
+
+                        th {
+                            background-color: #f1f5f9 !important;
+                            color: #0f172a !important;
+                            font-weight: bold !important;
+                            text-transform: uppercase;
+                            font-size: 9px;
+                        }
+
+                        /* Absolute Row Safety to prevent overlaying of Learner Names */
+                        .learner-name-col {
+                            text-align: left !important;
+                            white-space: nowrap !important;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            max-width: 240px;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body class="flex flex-col min-h-screen">
+                    <!-- Premium Overleaf Control Bar -->
+                    <header class="no-print bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between shadow-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-emerald-600 text-white p-2 rounded-lg shadow-md ring-1 ring-white/10">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </div>
+                            <div>
+                                <h1 class="text-sm font-extrabold text-white tracking-wider uppercase">${title}</h1>
+                                <p class="text-[10px] text-slate-400 font-mono">Premium Analytical CBA PDF Engine &bull; Landscape Mode</p>
+                            </div>
+                        </div>
+                        <button onclick="window.print()" class="no-print btn btn-success btn-sm text-white font-bold px-5 shadow-lg flex items-center gap-2 hover:scale-105 transition-all">
+                            <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download / Open PDF
+                        </button>
+                    </header>
+
+                    <!-- Main Previewer Area -->
+                    <main class="flex-1 overflow-auto bg-slate-950/60 py-8 px-4 flex justify-center">
+                        <div class="page-container">
+                            <div class="pdf-watermark"></div>
+                            <div class="pdf-content">
+                                <!-- Dual Corner Branding Logos -->
+                                <div class="flex justify-between items-center mb-5 border-b-2 border-slate-900 pb-4">
+                                    <img src="${logoUrl}" alt="Left Logo" class="w-16 h-16 object-contain rounded-full shadow-md border border-slate-100" />
+                                    <div class="text-center flex-1 mx-6">
+                                        <h1 class="text-2xl font-extrabold tracking-wider text-slate-950 uppercase" style="font-family: 'Georgia', serif;">F.P.F.K BETHANIA ACADEMY</h1>
+                                        <p class="text-[10px] tracking-widest text-slate-600 font-bold uppercase mt-1">Nurturing Excellence, Integrity, and Academic Distinction</p>
+                                    </div>
+                                    <img src="${logoUrl}" alt="Right Logo" class="w-16 h-16 object-contain rounded-full shadow-md border border-slate-100" />
+                                </div>
+
+                                <!-- Dynamic Report Content -->
+                                ${headerHtml}
+                                <table>
+                                    ${bodyHtml}
+                                </table>
+                                ${statsHtml}
+                            </div>
+                        </div>
+                    </main>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
+        }
+
         // REPORT COMPILATION & POSITION MATRIX ENGINE
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
@@ -888,6 +1056,15 @@
             try {
                 const tier = getGradeTier(grade);
                 const allowed = CBC_SUBJECT_TIERS[tier];
+
+                // Disable Points compilation and Points PDF features if Lower Primary is selected
+                if (tier === "lower_primary") {
+                    downloadPointsPdfBtn.disabled = true;
+                    downloadPointsPdfBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                } else {
+                    downloadPointsPdfBtn.disabled = false;
+                    downloadPointsPdfBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                }
 
                 const targetStudents = localStudentsCache.filter(s => s.grade === grade);
                 if (targetStudents.length === 0) {
@@ -912,7 +1089,7 @@
                 if (marksErr) throw marksErr;
                 const marksData = marks || [];
 
-                // Math/Science structures initialization for stats analysis[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span)
+                // Math/Science structures initialization for stats analysis
                 const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
                 const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
                 const pointsDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
@@ -925,7 +1102,7 @@
                     subjectPointsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
                 });
 
-                // Compute Student Profiles & Rankings[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span)
+                // Compute Student Profiles & Rankings
                 const calculatedMarksStudents = targetStudents.map(s => {
                     let totalMarks = 0;
                     let count = 0;
@@ -963,7 +1140,7 @@
                     };
                 });
 
-                const calculatedPointsStudents = targetStudents.map(s => {
+                const calculatedPointsStudents = tier === "lower_primary" ? [] : targetStudents.map(s => {
                     let totalPoints = 0;
                     let count = 0;
                     let subjectScores = {};
@@ -1001,22 +1178,30 @@
                     };
                 });
 
-                // Assign Rank Positions[span_10](start_span)[span_10](end_span)[span_11](start_span)[span_11](end_span)
+                // Assign Rank Positions
                 calculatedMarksStudents.sort((a, b) => b.totals - a.totals);
                 calculatedMarksStudents.forEach((cs, i) => { cs.position = i + 1; });
 
-                calculatedPointsStudents.sort((a, b) => b.totals - a.totals);
-                calculatedPointsStudents.forEach((cs, i) => { cs.position = i + 1; });
+                if (tier !== "lower_primary") {
+                    calculatedPointsStudents.sort((a, b) => b.totals - a.totals);
+                    calculatedPointsStudents.forEach((cs, i) => { cs.position = i + 1; });
+                }
 
-                // Render Live UI Broadsheet preview[span_12](start_span)[span_12](end_span)
+                // Render Live UI Broadsheet preview
                 let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
                 filteredSubjects.forEach(sub => {
                     headerHtml += `<th class="py-3 px-4 text-center">${getSubjectShorthand(sub.subject_name)}</th>`;
                 });
-                headerHtml += `<th class="py-3 px-4 text-center">Total Points</th><th class="py-3 px-4 text-center">Mean Points</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
+                if (tier === "lower_primary") {
+                    headerHtml += `<th class="py-3 px-4 text-center">Total Marks</th><th class="py-3 px-4 text-center">Mean Marks</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
+                } else {
+                    headerHtml += `<th class="py-3 px-4 text-center">Total Points</th><th class="py-3 px-4 text-center">Mean Points</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
+                }
                 broadsheetHeader.innerHTML = headerHtml;
 
-                broadsheetRows.innerHTML = calculatedPointsStudents.map(cs => {
+                const liveRenderStudents = tier === "lower_primary" ? calculatedMarksStudents : calculatedPointsStudents;
+
+                broadsheetRows.innerHTML = liveRenderStudents.map(cs => {
                     let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
                     cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
                     
@@ -1025,7 +1210,7 @@
                         cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? val : '-'}</td>`;
                     });
 
-                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${cs.totals}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${cs.totals.toFixed(0)}</td>`;
                     cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${cs.average.toFixed(1)}</td>`;
                     cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] bg-slate-100">${cs.rating}</span></td>`;
                     cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
@@ -1033,178 +1218,190 @@
                 }).join('');
 
                 const totalRanked = targetStudents.length;
-                const classMeanPoints = (calculatedPointsStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
-                analyticalSummaryBadges.innerHTML = `
-                    <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
-                    <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Points Mean: ${classMeanPoints} Pts</span>
-                `;
+                if (tier === "lower_primary") {
+                    const classMeanMarks = (calculatedMarksStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                    analyticalSummaryBadges.innerHTML = `
+                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
+                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Marks Mean: ${classMeanMarks}%</span>
+                    `;
+                } else {
+                    const classMeanPoints = (calculatedPointsStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                    analyticalSummaryBadges.innerHTML = `
+                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
+                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Points Mean: ${classMeanPoints} Pts</span>
+                    `;
+                }
 
-                // Sub-Subject Rankings[span_13](start_span)[span_13](end_span)[span_14](start_span)[span_14](end_span)
+                // Sub-Subject Rankings
                 const subjectMarksList = filteredSubjects.map(sub => {
                     const stats = subjectMarksStats[sub.subject_name];
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
                 
-                const subjectPointsList = filteredSubjects.map(sub => {
+                const subjectPointsList = tier === "lower_primary" ? [] : filteredSubjects.map(sub => {
                     const stats = subjectPointsStats[sub.subject_name];
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
 
-                // ==================== GENERATING PDF 1: MARKS MASTER LEDGER ====================[span_15](start_span)[span_15](end_span)
-                let marksBodyHtml = calculatedMarksStudents.map((cs, index) => `
-                    <tr style="height: 25px;">
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${index + 1}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${cs.name}</td>
-                        ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : ''}</td>`).join('')}
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.totals.toFixed(0)}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.average.toFixed(0)}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.rating}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.position}</td>
-                    </tr>
-                `).join('');
+                // ==================== GENERATING PDF 1: MARKS MASTER LEDGER ====================
+                let marksHeaderHtml = `
+                    <div style="text-align: center; margin-bottom: 20px; line-height: 1.4;">
+                        <h2 style="font-size: 14px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
+                        <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - MARKS MASTER LEDGER (LANDSCAPE LAYOUT)</h3>
+                    </div>
+                `;
 
-                printableMarksReportHtml = `
-                    <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; padding: 10px; color: #000; background-color: #fff;">
-                        <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
-                            <h1 style="font-size: 18px; font-weight: bold; margin: 0; text-transform: uppercase; tracking-wider">F.P.F.K BETHANIA ACADEMY</h1>
-                            <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
-                            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px;">MID-TERM ASSESSMENT - MARKS MASTER LEDGER (SORTED BY PERFORMANCE)</h3>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px;">
-                            <thead>
-                                <tr style="background-color: #f2f2f2; height: 25px;">
-                                    <th style="border: 1px solid #000; width: 30px; text-align: center;">NO.</th>
-                                    <th style="border: 1px solid #000; text-align: left; padding-left: 6px;">NAME</th>
-                                    ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; width: 45px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">TOTAL</th>
-                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">AVRG</th>
-                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">RATE</th>
-                                    <th style="border: 1px solid #000; width: 45px; text-align: center;">POS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${marksBodyHtml}
-                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
-                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">TOTAL</td>
-                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; text-align: center;">${subjectMarksStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
-                                    <td style="border: 1px solid #000; text-align: center;">${calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
-                                    <td colspan="3" style="border: 1px solid #000;"></td>
-                                </tr>
-                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
-                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">AVERAGE</td>
-                                    ${filteredSubjects.map(sub => {
-                                        const stats = subjectMarksStats[sub.subject_name];
-                                        return `<td style="border: 1px solid #000; text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(2) : '0.00'}</td>`;
-                                    }).join('')}
-                                    <td style="border: 1px solid #000; text-align: center;">${(calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(2)}</td>
-                                    <td colspan="3" style="border: 1px solid #000;"></td>
-                                </tr>
-                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
-                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">SUB. POS.</td>
-                                    ${filteredSubjects.map(sub => {
-                                        const rank = subjectMarksList.findIndex(x => x.name === sub.subject_name) + 1;
-                                        return `<td style="border: 1px solid #000; text-align: center;">${rank}</td>`;
-                                    }).join('')}
-                                    <td colspan="4" style="border: 1px solid #000;"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div style="margin-top: 15px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
-                            <div style="margin-bottom: 5px; text-decoration: underline; font-size: 11px;">PERFORMANCE LEVEL</div>
-                            ${ratingKeys.map(key => {
-                                const count = marksDistribution[key] || 0;
-                                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(2) : "0.00";
-                                const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
-                                                   key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
-                                                   key === "ME1" ? "Meeting Expectation 1 (ME1)" :
-                                                   key === "ME2" ? "Meeting Expectation 2 (ME2)" :
-                                                   key === "AE1" ? "Approaching Expectation 1 (AE1)" :
-                                                   key === "AE2" ? "Approaching Expectation 2 (AE2)" :
-                                                   key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
-
-                                return `
-                                    <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center;">
-                                        <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">${levelLabel}</div>
-                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                        <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${count} Students (${pct}%)</div>
-                                    </div>
-                                `;
+                let marksBodyHtml = `
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">NO.</th>
+                            <th style="text-align: left;">LEARNER FULL NAME</th>
+                            <th style="width: 70px;">STREAM</th>
+                            ${filteredSubjects.map(sub => `<th style="width: 60px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                            <th style="width: 60px;">TOTAL</th>
+                            <th style="width: 60px;">AVRG</th>
+                            <th style="width: 65px;">RATE</th>
+                            <th style="width: 55px;">POS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${calculatedMarksStudents.map((cs, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td class="learner-name-col">${cs.name}</td>
+                                <td><span style="text-transform: uppercase; font-weight: 500;">${cs.stream}</span></td>
+                                ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
+                                <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
+                                <td style="font-weight: bold;">${cs.rating}</td>
+                                <td style="font-weight: 900;">${cs.position}</td>
+                            </tr>
+                        `).join('')}
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="3" style="text-align: left; padding-left: 10px;">TOTAL</td>
+                            ${filteredSubjects.map(sub => `<td>${subjectMarksStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
+                            <td>${calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
+                            <td colspan="3"></td>
+                        </tr>
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="3" style="text-align: left; padding-left: 10px;">AVERAGE</td>
+                            ${filteredSubjects.map(sub => {
+                                const stats = subjectMarksStats[sub.subject_name];
+                                return `<td>${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
                             }).join('')}
-                            <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center; background-color: #f2f2f2;">
-                                <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">TOTAL STUDENTS</div>
-                                ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].count}</div>`).join('')}
-                                <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${totalRanked} Students (100%)</div>
-                            </div>
+                            <td>${(calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(1)}</td>
+                            <td colspan="3"></td>
+                        </tr>
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="3" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
+                            ${filteredSubjects.map(sub => {
+                                const rank = subjectMarksList.findIndex(x => x.name === sub.subject_name) + 1;
+                                return `<td>${rank}</td>`;
+                            }).join('')}
+                            <td colspan="4"></td>
+                        </tr>
+                    </tbody>
+                `;
+
+                let marksStatsHtml = `
+                    <div style="margin-top: 25px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
+                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider">PERFORMANCE ANALYSIS LEVEL MATRIX</div>
+                        ${ratingKeys.map(key => {
+                            const count = marksDistribution[key] || 0;
+                            const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
+                            const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
+                                               key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
+                                               key === "ME1" ? "Meeting Expectation 1 (ME1)" :
+                                               key === "ME2" ? "Meeting Expectation 2 (ME2)" :
+                                               key === "AE1" ? "Approaching Expectation 1 (AE1)" :
+                                               key === "AE2" ? "Approaching Expectation 2 (AE2)" :
+                                               key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
+
+                            return `
+                                <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
+                                    <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold;">${levelLabel}</div>
+                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                    <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%;">${count} Students (${pct}%)</div>
+                                </div>
+                            `;
+                        }).join('')}
+                        <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center; background-color: #f1f5f9;">
+                            <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b;">TOTAL ENROLLED</div>
+                            ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].count}</div>`).join('')}
+                            <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%;">${totalRanked} Students (100%)</div>
                         </div>
                     </div>
                 `;
 
-                // ==================== GENERATING PDF 2: POINTS MASTER LEDGER ====================[span_16](start_span)[span_16](end_span)
-                let pointsBodyHtml = calculatedPointsStudents.map((cs, index) => `
-                    <tr style="height: 25px;">
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${index + 1}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${cs.name}</td>
-                        ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : ''}</td>`).join('')}
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.totals.toFixed(0)}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.average.toFixed(1)}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.rating}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${cs.position}</td>
-                    </tr>
-                `).join('');
+                printableMarksReportHtml = { marksHeaderHtml, marksBodyHtml, marksStatsHtml };
 
-                printablePointsReportHtml = `
-                    <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; padding: 10px; color: #000; background-color: #fff;">
-                        <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
-                            <h1 style="font-size: 18px; font-weight: bold; margin: 0; text-transform: uppercase; tracking-wider">F.P.F.K BETHANIA ACADEMY</h1>
-                            <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
-                            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px;">MID-TERM ASSESSMENT - POINTS MASTER LEDGER (SORTED BY PERFORMANCE)</h3>
+                // ==================== GENERATING PDF 2: POINTS MASTER LEDGER ====================
+                if (tier !== "lower_primary") {
+                    let pointsHeaderHtml = `
+                        <div style="text-align: center; margin-bottom: 20px; line-height: 1.4;">
+                            <h2 style="font-size: 14px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} ${cycleTerm.value.toUpperCase()} ${cycleYear.value}</h2>
+                            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - POINTS MASTER LEDGER (LANDSCAPE LAYOUT)</h3>
                         </div>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px;">
-                            <thead>
-                                <tr style="background-color: #f2f2f2; height: 25px;">
-                                    <th style="border: 1px solid #000; width: 30px; text-align: center;">NO.</th>
-                                    <th style="border: 1px solid #000; text-align: left; padding-left: 6px;">NAME</th>
-                                    ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; width: 45px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">TOTAL</th>
-                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">AVRG</th>
-                                    <th style="border: 1px solid #000; width: 55px; text-align: center;">RATE</th>
-                                    <th style="border: 1px solid #000; width: 45px; text-align: center;">POS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${pointsBodyHtml}
-                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
-                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">TOTAL</td>
-                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; text-align: center;">${subjectPointsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
-                                    <td style="border: 1px solid #000; text-align: center;">${calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
-                                    <td colspan="3" style="border: 1px solid #000;"></td>
-                                </tr>
-                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
-                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">AVERAGE</td>
-                                    ${filteredSubjects.map(sub => {
-                                        const stats = subjectPointsStats[sub.subject_name];
-                                        return `<td style="border: 1px solid #000; text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
-                                    }).join('')}
-                                    <td style="border: 1px solid #000; text-align: center;">${(calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(1)}</td>
-                                    <td colspan="3" style="border: 1px solid #000;"></td>
-                                </tr>
-                                <tr style="height: 25px; background-color: #fafafa; font-weight: bold;">
-                                    <td colspan="2" style="border: 1px solid #000; padding: 4px 6px;">SUB. POS.</td>
-                                    ${filteredSubjects.map(sub => {
-                                        const rank = subjectPointsList.findIndex(x => x.name === sub.subject_name) + 1;
-                                        return `<td style="border: 1px solid #000; text-align: center;">${rank}</td>`;
-                                    }).join('')}
-                                    <td colspan="4" style="border: 1px solid #000;"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    `;
 
-                        <div style="margin-top: 15px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
-                            <div style="margin-bottom: 5px; text-decoration: underline; font-size: 11px;">PERFORMANCE LEVEL</div>
+                    let pointsBodyHtml = `
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">NO.</th>
+                                <th style="text-align: left;">LEARNER FULL NAME</th>
+                                <th style="width: 70px;">STREAM</th>
+                                ${filteredSubjects.map(sub => `<th style="width: 60px;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                                <th style="width: 60px;">TOTAL</th>
+                                <th style="width: 60px;">AVRG</th>
+                                <th style="width: 65px;">RATE</th>
+                                <th style="width: 55px;">POS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${calculatedPointsStudents.map((cs, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td class="learner-name-col">${cs.name}</td>
+                                    <td><span style="text-transform: uppercase; font-weight: 500;">${cs.stream}</span></td>
+                                    ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                    <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
+                                    <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
+                                    <td style="font-weight: bold;">${cs.rating}</td>
+                                    <td style="font-weight: 900;">${cs.position}</td>
+                                </tr>
+                            `).join('')}
+                            <tr style="background-color: #f8fafc; font-weight: bold;">
+                                <td colspan="3" style="text-align: left; padding-left: 10px;">TOTAL</td>
+                                ${filteredSubjects.map(sub => `<td>${subjectPointsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
+                                <td>${calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
+                                <td colspan="3"></td>
+                            </tr>
+                            <tr style="background-color: #f8fafc; font-weight: bold;">
+                                <td colspan="3" style="text-align: left; padding-left: 10px;">AVERAGE</td>
+                                ${filteredSubjects.map(sub => {
+                                    const stats = subjectPointsStats[sub.subject_name];
+                                    return `<td>${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
+                                }).join('')}
+                                <td>${(calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(1)}</td>
+                                <td colspan="3"></td>
+                            </tr>
+                            <tr style="background-color: #f8fafc; font-weight: bold;">
+                                <td colspan="3" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
+                                ${filteredSubjects.map(sub => {
+                                    const rank = subjectPointsList.findIndex(x => x.name === sub.subject_name) + 1;
+                                    return `<td>${rank}</td>`;
+                                }).join('')}
+                                <td colspan="4"></td>
+                            </tr>
+                        </tbody>
+                    `;
+
+                    let pointsStatsHtml = `
+                        <div style="margin-top: 25px; font-weight: bold; font-size: 10px; page-break-inside: avoid;">
+                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider">PERFORMANCE ANALYSIS LEVEL MATRIX</div>
                             ${ratingKeys.map(key => {
                                 const count = pointsDistribution[key] || 0;
-                                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(2) : "0.00";
+                                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
                                 const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
                                                    key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
                                                    key === "ME1" ? "Meeting Expectation 1 (ME1)" :
@@ -1214,24 +1411,25 @@
                                                    key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
 
                                 return `
-                                    <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center;">
-                                        <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">${levelLabel}</div>
-                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                        <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${count} Students (${pct}%)</div>
+                                    <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
+                                        <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold;">${levelLabel}</div>
+                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                        <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%;">${count} Students (${pct}%)</div>
                                     </div>
                                 `;
                             }).join('')}
-                            <div style="display: flex; border: 1px solid #000; margin-bottom: -1px; height: 24px; align-items: center; background-color: #f2f2f2;">
-                                <div style="width: 250px; padding-left: 6px; border-right: 1px solid #000;">TOTAL STUDENTS</div>
-                                ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #000; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].count}</div>`).join('')}
-                                <div style="width: 155px; padding-left: 6px; font-weight: bold; display: flex; align-items: center; height: 100%;">${totalRanked} Students (100%)</div>
+                            <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center; background-color: #f1f5f9;">
+                                <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b;">TOTAL ENROLLED</div>
+                                ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].count}</div>`).join('')}
+                                <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%;">${totalRanked} Students (100%)</div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
+
+                    printablePointsReportHtml = { pointsHeaderHtml, pointsBodyHtml, pointsStatsHtml };
+                }
 
                 downloadMarksPdfBtn.disabled = false;
-                downloadPointsPdfBtn.disabled = false;
             } catch (err) {
                 alert("Error compiling broadsheet: " + err.message);
             } finally {
@@ -1242,14 +1440,22 @@
 
         downloadMarksPdfBtn.addEventListener('click', () => {
             if (!printableMarksReportHtml) return;
-            printReportContainer.innerHTML = printableMarksReportHtml;
-            window.print();
+            openPdfPreview(
+                "Raw Marks Master Ledger - Bethania Academy",
+                printableMarksReportHtml.marksHeaderHtml,
+                printableMarksReportHtml.marksBodyHtml,
+                printableMarksReportHtml.marksStatsHtml
+            );
         });
 
         downloadPointsPdfBtn.addEventListener('click', () => {
             if (!printablePointsReportHtml) return;
-            printReportContainer.innerHTML = printablePointsReportHtml;
-            window.print();
+            openPdfPreview(
+                "Points Master Ledger - Bethania Academy",
+                printablePointsReportHtml.pointsHeaderHtml,
+                printablePointsReportHtml.pointsBodyHtml,
+                printablePointsReportHtml.pointsStatsHtml
+            );
         });
 
         window.addEventListener('DOMContentLoaded', initAdminEngine);
