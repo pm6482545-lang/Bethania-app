@@ -233,9 +233,9 @@
                         <span class="text-2xl">📝</span>
                         <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
                     </div>
-                    <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort, subject learning area, and sub-paper component to load assessment rosters.</p>
+                    <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort and subject learning area to load assessment rosters.</p>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
                         <div class="form-control">
                             <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class/Grade Target</label>
                             <select id="filter-grade" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none">
@@ -253,12 +253,6 @@
                                 <option disabled selected>Pick Grade First</option>
                             </select>
                         </div>
-                        <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Paper Component</label>
-                            <select id="filter-paper" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none" disabled>
-                                <option disabled selected>Pick Subject First</option>
-                            </select>
-                        </div>
                     </div>
 
                     <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -267,7 +261,7 @@
                                 <tr>
                                     <th class="p-3.5 text-left">Student Name</th>
                                     <th class="p-3.5 text-center">Stream</th>
-                                    <th id="paper-max-header" class="p-3.5 text-center">Raw Score Input</th>
+                                    <th id="paper-max-header" class="p-3.5 text-center">Raw Score Input (Max 100 Marks)</th>
                                 </tr>
                             </thead>
                             <tbody id="marks-entry-rows" class="text-xs">
@@ -299,7 +293,6 @@
         let activeExamContextName = "";
         let localStudentsCache = [];
         let subjectsCache = [];
-        let papersCache = []; 
 
         // DOM Handles
         const tabRoster = document.getElementById('tab-roster');
@@ -339,7 +332,6 @@
         // Marks Filters
         const filterGrade = document.getElementById('filter-grade');
         const filterSubject = document.getElementById('filter-subject');
-        const filterPaper = document.getElementById('filter-paper');
         const marksEntryRows = document.getElementById('marks-entry-rows');
         const paperMaxHeader = document.getElementById('paper-max-header');
         const saveMarksBtn = document.getElementById('save-marks-btn');
@@ -597,10 +589,6 @@
         async function fetchSubjects() {
             const { data: subjectData, error: subjectError } = await _supabase.from('subjects').select('*').order('subject_name');
             if (subjectError) console.error("Error fetching subjects:", subjectError);
-
-            const { data: paperData, error: paperError } = await _supabase.from('papers').select('*');
-            if (paperError) console.error("Error fetching papers:", paperError);
-            papersCache = paperData || [];
             
             if(activeExamContextName && activeExamContextName.toLowerCase().includes('maths contest')) {
                 subjectsCache = (subjectData || []).filter(s => s.subject_name.toLowerCase().includes('math'));
@@ -625,44 +613,18 @@
                     filteredSubjects.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
                 filterSubject.disabled = false; 
             }
-            filterPaper.disabled = true;
-            filterPaper.innerHTML = '<option value="" disabled selected>Pick Subject First</option>';
             marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
         });
 
-        // Triggered when Subject selection changes
-        filterSubject.addEventListener('change', () => {
+        // Triggered when Subject selection changes -> Loads rosters automatically now
+        filterSubject.addEventListener('change', async () => {
             const subId = filterSubject.value;
             if(!subId) {
-                filterPaper.innerHTML = '<option value="">-- Choose Paper Component --</option>';
-                filterPaper.disabled = true;
                 marksEntryRows.innerHTML = '';
                 return;
             }
 
-            const papers = papersCache.filter(p => p.subject_id === subId);
-            
-            if(papers.length === 0) {
-                filterPaper.innerHTML = '<option value="DIRECT_ENTRY" data-max="100" selected>📝 Direct Entry (Default: 100 Marks)</option>';
-                filterPaper.disabled = false;
-                filterPaper.dispatchEvent(new Event('change'));
-            } else {
-                let html = '<option value="" disabled selected>-- Select Paper Component --</option>';
-                papers.forEach(p => {
-                    html += `<option value="${p.id}" data-max="${p.max_marks || 50}">${p.paper_name} (Max Marks: ${p.max_marks || 50})</option>`;
-                });
-                filterPaper.innerHTML = html;
-                filterPaper.disabled = false;
-            }
-            marksEntryRows.innerHTML = ''; 
-        });
-
-        // Triggered when Paper/Component selection changes
-        filterPaper.addEventListener('change', async () => {
-            const selectedOption = filterPaper.options[filterPaper.selectedIndex];
-            if (!selectedOption || !selectedOption.value) return;
-
-            const maxMarks = selectedOption.getAttribute('data-max') || "100";
+            const maxMarks = "100";
             paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
 
             const selectedGrade = parseInt(filterGrade.value);
@@ -674,23 +636,16 @@
                 return;
             }
 
-            // Fetch existing marks
+            // Fetch existing marks where paper_id is null (direct subject entries)
             const studentIds = filteredStudents.map(s => s.id);
-            const paperVal = filterPaper.value;
             
-            let query = _supabase
+            const { data: savedMarks, error } = await _supabase
                 .from('marks_entry')
                 .select('student_id, raw_score')
                 .eq('test_name', activeExamContextName)
-                .in('student_id', studentIds);
+                .in('student_id', studentIds)
+                .is('paper_id', null);
 
-            if (paperVal === 'DIRECT_ENTRY') {
-                query = query.is('paper_id', null);
-            } else {
-                query = query.eq('paper_id', paperVal);
-            }
-
-            const { data: savedMarks, error } = await query;
             if (error) console.error("Error loading existing marks:", error);
 
             const marksMap = {};
@@ -721,7 +676,7 @@
             saveMarksBtn.disabled = systemIsLocked;
         });
         
-        // Consolidated Save All Marks Submit Event with verification & locks check
+        // Save All Marks Submit Event
         saveMarksBtn.addEventListener('click', async () => {
             if (systemIsLocked) {
                 return alert("⚠️ System is currently Closed. Data submission rejected.");
@@ -732,18 +687,6 @@
                 return alert("⚠️ Error: No active exam session context found. Please refresh the page and try again.");
             }
             
-            const paperVal = filterPaper.value;
-
-            // SAFEGUARD: Stop submission if paper selection is completely missing or invalid
-            if (!paperVal || paperVal === "undefined" || paperVal === "null" || paperVal === "") {
-                return alert("⚠️ Please select a valid Paper Component from the dropdown before saving.");
-            }
-
-            // Prevent database crash if DIRECT_ENTRY is selected but is not a valid UUID in marks_entry
-            if (paperVal === 'DIRECT_ENTRY') {
-                return alert("⚠️ Direct Entry is active. Please configure at least one Paper Component (e.g., 'Theory' or 'Paper 1') in your Admin Dashboard first for this subject.");
-            }
-
             const entries = Array.from(document.querySelectorAll('.score-field'))
                 .filter(input => input.value.trim() !== "") 
                 .map(input => {
@@ -751,7 +694,7 @@
                         student_id: input.getAttribute('data-sid'),
                         test_name: activeExamContextName,
                         raw_score: parseFloat(input.value) || 0.00,
-                        paper_id: paperVal
+                        paper_id: null // Explicitly null because components are removed
                     };
                 });
 
@@ -762,7 +705,6 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Use .select() to enforce that Supabase returns the rows written
             const { data, error } = await _supabase
                 .from('marks_entry')
                 .upsert(entries, { onConflict: 'student_id,test_name,paper_id' })
