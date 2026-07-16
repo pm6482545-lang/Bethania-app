@@ -453,6 +453,12 @@
         let activeBroadSheetCsvData = "";
         let printableReportHtml = "";
 
+        // Dynamic DB Schema Cache for mismatch protection
+        let dbSchemaCache = {
+            examColumn: 'test_name', // fallback
+            scoreColumn: 'raw_score' // fallback
+        };
+
         // Official CBC Curriculum Rules (Compulsory Lists)
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
@@ -516,9 +522,31 @@
             }
         }
 
+        // Dynamic Schema Sniffer Routine
+        async function detectMarksSchema() {
+            try {
+                const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
+                if (data && data.length > 0) {
+                    const row = data[0];
+                    if ('exam_name' in row) dbSchemaCache.examColumn = 'exam_name';
+                    else if ('exam_session' in row) dbSchemaCache.examColumn = 'exam_session';
+                    else dbSchemaCache.examColumn = 'test_name';
+
+                    if ('score' in row) dbSchemaCache.scoreColumn = 'score';
+                    else if ('marks' in row) dbSchemaCache.scoreColumn = 'marks';
+                    else dbSchemaCache.scoreColumn = 'raw_score';
+                }
+            } catch (err) {
+                console.warn("Schema detection warning: using default fallbacks.", err);
+            }
+        }
+
         // Core Admin Init
         async function initAdminEngine() {
             try {
+                // Auto detect marks schema before querying
+                await detectMarksSchema();
+
                 const { data: students, error: studentErr } = await _supabase.from('students').select('*');
                 if (studentErr) throw studentErr;
                 localStudentsCache = students || [];
@@ -756,7 +784,7 @@
             }
         });
 
-        // Submission Tracker
+        // Submission Tracker with Dynamic Schema Query Alignment
         trackerGrade.addEventListener('change', async () => {
             trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
             const selectedGrade = trackerGrade.value;
@@ -798,7 +826,7 @@
                 if (targetPapers.length > 0) {
                     const { data, error } = await _supabase.from('marks_entry')
                         .select('*')
-                        .eq('test_name', currentActiveExamName)
+                        .eq(dbSchemaCache.examColumn, currentActiveExamName)
                         .in('student_id', studIds)
                         .in('paper_id', targetPapers.map(p => p.id));
                     if (error) throw error;
@@ -811,7 +839,8 @@
                     let scoreDetails = targetPapers.length === 0 ? "No papers set up" : 
                         marksForStudent.map(m => {
                             const pap = targetPapers.find(tp => tp.id === m.paper_id);
-                            return pap ? `${pap.paper_name}: ${m.raw_score}` : `Score: ${m.raw_score}`;
+                            const actualScore = m[dbSchemaCache.scoreColumn];
+                            return pap ? `${pap.paper_name}: ${actualScore}` : `Score: ${actualScore}`;
                         }).join(', ');
 
                     return `
@@ -831,7 +860,7 @@
             }
         });
 
-        // REPORT COMPILATION & POSITION MATRIX ENGINE
+        // REPORT COMPILATION & POSITION MATRIX ENGINE (Using sniffed schema columns)
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
             if (isNaN(grade)) return alert("Select target grade cohort!");
@@ -868,10 +897,10 @@
                 const relevantPapers = globalPapersList.filter(p => subjectIds.includes(p.subject_id));
                 const studentIds = targetStudents.map(s => s.id);
 
-                // Fetch scores
+                // Fetch scores using Sniffed Exam Column Name
                 const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
                     .select('*')
-                    .eq('test_name', currentActiveExamName)
+                    .eq(dbSchemaCache.examColumn, currentActiveExamName)
                     .in('student_id', studentIds)
                     .in('paper_id', relevantPapers.map(p => p.id));
                 if (marksErr) throw marksErr;
@@ -895,7 +924,7 @@
                         papersForSub.forEach(p => {
                             const m = marksData.find(md => md.student_id === s.id && md.paper_id === p.id);
                             if (m) {
-                                subRawSum += parseFloat(m.raw_score);
+                                subRawSum += parseFloat(m[dbSchemaCache.scoreColumn]);
                                 recordExists = true;
                             }
                             subMaxSum += parseFloat(p.max_marks);
