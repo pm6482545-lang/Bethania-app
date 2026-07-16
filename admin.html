@@ -87,7 +87,7 @@
         </div>
     </header>
 
-    <!-- PRINT-PREVIEW AREA (Only active during print rendering, hidden by default in UI) -->
+    <!-- PRINT-PREVIEW AREA -->
     <div id="print-report-container" class="hidden print:block p-8 bg-white text-slate-900">
         <!-- Dynamically injected printable report content -->
     </div>
@@ -108,11 +108,16 @@
                             <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Select Grade to Edit</label>
                             <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium focus:outline-none focus:border-slate-400">
                                 <option value="" disabled selected>Choose Grade...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
                                 <option value="9">Grade 9</option>
                             </select>
                         </div>
@@ -234,11 +239,17 @@
                             <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Class Level</label>
                             <select id="tracker-grade" class="select select-bordered select-sm w-full font-medium">
                                 <option value="" disabled selected>Choose Class...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
                             </select>
                         </div>
 
@@ -329,11 +340,17 @@
                             <label class="label-text font-bold text-slate-600 text-[11px] tracking-wider uppercase mb-1.5">Class Cohort</label>
                             <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
                                 <option value="" disabled selected>Choose Grade...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
                             </select>
                         </div>
 
@@ -501,16 +518,29 @@
 
         // Core Admin Init
         async function initAdminEngine() {
-            const { data: students } = await _supabase.from('students').select('*');
-            localStudentsCache = students || [];
-            const { data: papers } = await _supabase.from('subject_papers').select('*');
-            globalPapersList = papers || [];
+            try {
+                const { data: students, error: studentErr } = await _supabase.from('students').select('*');
+                if (studentErr) throw studentErr;
+                localStudentsCache = students || [];
 
-            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
-            if(sessions && sessions.length > 0) {
-                currentActiveExamName = sessions[0].exam_name;
-                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
-                detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
+                const { data: papers, error: papersErr } = await _supabase.from('subject_papers').select('*');
+                if (papersErr) throw papersErr;
+                globalPapersList = papers || [];
+
+                const { data: sessions, error: sessionErr } = await _supabase.from('exam_sessions')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                if (sessionErr) throw sessionErr;
+
+                if (sessions && sessions.length > 0) {
+                    currentActiveExamName = sessions[0].exam_name;
+                    dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
+                    detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
+                }
+            } catch (err) {
+                console.error("Initialization error:", err);
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-error"></span> Connection Failed`;
             }
         }
 
@@ -528,23 +558,42 @@
             const grade = parseInt(manageGradeSelect.value);
             if (!grade) return;
             manageList.innerHTML = '<p class="text-xs text-center py-4">Loading learners...</p>';
-            const { data } = await _supabase.from('students').select('*').eq('grade', grade);
-            manageList.innerHTML = (data || []).map(s => `
-                <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
-                    <div class="flex flex-col">
-                        <span class="font-semibold text-slate-800">${s.name} <span class="text-slate-400 font-mono italic">(${s.stream})</span></span>
-                        <span class="text-[10px] text-slate-400 font-mono mt-0.5">ID: ${s.login_id || 'NO ID'}</span>
+            try {
+                const { data, error } = await _supabase.from('students').select('*').eq('grade', grade);
+                if (error) throw error;
+                
+                manageList.innerHTML = (data || []).map(s => `
+                    <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-slate-800">${s.name} <span class="text-slate-400 font-mono italic">(${s.stream})</span></span>
+                            <span class="text-[10px] text-slate-400 font-mono mt-0.5">ID: ${s.login_id || 'NO ID'}</span>
+                        </div>
+                        <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white px-2.5">Delete</button>
                     </div>
-                    <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white px-2.5">Delete</button>
-                </div>
-            `).join('');
+                `).join('');
+                if (!data || data.length === 0) {
+                    manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners found in this grade.</p>';
+                }
+            } catch (err) {
+                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Failed to load learners: ${err.message}</p>`;
+            }
         }
 
         async function removeLearner(id) {
-            if(!confirm("Are you sure? This will delete the learner permanently.")) return;
-            await _supabase.from('students').delete().eq('id', id);
-            fetchManageList();
+            if (!confirm("Are you sure? This will delete the learner permanently.")) return;
+            try {
+                const { error } = await _supabase.from('students').delete().eq('id', id);
+                if (error) throw error;
+                alert("Learner removed successfully.");
+                fetchManageList();
+                // Refresh local cache
+                initAdminEngine();
+            } catch (err) {
+                alert("Deletion failure: " + err.message);
+            }
         }
+        // Expose to window context for global markup references
+        window.removeLearner = removeLearner;
 
         manageGradeSelect.addEventListener('change', fetchManageList);
 
@@ -552,84 +601,158 @@
             const grade = manageGradeSelect.value;
             const name = newNameInput.value.trim();
             const stream = newStreamInput.value.trim();
-            if(!grade || !name) return alert("Select a grade and enter a name.");
+            if (!grade || !name) return alert("Select a grade and enter a name.");
             
-            const { error } = await _supabase.from('students').insert([{ 
-                name, 
-                stream, 
-                grade: parseInt(grade),
-                login_id: generateStudentID() 
-            }]);
+            addLearnerBtn.disabled = true;
+            addLearnerBtn.innerText = "Saving...";
             
-            if (error) alert("Error: " + error.message);
-            else {
-                alert("Learner added with new ID!");
+            try {
+                const { error } = await _supabase.from('students').insert([{ 
+                    name, 
+                    stream, 
+                    grade: parseInt(grade),
+                    login_id: generateStudentID() 
+                }]);
+                
+                if (error) throw error;
+                
+                alert("Learner registered with a new ID!");
                 newNameInput.value = "";
                 newStreamInput.value = "";
                 fetchManageList();
+                initAdminEngine();
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                addLearnerBtn.disabled = false;
+                addLearnerBtn.innerText = "✨ Save Learner";
             }
         });
 
         // Config Toggles
-        tabAddSub.addEventListener('click', () => { tabAddSub.classList.add('tab-active'); tabDelSub.classList.remove('tab-active'); subPanelAdd.classList.remove('hidden'); subPanelDel.classList.add('hidden'); });
-        tabDelSub.addEventListener('click', () => { tabDelSub.classList.add('tab-active'); tabAddSub.classList.remove('tab-active'); subPanelDel.classList.remove('hidden'); subPanelAdd.classList.add('hidden'); fetchRemovalSubjects(); });
-        radioMain.addEventListener('change', () => { mainExamOptions.classList.remove('hidden'); contestOptions.classList.add('hidden'); });
-        radioContest.addEventListener('change', () => { contestOptions.classList.remove('hidden'); mainExamOptions.classList.add('hidden'); });
+        tabAddSub.addEventListener('click', () => { 
+            tabAddSub.classList.add('tab-active'); 
+            tabDelSub.classList.remove('tab-active'); 
+            subPanelAdd.classList.remove('hidden'); 
+            subPanelDel.classList.add('hidden'); 
+        });
+        tabDelSub.addEventListener('click', () => { 
+            tabDelSub.classList.add('tab-active'); 
+            tabAddSub.classList.remove('tab-active'); 
+            subPanelDel.classList.remove('hidden'); 
+            subPanelAdd.classList.add('hidden'); 
+            fetchRemovalSubjects(); 
+        });
+        radioMain.addEventListener('change', () => { 
+            mainExamOptions.classList.remove('hidden'); 
+            contestOptions.classList.add('hidden'); 
+        });
+        radioContest.addEventListener('change', () => { 
+            contestOptions.classList.remove('hidden'); 
+            mainExamOptions.classList.add('hidden'); 
+        });
 
         cfgBtnSave.addEventListener('click', async () => {
             const subjectTitle = cfgSubName.value.trim();
-            if(!subjectTitle) return alert("You must provide an assessment subject title!");
+            if (!subjectTitle) return alert("You must provide an assessment subject title!");
 
-            const { data: subData, error: subErr } = await _supabase.from('subjects').insert([{ subject_name: subjectTitle }]).select();
-            if(subErr) return alert("Save Error: " + subErr.message);
+            cfgBtnSave.disabled = true;
+            cfgBtnSave.innerText = "Saving Content...";
 
-            const savedSubject = subData[0];
-            const paperTitle = cfgPaperName.value.trim();
-            const maxVal = parseFloat(cfgPaperMax.value) || 100;
+            try {
+                const { data: subData, error: subErr } = await _supabase.from('subjects').insert([{ subject_name: subjectTitle }]).select();
+                if (subErr) throw subErr;
 
-            if(paperTitle) {
-                const { error: papErr } = await _supabase.from('subject_papers').insert([{ subject_id: savedSubject.id, paper_name: paperTitle, max_marks: maxVal }]);
-                if(papErr) return alert("Added subject, but paper failed: " + papErr.message);
+                const savedSubject = subData[0];
+                const paperTitle = cfgPaperName.value.trim();
+                const maxVal = parseFloat(cfgPaperMax.value) || 100;
+
+                if (paperTitle) {
+                    const { error: papErr } = await _supabase.from('subject_papers').insert([{ 
+                        subject_id: savedSubject.id, 
+                        paper_name: paperTitle, 
+                        max_marks: maxVal 
+                    }]);
+                    if (papErr) throw papErr;
+                }
+
+                alert(`"${subjectTitle}" registered!`);
+                cfgSubName.value = ""; 
+                cfgPaperName.value = ""; 
+                cfgPaperMax.value = "";
+                await initAdminEngine();
+            } catch (err) {
+                alert("Save Error: " + err.message);
+            } finally {
+                cfgBtnSave.disabled = false;
+                cfgBtnSave.innerText = "✨ Save Subjects & Components";
             }
-
-            alert(`"${subjectTitle}" registered!`);
-            cfgSubName.value = ""; cfgPaperName.value = ""; cfgPaperMax.value = "";
-            await initAdminEngine();
         });
 
         async function fetchRemovalSubjects() {
             cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Loading...</option>';
-            const { data } = await _supabase.from('subjects').select('*').order('subject_name');
-            if(data) {
-                cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select from database...</option>' + 
-                    data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+            try {
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+                if (data) {
+                    cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select from database...</option>' + 
+                        data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                }
+            } catch (err) {
+                cfgDelSubDropdown.innerHTML = `<option value="" disabled>Error: ${err.message}</option>`;
             }
         }
 
         cfgBtnDelete.addEventListener('click', async () => {
             const selectedId = cfgDelSubDropdown.value;
-            if(!selectedId) return alert("Please select a target subject to remove!");
-            if(!confirm("Delete this subject and all its component papers?")) return;
+            if (!selectedId) return alert("Please select a target subject to remove!");
+            if (!confirm("Delete this subject and all its component papers?")) return;
 
-            await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
-            await _supabase.from('subjects').delete().eq('id', selectedId);
-            alert("Subject deleted.");
-            fetchRemovalSubjects();
-            await initAdminEngine();
+            cfgBtnDelete.disabled = true;
+            cfgBtnDelete.innerText = "Deleting...";
+
+            try {
+                // Delete associated component papers first
+                await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
+                const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
+                if (error) throw error;
+                
+                alert("Subject deleted successfully.");
+                fetchRemovalSubjects();
+                await initAdminEngine();
+            } catch (err) {
+                alert("Error deleting subject: " + err.message);
+            } finally {
+                cfgBtnDelete.disabled = false;
+                cfgBtnDelete.innerText = "🗑️ Delete Selected Subject";
+            }
         });
 
         startCycleBtn.addEventListener('click', async () => {
-            if(!cycleDeadline.value) return alert("Choose a valid deadline date!");
+            if (!cycleDeadline.value) return alert("Choose a valid deadline date!");
             let constructedName = radioMain.checked ? `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}` : `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
             const deadlineIso = new Date(cycleDeadline.value).toISOString();
 
-            const { error } = await _supabase.from('exam_sessions').insert([{ exam_name: constructedName, deadline_at: deadlineIso, is_active: true }]);
-            if(error) alert("Insertion failure: " + error.message);
-            else {
+            startCycleBtn.disabled = true;
+            startCycleBtn.innerText = "Publishing Cycle...";
+
+            try {
+                const { error } = await _supabase.from('exam_sessions').insert([{ 
+                    exam_name: constructedName, 
+                    deadline_at: deadlineIso, 
+                    is_active: true 
+                }]);
+                if (error) throw error;
+                
                 alert(`Assessment Context "${constructedName}" Deployed!`);
                 currentActiveExamName = constructedName;
                 dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
                 detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
+            } catch (err) {
+                alert("Insertion failure: " + err.message);
+            } finally {
+                startCycleBtn.disabled = false;
+                startCycleBtn.innerText = "⚡ Publish Active Exam Context";
             }
         });
 
@@ -640,62 +763,78 @@
             const tier = getGradeTier(selectedGrade);
             const allowed = CBC_SUBJECT_TIERS[tier];
 
-            const { data } = await _supabase.from('subjects').select('*').order('subject_name');
-            if(data) {
-                const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
-                trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' : 
-                    '<option value="" disabled selected>Choose Component Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
-                trackerSubject.disabled = false;
+            try {
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+                if (data) {
+                    const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
+                    trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' : 
+                        '<option value="" disabled selected>Choose Component Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                    trackerSubject.disabled = false;
+                }
+            } catch (err) {
+                trackerSubject.innerHTML = `<option value="" disabled>Error loading subjects: ${err.message}</option>`;
             }
         });
 
         checkUploadsBtn.addEventListener('click', async () => {
             const grade = parseInt(trackerGrade.value);
             const subId = trackerSubject.value;
-            if(!grade || !subId) return alert("Select grade and subject parameters!");
+            if (!grade || !subId) return alert("Select grade and subject parameters!");
 
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
-            if(targetStudents.length === 0) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">No students in this grade.</p>`;
+            if (targetStudents.length === 0) {
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">No students found in this grade.</p>`;
                 return;
             }
 
-            const targetPapers = globalPapersList.filter(p => p.subject_id === subId);
-            const studIds = targetStudents.map(s => s.id);
-            
-            let uploadedMarks = [];
-            if (targetPapers.length > 0) {
-                const { data } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studIds).in('paper_id', targetPapers.map(p => p.id));
-                uploadedMarks = data || [];
+            trackerOutput.innerHTML = '<p class="text-center py-8 text-xs italic text-slate-400">Computing Matrix...</p>';
+
+            try {
+                const targetPapers = globalPapersList.filter(p => p.subject_id === subId);
+                const studIds = targetStudents.map(s => s.id);
+                
+                let uploadedMarks = [];
+                if (targetPapers.length > 0) {
+                    const { data, error } = await _supabase.from('marks_entry')
+                        .select('*')
+                        .eq('test_name', currentActiveExamName)
+                        .in('student_id', studIds)
+                        .in('paper_id', targetPapers.map(p => p.id));
+                    if (error) throw error;
+                    uploadedMarks = data || [];
+                }
+
+                trackerOutput.innerHTML = targetStudents.map(s => {
+                    const marksForStudent = uploadedMarks.filter(m => m.student_id === s.id);
+                    const hasUploaded = targetPapers.length > 0 && marksForStudent.length >= targetPapers.length;
+                    let scoreDetails = targetPapers.length === 0 ? "No papers set up" : 
+                        marksForStudent.map(m => {
+                            const pap = targetPapers.find(tp => tp.id === m.paper_id);
+                            return pap ? `${pap.paper_name}: ${m.raw_score}` : `Score: ${m.raw_score}`;
+                        }).join(', ');
+
+                    return `
+                        <div class="flex items-center justify-between p-3 text-xs border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-slate-800">${s.name}</span>
+                                <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
+                            </div>
+                            <div>
+                                ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Failed to fetch uploads: ${err.message}</p>`;
             }
-
-            trackerOutput.innerHTML = targetStudents.map(s => {
-                const marksForStudent = uploadedMarks.filter(m => m.student_id === s.id);
-                const hasUploaded = targetPapers.length > 0 && marksForStudent.length >= targetPapers.length;
-                let scoreDetails = targetPapers.length === 0 ? "No papers set up" : 
-                    marksForStudent.map(m => {
-                        const pap = targetPapers.find(tp => tp.id === m.paper_id);
-                        return pap ? `${pap.paper_name}: ${m.raw_score}` : `Score: ${m.raw_score}`;
-                    }).join(', ');
-
-                return `
-                    <div class="flex items-center justify-between p-3 text-xs border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
-                        <div class="flex flex-col">
-                            <span class="font-semibold text-slate-800">${s.name}</span>
-                            <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails || 'No Data'}</span>
-                        </div>
-                        <div>
-                            ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
-                        </div>
-                    </div>
-                `;
-            }).join('');
         });
 
         // REPORT COMPILATION & POSITION MATRIX ENGINE
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
-            if(isNaN(grade)) return alert("Select target grade cohort!");
+            if (isNaN(grade)) return alert("Select target grade cohort!");
 
             // BRANDING AND LOGO VALIDATION
             const schoolLogo = document.getElementById('school-logo');
@@ -704,212 +843,230 @@
                 return alert("Critical Error: Core institutional branding (School Name and Valid Logo Asset) missing. Broadsheet generation halted.");
             }
 
-            const tier = getGradeTier(grade);
-            const allowed = CBC_SUBJECT_TIERS[tier];
-            const isJuniorSchool = (tier === "junior_school");
+            compileReportsBtn.disabled = true;
+            compileReportsBtn.innerText = "Compiling Database records...";
 
-            const targetStudents = localStudentsCache.filter(s => s.grade === grade);
-            if(targetStudents.length === 0) {
-                broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
-                return;
-            }
+            try {
+                const tier = getGradeTier(grade);
+                const allowed = CBC_SUBJECT_TIERS[tier];
+                const isJuniorSchool = (tier === "junior_school");
 
-            // Fetch dynamic valid subjects
-            const { data: dbSubjects } = await _supabase.from('subjects').select('*');
-            const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
-            const subjectIds = filteredSubjects.map(s => s.id);
+                const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+                if (targetStudents.length === 0) {
+                    broadsheetRows.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
+                    return;
+                }
 
-            // Filter relevant papers
-            const relevantPapers = globalPapersList.filter(p => subjectIds.includes(p.subject_id));
-            const studentIds = targetStudents.map(s => s.id);
+                // Fetch dynamic valid subjects
+                const { data: dbSubjects, error: subErr } = await _supabase.from('subjects').select('*');
+                if (subErr) throw subErr;
 
-            // Fetch scores
-            const { data: marks } = await _supabase.from('marks_entry').select('*').eq('test_name', currentActiveExamName).in('student_id', studentIds).in('paper_id', relevantPapers.map(p => p.id));
-            const marksData = marks || [];
+                const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+                const subjectIds = filteredSubjects.map(s => s.id);
 
-            // Compute Student Metrics to determine Class Positions
-            const calculatedStudents = targetStudents.map(s => {
-                let totals = 0;
-                let count = 0;
-                let subjectScores = {};
+                // Filter relevant papers
+                const relevantPapers = globalPapersList.filter(p => subjectIds.includes(p.subject_id));
+                const studentIds = targetStudents.map(s => s.id);
 
-                filteredSubjects.forEach(sub => {
-                    const papersForSub = relevantPapers.filter(p => p.subject_id === sub.id);
-                    if (papersForSub.length === 0) return;
+                // Fetch scores
+                const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
+                    .select('*')
+                    .eq('test_name', currentActiveExamName)
+                    .in('student_id', studentIds)
+                    .in('paper_id', relevantPapers.map(p => p.id));
+                if (marksErr) throw marksErr;
+                
+                const marksData = marks || [];
 
-                    let subRawSum = 0;
-                    let subMaxSum = 0;
-                    let recordExists = false;
+                // Compute Student Metrics to determine Class Positions
+                const calculatedStudents = targetStudents.map(s => {
+                    let totals = 0;
+                    let count = 0;
+                    let subjectScores = {};
 
-                    papersForSub.forEach(p => {
-                        const m = marksData.find(md => md.student_id === s.id && md.paper_id === p.id);
-                        if (m) {
-                            subRawSum += parseFloat(m.raw_score);
-                            recordExists = true;
+                    filteredSubjects.forEach(sub => {
+                        const papersForSub = relevantPapers.filter(p => p.subject_id === sub.id);
+                        if (papersForSub.length === 0) return;
+
+                        let subRawSum = 0;
+                        let subMaxSum = 0;
+                        let recordExists = false;
+
+                        papersForSub.forEach(p => {
+                            const m = marksData.find(md => md.student_id === s.id && md.paper_id === p.id);
+                            if (m) {
+                                subRawSum += parseFloat(m.raw_score);
+                                recordExists = true;
+                            }
+                            subMaxSum += parseFloat(p.max_marks);
+                        });
+
+                        if (recordExists) {
+                            if (isJuniorSchool) {
+                                // Instant conversion from raw scores to 8-Point scale points (Grades 7-9)
+                                const points = convertScoreToPoints(subRawSum, subMaxSum);
+                                totals += points;
+                                subjectScores[sub.subject_name] = `${points} Pts`;
+                            } else {
+                                // Core raw marks totals for Primary School (PP1 to Grade 6)
+                                const percentage = (subRawSum / subMaxSum) * 100;
+                                totals += percentage;
+                                subjectScores[sub.subject_name] = `${percentage.toFixed(1)}%`;
+                            }
+                            count++;
+                        } else {
+                            subjectScores[sub.subject_name] = "-";
                         }
-                        subMaxSum += parseFloat(p.max_marks);
                     });
 
-                    if (recordExists) {
-                        if (isJuniorSchool) {
-                            // Instant conversion from raw scores to 8-Point scale points (Grades 7-9)
-                            const points = convertScoreToPoints(subRawSum, subMaxSum);
-                            totals += points;
-                            subjectScores[sub.subject_name] = `${points} Pts`;
-                        } else {
-                            // Core raw marks totals for Primary School (PP1 to Grade 6)
-                            const percentage = (subRawSum / subMaxSum) * 100;
-                            totals += percentage;
-                            subjectScores[sub.subject_name] = `${percentage.toFixed(1)}%`;
-                        }
-                        count++;
-                    } else {
-                        subjectScores[sub.subject_name] = "-";
-                    }
+                    const average = count > 0 ? (totals / count) : 0;
+                    return {
+                        id: s.id,
+                        name: s.name,
+                        stream: s.stream,
+                        subjectScores,
+                        totals,
+                        average,
+                        rating: getCompetencyLevel(average, isJuniorSchool ? 'points' : 'marks')
+                    };
                 });
 
-                const average = count > 0 ? (totals / count) : 0;
-                return {
-                    id: s.id,
-                    name: s.name,
-                    stream: s.stream,
-                    subjectScores,
-                    totals,
-                    average,
-                    rating: getCompetencyLevel(average, isJuniorSchool ? 'points' : 'marks')
-                };
-            });
+                // Sort descending to assign Position ranks
+                calculatedStudents.sort((a, b) => b.totals - a.totals);
+                calculatedStudents.forEach((cs, i) => {
+                    cs.position = i + 1;
+                });
 
-            // Sort descending to assign Position ranks
-            calculatedStudents.sort((a, b) => b.totals - a.totals);
-            calculatedStudents.forEach((cs, i) => {
-                cs.position = i + 1;
-            });
-
-            // Build Broadsheet Table Headers
-            let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
-            filteredSubjects.forEach(sub => {
-                headerHtml += `<th class="py-3 px-4 text-center">${sub.subject_name}</th>`;
-            });
-            headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
-            headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
-            headerHtml += `<th class="py-3 px-4 text-center">Rating</th>`;
-            headerHtml += `<th class="py-3 px-4 text-center">Pos</th></tr>`;
-            broadsheetHeader.innerHTML = headerHtml;
-
-            // Generate Table Rows
-            broadsheetRows.innerHTML = calculatedStudents.map(cs => {
-                let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
-                cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
-                
+                // Build Broadsheet Table Headers
+                let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
                 filteredSubjects.forEach(sub => {
-                    cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
+                    headerHtml += `<th class="py-3 px-4 text-center">${sub.subject_name}</th>`;
+                });
+                headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Total Points' : 'Total Marks'}</th>`;
+                headerHtml += `<th class="py-3 px-4 text-center">${isJuniorSchool ? 'Mean Points' : 'Mean Marks (%)'}</th>`;
+                headerHtml += `<th class="py-3 px-4 text-center">Rating</th>`;
+                headerHtml += `<th class="py-3 px-4 text-center">Pos</th></tr>`;
+                broadsheetHeader.innerHTML = headerHtml;
+
+                // Generate Table Rows
+                broadsheetRows.innerHTML = calculatedStudents.map(cs => {
+                    let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
+                    cells += `<td class="text-center py-3 px-4"><span class="badge badge-outline border-slate-200 text-slate-600 text-[10px]">${cs.stream}</span></td>`;
+                    
+                    filteredSubjects.forEach(sub => {
+                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${cs.subjectScores[sub.subject_name] || '-'}</td>`;
+                    });
+
+                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
+                    cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] ${cs.rating.class}">${cs.rating.text}</span></td>`;
+                    cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
+                    return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
+                }).join('');
+
+                // CSV Export Assembly
+                let csvHeaders = ["Learner Name", "Stream", ...filteredSubjects.map(s => s.subject_name), isJuniorSchool ? "Total Points" : "Total Marks", isJuniorSchool ? "Mean Points" : "Mean Marks (%)", "Rating", "Class Position"];
+                let csvRows = [csvHeaders];
+                calculatedStudents.forEach(cs => {
+                    csvRows.push([
+                        cs.name,
+                        cs.stream,
+                        ...filteredSubjects.map(s => cs.subjectScores[s.subject_name] || '-'),
+                        isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1),
+                        cs.average.toFixed(1),
+                        cs.rating.text,
+                        cs.position
+                    ]);
                 });
 
-                cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>`;
-                cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>`;
-                cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] ${cs.rating.class}">${cs.rating.text}</span></td>`;
-                cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
-                return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
-            }).join('');
+                activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+                downloadCsvBtn.disabled = false;
 
-            // CSV Export Assembly
-            let csvHeaders = ["Learner Name", "Stream", ...filteredSubjects.map(s => s.subject_name), isJuniorSchool ? "Total Points" : "Total Marks", isJuniorSchool ? "Mean Points" : "Mean Marks (%)", "Rating", "Class Position"];
-            let csvRows = [csvHeaders];
-            calculatedStudents.forEach(cs => {
-                csvRows.push([
-                    cs.name,
-                    cs.stream,
-                    ...filteredSubjects.map(s => cs.subjectScores[s.subject_name] || '-'),
-                    isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1),
-                    cs.average.toFixed(1),
-                    cs.rating.text,
-                    cs.position
-                ]);
-            });
+                // Aggregate metrics indicators
+                const totalRanked = calculatedStudents.length;
+                const classMean = (calculatedStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                analyticalSummaryBadges.innerHTML = `
+                    <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
+                    <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
+                `;
 
-            activeBroadSheetCsvData = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
-            downloadCsvBtn.disabled = false;
-
-            // Aggregate metrics indicators
-            const totalRanked = calculatedStudents.length;
-            const classMean = (calculatedStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
-            analyticalSummaryBadges.innerHTML = `
-                <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
-                <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</span>
-            `;
-
-            // HTML PDF REPORT TEMPLATE ASSEMBLY
-            let printableHeaderHtml = `
-                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 30px;">
-                    <div style="flex: 0 0 120px;">
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" style="width: 100%; height: auto; max-height: 100px; object-fit: contain;" />
+                // HTML PDF REPORT TEMPLATE ASSEMBLY
+                let printableHeaderHtml = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 30px;">
+                        <div style="flex: 0 0 120px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" style="width: 100%; height: auto; max-height: 100px; object-fit: contain;" />
+                        </div>
+                        <div style="flex: 1; text-align: center; padding: 0 20px;">
+                            <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; font-family: 'Times New Roman', Times, serif;">Bethania Academy</h1>
+                            <p style="font-style: italic; font-size: 14px; color: #555; margin-bottom: 5px;">"Determination is Nobility"</p>
+                            <p style="font-size: 12px; color: #444;">P.O. Box 12345, City, Country | Tel: +123 456 789<br>Email: info@bethaniaacademy.edu</p>
+                        </div>
+                        <div style="flex: 0 0 120px;"></div>
                     </div>
-                    <div style="flex: 1; text-align: center; padding: 0 20px;">
-                        <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; font-family: 'Times New Roman', Times, serif;">Bethania Academy</h1>
-                        <p style="font-style: italic; font-size: 14px; color: #555; margin-bottom: 5px;">"Determination is Nobility"</p>
-                        <p style="font-size: 12px; color: #444;">P.O. Box 12345, City, Country | Tel: +123 456 789<br>Email: info@bethaniaacademy.edu</p>
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="font-size: 20px; text-transform: uppercase; text-decoration: underline; margin-bottom: 5px; font-weight: bold;">General Performance Summary Ledger</h2>
+                        <p style="font-size: 14px; font-weight: bold;">Assessment Cycle: ${currentActiveExamName} | Grade Level: ${getGradeLabel(grade)}</p>
                     </div>
-                    <div style="flex: 0 0 120px;"></div>
-                </div>
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <h2 style="font-size: 20px; text-transform: uppercase; text-decoration: underline; margin-bottom: 5px; font-weight: bold;">General Performance Summary Ledger</h2>
-                    <p style="font-size: 14px; font-weight: bold;">Assessment Cycle: ${currentActiveExamName} | Grade Level: ${getGradeLabel(grade)}</p>
-                </div>
-            `;
+                `;
 
-            let printableTableHtml = `
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; font-family: 'Times New Roman', Times, serif;">
-                    <thead>
-                        <tr style="background-color: #f2f2f2;">
-                            <th style="border: 1px solid #000; padding: 8px; text-align: left;">Learner Name</th>
-                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">Stream</th>
-                            ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; padding: 8px; text-align: center;">${sub.subject_name}</th>`).join('')}
-                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Total Pts' : 'Total Marks'}</th>
-                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Mean Pts' : 'Mean (%)'}</th>
-                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rating</th>
-                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rank</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${calculatedStudents.map(cs => `
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">${cs.name}</td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.stream}</td>
-                                ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.subjectScores[sub.subject_name] || '-'}</td>`).join('')}
-                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; color: #1e3a8a;">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.rating.text}</td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.position}</td>
+                let printableTableHtml = `
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; font-family: 'Times New Roman', Times, serif;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Learner Name</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">Stream</th>
+                                ${filteredSubjects.map(sub => `<th style="border: 1px solid #000; padding: 8px; text-align: center;">${sub.subject_name}</th>`).join('')}
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Total Pts' : 'Total Marks'}</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">${isJuniorSchool ? 'Mean Pts' : 'Mean (%)'}</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rating</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center;">Rank</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+                        </thead>
+                        <tbody>
+                            ${calculatedStudents.map(cs => `
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">${cs.name}</td>
+                                    <td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.stream}</td>
+                                    ${filteredSubjects.map(sub => `<td style="border: 1px solid #000; padding: 8px; text-align: center;">${cs.subjectScores[sub.subject_name] || '-'}</td>`).join('')}
+                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${isJuniorSchool ? cs.totals.toFixed(0) : cs.totals.toFixed(1)}</td>
+                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; color: #1e3a8a;">${isJuniorSchool ? cs.average.toFixed(1) : cs.average.toFixed(1) + '%'}</td>
+                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.rating.text}</td>
+                                    <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${cs.position}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
 
-            let printableSummaryBadgesHtml = `
-                <div style="display: flex; gap: 20px; justify-content: flex-start; margin-bottom: 40px; font-family: 'Times New Roman', Times, serif; font-size: 13px;">
-                    <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold;">Class Cohort Size: ${totalRanked} Students</div>
-                    <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold; background-color: #f9fafb;">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</div>
-                </div>
-            `;
+                let printableSummaryBadgesHtml = `
+                    <div style="display: flex; gap: 20px; justify-content: flex-start; margin-bottom: 40px; font-family: 'Times New Roman', Times, serif; font-size: 13px;">
+                        <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold;">Class Cohort Size: ${totalRanked} Students</div>
+                        <div style="border: 1px solid #000; padding: 8px 15px; font-weight: bold; background-color: #f9fafb;">Class Performance Mean: ${classMean}${isJuniorSchool ? ' Pts' : '%'}</div>
+                    </div>
+                `;
 
-            let printableFooterSignaturesHtml = `
-                <div style="margin-top: 60px; display: flex; justify-content: space-between; font-family: 'Times New Roman', Times, serif; page-break-inside: avoid;">
-                    <div style="width: 220px; text-align: center;">
-                        <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Class Teacher's Signature</div>
+                let printableFooterSignaturesHtml = `
+                    <div style="margin-top: 60px; display: flex; justify-content: space-between; font-family: 'Times New Roman', Times, serif; page-break-inside: avoid;">
+                        <div style="width: 220px; text-align: center;">
+                            <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Class Teacher's Signature</div>
+                        </div>
+                        <div style="width: 150px; text-align: center;">
+                            <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Date</div>
+                        </div>
+                        <div style="width: 220px; text-align: center;">
+                            <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Principal's Signature & Stamp</div>
+                        </div>
                     </div>
-                    <div style="width: 150px; text-align: center;">
-                        <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Date</div>
-                    </div>
-                    <div style="width: 220px; text-align: center;">
-                        <div style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 13px; font-weight: bold;">Principal's Signature & Stamp</div>
-                    </div>
-                </div>
-            `;
+                `;
 
-            printableReportHtml = printableHeaderHtml + printableSummaryBadgesHtml + printableTableHtml + printableFooterSignaturesHtml;
-            downloadPdfBtn.disabled = false;
+                printableReportHtml = printableHeaderHtml + printableSummaryBadgesHtml + printableTableHtml + printableFooterSignaturesHtml;
+                downloadPdfBtn.disabled = false;
+            } catch (err) {
+                alert("Error compiling broadsheet: " + err.message);
+            } finally {
+                compileReportsBtn.disabled = false;
+                compileReportsBtn.innerText = "📊 Compile Broad Sheet";
+            }
         });
 
         downloadCsvBtn.addEventListener('click', () => {
@@ -923,7 +1080,7 @@
         });
 
         downloadPdfBtn.addEventListener('click', () => {
-            if(!printableReportHtml) return;
+            if (!printableReportHtml) return;
             printReportContainer.innerHTML = printableReportHtml;
             window.print();
         });
