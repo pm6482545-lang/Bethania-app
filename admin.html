@@ -7,8 +7,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Standard PDF Compilation & Rendering Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Custom scrollbar adjustments for a cleaner UI footprint */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -23,53 +25,14 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-
-        /* Print styling block for generating clean school-wide PDF results */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #print-report-container, #print-report-container * {
-                visibility: visible;
-            }
-            #print-report-container {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                color: #000;
-                font-family: 'Times New Roman', Times, serif;
-                background-color: #fff;
-            }
-            .no-print {
-                display: none !important;
-            }
-            tr {
-                page-break-inside: avoid;
-            }
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-            }
-            th, td {
-                border: 1px solid #000 !important;
-                padding: 5px 6px !important;
-            }
-            th {
-                background-color: #f2f2f2 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
 
     <!-- EXECUTIVE HEADER -->
-    <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20 no-print">
+    <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20">
         <div class="flex-1">
             <div class="flex items-center gap-3.5">
-                <!-- Official School Logo Badge -->
                 <div class="avatar bg-white p-1 rounded-full ring-2 ring-amber-400/50">
                     <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
                         <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
@@ -88,12 +51,38 @@
         </div>
     </header>
 
-    <!-- PRINT-PREVIEW AREA -->
-    <div id="print-report-container" class="hidden print:block p-8 bg-white text-slate-900">
-        <!-- Dynamically injected printable report content -->
-    </div>
+    <!-- IN-PAGE MODAL FOR INSTANT PDF PREVIEW AND ACTION -->
+    <dialog id="pdf-modal" class="modal">
+        <div class="modal-box w-11/12 max-w-5xl bg-white p-6 relative rounded-2xl shadow-2xl">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-slate-500 hover:bg-slate-100">✕</button>
+            </form>
+            <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
+                📄 Document Export Sandbox
+            </h3>
+            
+            <!-- Embedded PDF Preview Area (A4 Landscape aspect ratio representation) -->
+            <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
+                <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px;">
+                    <!-- Dynamically populated PDF view -->
+                </div>
+            </div>
 
-    <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2 no-print">
+            <div class="modal-action flex justify-between items-center mt-6">
+                <p class="text-xs text-slate-500 italic">Verify structural formatting. Click Download to save directly as a valid .pdf file.</p>
+                <div class="flex gap-3">
+                    <form method="dialog">
+                        <button class="btn btn-sm btn-ghost">Close</button>
+                    </form>
+                    <button id="execute-pdf-download-btn" class="btn btn-sm btn-primary text-white font-bold">
+                        💾 Download as .pdf File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2">
 
         <!-- 👥 MANAGE LEARNERS BOARD -->
         <section class="card bg-white shadow-md border border-slate-200/60">
@@ -395,7 +384,7 @@
     </main>
 
     <script>
-        // Supabase Initialization
+        // Supabase Configuration
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -415,7 +404,7 @@
         const contestSeries = document.getElementById('contest-series');
         const cycleDeadline = document.getElementById('cycle-deadline');
 
-        // Target Select Elements
+        // Select & Management Options
         const manageGradeSelect = document.getElementById('manage-grade-select');
         const manageList = document.getElementById('manage-learner-list');
         const newNameInput = document.getElementById('new-name');
@@ -434,9 +423,8 @@
         const downloadMarksPdfBtn = document.getElementById('download-marks-pdf-btn');
         const downloadPointsPdfBtn = document.getElementById('download-points-pdf-btn');
         const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
-        const printReportContainer = document.getElementById('print-report-container');
 
-        // Config Elements
+        // Config elements
         const tabAddSub = document.getElementById('tab-add-sub');
         const tabDelSub = document.getElementById('tab-del-sub');
         const subPanelAdd = document.getElementById('sub-panel-add');
@@ -448,19 +436,21 @@
         const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
         const cfgBtnDelete = document.getElementById('cfg-btn-delete');
 
+        // Modal Elements
+        const pdfModal = document.getElementById('pdf-modal');
+        const pdfRenderCanvas = document.getElementById('pdf-render-canvas');
+        const executePdfDownloadBtn = document.getElementById('execute-pdf-download-btn');
+
         let currentActiveExamName = "";
         let globalPapersList = [];
         let localStudentsCache = [];
-        let printableMarksReportHtml = "";
-        let printablePointsReportHtml = "";
+        let currentPdfTitle = "";
 
-        // Dynamic DB Schema Cache for mismatch protection
         let dbSchemaCache = {
-            examColumn: 'test_name', // fallback
-            scoreColumn: 'raw_score' // fallback
+            examColumn: 'test_name',
+            scoreColumn: 'raw_score'
         };
 
-        // Official CBC Curriculum Rules (Compulsory Lists)
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
@@ -511,20 +501,18 @@
             return `Grade ${val}`;
         }
 
-        // Convert Score to 8-Point Scale points
         function convertScoreToPoints(score, max) {
             const pct = (score / max) * 100;
-            if (pct >= 90) return 8; // EE1
-            if (pct >= 75) return 7; // EE2
-            if (pct >= 58) return 6; // ME1
-            if (pct >= 40) return 5; // ME2
-            if (pct >= 30) return 4; // AE1
-            if (pct >= 20) return 3; // AE2
-            if (pct >= 10) return 2; // BE1
-            return 1;                // BE2
+            if (pct >= 90) return 8;
+            if (pct >= 75) return 7;
+            if (pct >= 58) return 6;
+            if (pct >= 40) return 5;
+            if (pct >= 30) return 4;
+            if (pct >= 20) return 3;
+            if (pct >= 10) return 2;
+            return 1;
         }
 
-        // Get rating text based on Average Points
         function getPointsRating(avg) {
             if (avg >= 7.5 && avg <= 8.0) return "EE1";
             if (avg >= 6.5 && avg < 7.5) return "EE2";
@@ -537,7 +525,6 @@
             return "BE2";
         }
 
-        // Get rating text based on Average Marks Percentage
         function getMarksRating(pct) {
             if (pct >= 80) return "EE2";
             if (pct >= 50) return "ME1";
@@ -548,7 +535,6 @@
             return "BE2";
         }
 
-        // Dynamic Schema Sniffer Routine
         async function detectMarksSchema() {
             try {
                 const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
@@ -563,11 +549,10 @@
                     else dbSchemaCache.scoreColumn = 'raw_score';
                 }
             } catch (err) {
-                console.warn("Schema detection warning: using default fallbacks.", err);
+                console.warn("Schema sniffing warning.", err);
             }
         }
 
-        // Core Admin Init
         async function initAdminEngine() {
             try {
                 await detectMarksSchema();
@@ -592,8 +577,8 @@
                     detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
                 }
             } catch (err) {
-                console.error("Initialization error:", err);
-                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-error"></span> Connection Failed`;
+                console.error("Initialization failed:", err);
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-error"></span> Connection Offline`;
             }
         }
 
@@ -623,10 +608,10 @@
                     </div>
                 `).join('');
                 if (!data || data.length === 0) {
-                    manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners found in this grade.</p>';
+                    manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners in grade.</p>';
                 }
             } catch (err) {
-                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Failed to load learners: ${err.message}</p>`;
+                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
             }
         }
 
@@ -635,11 +620,11 @@
             try {
                 const { error } = await _supabase.from('students').delete().eq('id', id);
                 if (error) throw error;
-                alert("Learner removed successfully.");
+                alert("Learner deleted.");
                 fetchManageList();
                 initAdminEngine();
             } catch (err) {
-                alert("Deletion failure: " + err.message);
+                alert("Error: " + err.message);
             }
         }
         window.removeLearner = removeLearner;
@@ -650,11 +635,10 @@
             const grade = manageGradeSelect.value;
             const name = newNameInput.value.trim();
             const stream = newStreamInput.value.trim();
-            if (!grade || !name) return alert("Select a grade and enter a name.");
+            if (!grade || !name) return alert("Fill out the required inputs!");
             
             addLearnerBtn.disabled = true;
             addLearnerBtn.innerText = "Saving...";
-            
             try {
                 const { error } = await _supabase.from('students').insert([{ 
                     name, 
@@ -662,10 +646,8 @@
                     grade: parseInt(grade),
                     login_id: generateStudentID() 
                 }]);
-                
                 if (error) throw error;
-                
-                alert("Learner registered with a new ID!");
+                alert("New learner saved!");
                 newNameInput.value = "";
                 newStreamInput.value = "";
                 fetchManageList();
@@ -702,11 +684,10 @@
 
         cfgBtnSave.addEventListener('click', async () => {
             const subjectTitle = cfgSubName.value.trim();
-            if (!subjectTitle) return alert("You must provide an assessment subject title!");
+            if (!subjectTitle) return alert("A subject title is required!");
 
             cfgBtnSave.disabled = true;
-            cfgBtnSave.innerText = "Saving Content...";
-
+            cfgBtnSave.innerText = "Saving...";
             try {
                 const { data: subData, error: subErr } = await _supabase.from('subjects').insert([{ subject_name: subjectTitle }]).select();
                 if (subErr) throw subErr;
@@ -716,21 +697,20 @@
                 const maxVal = parseFloat(cfgPaperMax.value) || 100;
 
                 if (paperTitle) {
-                    const { error: papErr } = await _supabase.from('subject_papers').insert([{ 
+                    await _supabase.from('subject_papers').insert([{ 
                         subject_id: savedSubject.id, 
                         paper_name: paperTitle, 
                         max_marks: maxVal 
                     }]);
-                    if (papErr) throw papErr;
                 }
 
-                alert(`"${subjectTitle}" registered!`);
+                alert(`Subject "${subjectTitle}" saved!`);
                 cfgSubName.value = ""; 
                 cfgPaperName.value = ""; 
                 cfgPaperMax.value = "";
                 await initAdminEngine();
             } catch (err) {
-                alert("Save Error: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 cfgBtnSave.disabled = false;
                 cfgBtnSave.innerText = "✨ Save Subjects & Components";
@@ -743,7 +723,7 @@
                 const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
                 if (error) throw error;
                 if (data) {
-                    cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select from database...</option>' + 
+                    cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select Subject...</option>' + 
                         data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
                 }
             } catch (err) {
@@ -753,22 +733,19 @@
 
         cfgBtnDelete.addEventListener('click', async () => {
             const selectedId = cfgDelSubDropdown.value;
-            if (!selectedId) return alert("Please select a target subject to remove!");
-            if (!confirm("Delete this subject and all its component papers?")) return;
+            if (!selectedId) return alert("Select a subject first!");
+            if (!confirm("Are you sure? This action deletes linked component papers as well.")) return;
 
             cfgBtnDelete.disabled = true;
             cfgBtnDelete.innerText = "Deleting...";
-
             try {
                 await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
-                const { error } = await _supabase.from('subjects').delete().eq('id', selectedId);
-                if (error) throw error;
-                
-                alert("Subject deleted successfully.");
+                await _supabase.from('subjects').delete().eq('id', selectedId);
+                alert("Subject removed.");
                 fetchRemovalSubjects();
                 await initAdminEngine();
             } catch (err) {
-                alert("Error deleting subject: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 cfgBtnDelete.disabled = false;
                 cfgBtnDelete.innerText = "🗑️ Delete Selected Subject";
@@ -776,13 +753,12 @@
         });
 
         startCycleBtn.addEventListener('click', async () => {
-            if (!cycleDeadline.value) return alert("Choose a valid deadline date!");
+            if (!cycleDeadline.value) return alert("Set a closing deadline!");
             let constructedName = radioMain.checked ? `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}` : `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
             const deadlineIso = new Date(cycleDeadline.value).toISOString();
 
             startCycleBtn.disabled = true;
-            startCycleBtn.innerText = "Publishing Cycle...";
-
+            startCycleBtn.innerText = "Publishing...";
             try {
                 const { error } = await _supabase.from('exam_sessions').insert([{ 
                     exam_name: constructedName, 
@@ -796,7 +772,7 @@
                 dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
                 detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
             } catch (err) {
-                alert("Insertion failure: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 startCycleBtn.disabled = false;
                 startCycleBtn.innerText = "⚡ Publish Active Exam Context";
@@ -814,31 +790,29 @@
                 if (error) throw error;
                 if (data) {
                     const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
-                    trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' : 
-                        '<option value="" disabled selected>Choose Component Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                    trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching areas...</option>' : 
+                        '<option value="" disabled selected>Choose Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
                     trackerSubject.disabled = false;
                 }
             } catch (err) {
-                trackerSubject.innerHTML = `<option value="" disabled>Error loading subjects: ${err.message}</option>`;
+                trackerSubject.innerHTML = `<option value="" disabled>Error: ${err.message}</option>`;
             }
         });
 
         checkUploadsBtn.addEventListener('click', async () => {
             const grade = parseInt(trackerGrade.value);
             const subId = trackerSubject.value;
-            if (!grade || !subId) return alert("Select grade and subject parameters!");
+            if (!grade || !subId) return alert("Select grade and subject components first!");
 
             const targetStudents = localStudentsCache.filter(s => s.grade === grade);
             if (targetStudents.length === 0) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">No students found in this grade.</p>`;
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">No student profiles found.</p>`;
                 return;
             }
 
-            trackerOutput.innerHTML = '<p class="text-center py-8 text-xs italic text-slate-400">Computing Matrix...</p>';
-
+            trackerOutput.innerHTML = '<p class="text-center py-8 text-xs italic text-slate-400">Computing Uploads...</p>';
             try {
                 const studIds = targetStudents.map(s => s.id);
-                
                 const { data, error } = await _supabase.from('marks_entry')
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
@@ -867,195 +841,202 @@
                     `;
                 }).join('');
             } catch (err) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Failed to fetch uploads: ${err.message}</p>`;
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
             }
         });
 
-        // OVERLEAF PREMIUM PDF PORTAL VIEWER & FILE DOWNLOAD TRIGGER
-        function openPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
-            const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+        // MODAL PREVIEW & PDF STREAMING COMPILER
+        let cachedPdfData = { title: "", header: "", body: "", stats: "" };
 
-            // Complete standard document structure for PDF delivery
-            const rawDocumentHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>${title}</title>
-    <style>
-        @page {
-            size: A4 landscape;
-            margin: 0.8cm 1cm;
-        }
-        body {
-            background: white !important;
-            color: #0f172a !important;
-            font-family: 'Times New Roman', Times, serif;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        .page-container {
-            width: 100%;
-            position: relative;
-            box-sizing: border-box;
-        }
-        /* Strict Page budgeting: push statistics box explicitly onto page 2 */
-        .page-break {
-            page-break-before: always;
-        }
-        .pdf-watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            width: 450px;
-            height: 450px;
-            opacity: 0.04;
-            background-image: url('${logoUrl}');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            z-index: 1;
-            pointer-events: none;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .pdf-content {
-            position: relative;
-            z-index: 10;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-            font-size: 10.5px;
-        }
-        th, td {
-            border: 1px solid #1e293b !important;
-            padding: 5px 6px !important;
-            text-align: center;
-        }
-        th {
-            background-color: #f1f5f9 !important;
-            color: #0f172a !important;
-            font-weight: bold !important;
-            text-transform: uppercase;
-            font-size: 9px;
-        }
-        .learner-name-col {
-            text-align: left !important;
-            white-space: nowrap !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 220px;
-            font-weight: bold;
-        }
-        .brand-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-b: 2px solid #0f172a;
-            padding-bottom: 8px;
-        }
-        .brand-title {
-            text-align: center;
-            flex: 1;
-        }
-        .brand-title h1 {
-            font-size: 22px;
-            font-weight: 800;
-            margin: 0;
-            text-transform: uppercase;
-            font-family: 'Georgia', serif;
-        }
-        .brand-title p {
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            margin: 4px 0 0 0;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .logo-img {
-            width: 55px;
-            height: 55px;
-            object-fit: contain;
-            border-radius: 50%;
-        }
-    </style>
-</head>
-<body>
-    <!-- PAGE 1: LEDGER COVERED FULLY -->
-    <div class="page-container">
-        <div class="pdf-watermark"></div>
-        <div class="pdf-content">
-            <div class="brand-header">
-                <img src="${logoUrl}" alt="Logo" class="logo-img" />
-                <div class="brand-title">
-                    <h1>F.P.F.K BETHANIA ACADEMY</h1>
-                    <p>Determination is Nobility</p>
+        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
+            cachedPdfData = { title, header: headerHtml, body: bodyHtml, stats: statsHtml };
+            currentPdfTitle = title;
+
+            // Render exact landscape view structure inside the modal sandbox
+            pdfRenderCanvas.innerHTML = `
+                <div style="width: 100%; box-sizing: border-box; margin-bottom: 2rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="text-align: center; flex: 1;">
+                            <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                            <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                        </div>
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                    </div>
+                    <div style="margin-top: 15px;">${headerHtml}</div>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
+                        ${bodyHtml}
+                    </table>
                 </div>
-                <img src="${logoUrl}" alt="Logo" class="logo-img" />
-            </div>
-            ${headerHtml}
-            <table>
-                ${bodyHtml}
-            </table>
-        </div>
-    </div>
 
-    <!-- PAGE 2: STATISTICAL ANALYSIS MATRICES -->
-    <div class="page-container page-break">
-        <div class="pdf-watermark"></div>
-        <div class="pdf-content">
-            <div class="brand-header">
-                <img src="${logoUrl}" alt="Logo" class="logo-img" />
-                <div class="brand-title">
-                    <h1>F.P.F.K BETHANIA ACADEMY</h1>
-                    <p>Determination is Nobility</p>
+                <div style="width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="text-align: center; flex: 1;">
+                            <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                            <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                        </div>
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                    </div>
+                    <div style="margin-top: 15px;">${statsHtml}</div>
                 </div>
-                <img src="${logoUrl}" alt="Logo" class="logo-img" />
-            </div>
-            ${statsHtml}
-        </div>
-    </div>
-</body>
-</html>`;
+            `;
 
-            // Prompt clean physical/system level file download 
-            const blob = new Blob([rawDocumentHtml], { type: "application/pdf-helper-html;charset=utf-8" });
-            const downloadUrl = URL.createObjectURL(blob);
-            const virtualAnchor = document.createElement("a");
-            virtualAnchor.href = downloadUrl;
-            
-            // Re-identify exact complete session text for direct matching
-            const safeFileName = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            virtualAnchor.download = `${safeFileName}.html`;
-            document.body.appendChild(virtualAnchor);
-            virtualAnchor.click();
-            document.body.removeChild(virtualAnchor);
-            URL.revokeObjectURL(downloadUrl);
+            // Apply style rules specifically targeting modal view tables
+            const tables = pdfRenderCanvas.querySelectorAll('table');
+            tables.forEach(t => {
+                t.style.width = '100%';
+                t.style.borderCollapse = 'collapse';
+                t.style.fontSize = '10px';
+                t.style.marginTop = '10px';
+            });
+            const cells = pdfRenderCanvas.querySelectorAll('th, td');
+            cells.forEach(c => {
+                c.style.border = '1px solid #1e293b';
+                c.style.padding = '5px 6px';
+                c.style.textAlign = 'center';
+            });
+            const headers = pdfRenderCanvas.querySelectorAll('th');
+            headers.forEach(h => {
+                h.style.backgroundColor = '#f1f5f9';
+                h.style.color = '#0f172a';
+                h.style.fontWeight = 'bold';
+            });
 
-            // Double action: Fallback open to immediately trigger system printing on target devices
-            const previewWindow = window.open("", "_blank");
-            if (previewWindow) {
-                previewWindow.document.write(rawDocumentHtml);
-                previewWindow.document.close();
-                previewWindow.focus();
-                // Let user seamlessly choose print options
-                setTimeout(() => { previewWindow.print(); }, 600);
+            pdfModal.showModal();
+        }
+
+        // Direct Download as .pdf File Trigger
+        executePdfDownloadBtn.addEventListener('click', async () => {
+            executePdfDownloadBtn.disabled = true;
+            executePdfDownloadBtn.innerText = "Compiling PDF File...";
+
+            try {
+                const { jsPDF } = window.jspdf;
+                // Standard Landscape layout declaration
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: 'a4'
+                });
+
+                // Structure temporary isolated nodes to compile separate pages
+                const offscreenContainer = document.createElement('div');
+                offscreenContainer.style.position = 'absolute';
+                offscreenContainer.style.left = '-9999px';
+                offscreenContainer.style.width = '1000px'; 
+                offscreenContainer.style.backgroundColor = '#ffffff';
+                document.body.appendChild(offscreenContainer);
+
+                const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+
+                // PAGE 1 Compilation
+                const page1 = document.createElement('div');
+                page1.style.padding = '40px';
+                page1.style.color = '#000000';
+                page1.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="text-align: center; flex: 1;">
+                            <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                            <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                        </div>
+                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                    </div>
+                    ${cachedPdfData.header}
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
+                        ${cachedPdfData.body}
+                    </table>
+                `;
+                offscreenContainer.appendChild(page1);
+
+                // Re-apply styled borders inside the canvas compile container
+                page1.querySelectorAll('th, td').forEach(cell => {
+                    cell.style.border = '1px solid #000000';
+                    cell.style.padding = '5px 6px';
+                    cell.style.textAlign = 'center';
+                });
+                page1.querySelectorAll('th').forEach(th => {
+                    th.style.backgroundColor = '#f1f5f9';
+                    th.style.fontWeight = 'bold';
+                });
+
+                // Generate Canvas 1
+                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
+                const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
+                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+
+                // PAGE 2 Compilation
+                offscreenContainer.innerHTML = ""; // Clear page 1 nodes
+                const page2 = document.createElement('div');
+                page2.style.padding = '40px';
+                page2.style.color = '#000000';
+                page2.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="text-align: center; flex: 1;">
+                            <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                            <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                        </div>
+                        <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                    </div>
+                    ${cachedPdfData.stats}
+                `;
+                offscreenContainer.appendChild(page2);
+
+                page2.querySelectorAll('th, td').forEach(cell => {
+                    cell.style.border = '1px solid #000000';
+                    cell.style.padding = '5px 6px';
+                    cell.style.textAlign = 'center';
+                });
+
+                // Generate Canvas 2
+                const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
+                const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
+                
+                doc.addPage();
+                doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+
+                // Clean up DOM Sandbox
+                document.body.removeChild(offscreenContainer);
+
+                // Build a pure binary Blob containing exact PDF bytes to trigger actual OS Download
+                const pdfBlob = doc.output('blob');
+                const cleanFileName = currentPdfTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
+
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = blobUrl;
+                downloadAnchor.download = cleanFileName;
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                
+                // Cleanup URL memory space
+                document.body.removeChild(downloadAnchor);
+                URL.revokeObjectURL(blobUrl);
+
+                pdfModal.close();
+            } catch (err) {
+                alert("Error compilation: " + err.message);
+                console.error(err);
+            } finally {
+                executePdfDownloadBtn.disabled = false;
+                executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
             }
-        }
+        });
 
-        // REPORT COMPILATION & POSITION MATRIX ENGINE
+        // PERFORMANCE METRICS REPORT COMPILER
+        let printableMarksReportHtml = "";
+        let printablePointsReportHtml = "";
+
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
-            if (isNaN(grade)) return alert("Select target grade cohort!");
+            if (isNaN(grade)) return alert("Please select a target class cohort!");
 
             const schoolLogo = document.getElementById('school-logo');
             const schoolNameText = document.getElementById('school-title').innerText.trim();
             if (!schoolLogo.complete || schoolLogo.naturalWidth === 0 || !schoolNameText) {
-                return alert("Critical Error: Core institutional branding (School Name and Valid Logo Asset) missing. Broadsheet generation halted.");
+                return alert("Branding error: missing logo asset. Broadsheet compilation halted.");
             }
 
             compileReportsBtn.disabled = true;
@@ -1065,7 +1046,6 @@
                 const tier = getGradeTier(grade);
                 const allowed = CBC_SUBJECT_TIERS[tier];
 
-                // Disable Points compilation and Points PDF features if Lower Primary is selected
                 if (tier === "lower_primary") {
                     downloadPointsPdfBtn.disabled = true;
                     downloadPointsPdfBtn.classList.add('opacity-40', 'cursor-not-allowed');
@@ -1097,7 +1077,6 @@
                 if (marksErr) throw marksErr;
                 const marksData = marks || [];
 
-                // Math/Science structures initialization for stats analysis
                 const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
                 const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
                 const pointsDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
@@ -1110,7 +1089,6 @@
                     subjectPointsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
                 });
 
-                // Compute Student Profiles & Rankings
                 const calculatedMarksStudents = targetStudents.map(s => {
                     let totalMarks = 0;
                     let count = 0;
@@ -1186,7 +1164,6 @@
                     };
                 });
 
-                // Assign Rank Positions
                 calculatedMarksStudents.sort((a, b) => b.totals - a.totals);
                 calculatedMarksStudents.forEach((cs, i) => { cs.position = i + 1; });
 
@@ -1195,7 +1172,6 @@
                     calculatedPointsStudents.forEach((cs, i) => { cs.position = i + 1; });
                 }
 
-                // Render Live UI Broadsheet preview
                 let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th><th class="py-3 px-4 text-center">Stream</th>`;
                 filteredSubjects.forEach(sub => {
                     headerHtml += `<th class="py-3 px-4 text-center">${getSubjectShorthand(sub.subject_name)}</th>`;
@@ -1229,18 +1205,17 @@
                 if (tier === "lower_primary") {
                     const classMeanMarks = (calculatedMarksStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
                     analyticalSummaryBadges.innerHTML = `
-                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
-                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Marks Mean: ${classMeanMarks}%</span>
+                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Cohort: ${totalRanked}</span>
+                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Mean: ${classMeanMarks}%</span>
                     `;
                 } else {
                     const classMeanPoints = (calculatedPointsStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
                     analyticalSummaryBadges.innerHTML = `
-                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Cohort Size: ${totalRanked}</span>
-                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Points Mean: ${classMeanPoints} Pts</span>
+                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Cohort: ${totalRanked}</span>
+                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Mean: ${classMeanPoints} Pts</span>
                     `;
                 }
 
-                // Sub-Subject Rankings
                 const subjectMarksList = filteredSubjects.map(sub => {
                     const stats = subjectMarksStats[sub.subject_name];
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
@@ -1251,7 +1226,7 @@
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
 
-                // ==================== GENERATING PDF 1: MARKS MASTER LEDGER ====================
+                // ==================== COMPILE RAW DATA STRUCTS FOR EMBEDDED MODAL & DYNAMIC DOWNLOADS ====================
                 let marksHeaderHtml = `
                     <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
                         <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${currentActiveExamName.toUpperCase()}</h2>
@@ -1276,8 +1251,8 @@
                         ${calculatedMarksStudents.map((cs, index) => `
                             <tr>
                                 <td>${index + 1}</td>
-                                <td class="learner-name-col">${cs.name}</td>
-                                <td><span style="text-transform: uppercase; font-weight: 500;">${cs.stream}</span></td>
+                                <td style="text-align: left; font-weight: bold;">${cs.name}</td>
+                                <td>${cs.stream}</td>
                                 ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                 <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                 <td style="font-weight: bold; color: #0284c7;">${cs.average.toFixed(0)}%</td>
@@ -1313,7 +1288,7 @@
 
                 let marksStatsHtml = `
                     <div style="font-weight: bold; font-size: 10px;">
-                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
+                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
                         ${ratingKeys.map(key => {
                             const count = marksDistribution[key] || 0;
                             const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
@@ -1343,7 +1318,6 @@
 
                 printableMarksReportHtml = { marksHeaderHtml, marksBodyHtml, marksStatsHtml };
 
-                // ==================== GENERATING PDF 2: POINTS MASTER LEDGER ====================
                 if (tier !== "lower_primary") {
                     let pointsHeaderHtml = `
                         <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
@@ -1369,8 +1343,8 @@
                             ${calculatedPointsStudents.map((cs, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td class="learner-name-col">${cs.name}</td>
-                                    <td><span style="text-transform: uppercase; font-weight: 500;">${cs.stream}</span></td>
+                                    <td style="text-align: left; font-weight: bold;">${cs.name}</td>
+                                    <td>${cs.stream}</td>
                                     ${filteredSubjects.map(sub => `<td>${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
                                     <td style="font-weight: bold;">${cs.totals.toFixed(0)}</td>
                                     <td style="font-weight: bold; color: #15803d;">${cs.average.toFixed(1)}</td>
@@ -1406,7 +1380,7 @@
 
                     let pointsStatsHtml = `
                         <div style="font-weight: bold; font-size: 10px;">
-                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; tracking-wider; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
+                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
                             ${ratingKeys.map(key => {
                                 const count = pointsDistribution[key] || 0;
                                 const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
@@ -1439,7 +1413,7 @@
 
                 downloadMarksPdfBtn.disabled = false;
             } catch (err) {
-                alert("Error compiling broadsheet: " + err.message);
+                alert("Broadsheet compilation error: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
                 compileReportsBtn.innerText = "📊 Compile Broad Sheet";
@@ -1448,7 +1422,7 @@
 
         downloadMarksPdfBtn.addEventListener('click', () => {
             if (!printableMarksReportHtml) return;
-            openPdfPreview(
+            openEmbeddedPdfPreview(
                 `${currentActiveExamName} - Raw Marks Master Ledger`,
                 printableMarksReportHtml.marksHeaderHtml,
                 printableMarksReportHtml.marksBodyHtml,
@@ -1458,7 +1432,7 @@
 
         downloadPointsPdfBtn.addEventListener('click', () => {
             if (!printablePointsReportHtml) return;
-            openPdfPreview(
+            openEmbeddedPdfPreview(
                 `${currentActiveExamName} - Points Master Ledger`,
                 printablePointsReportHtml.pointsHeaderHtml,
                 printablePointsReportHtml.pointsBodyHtml,
