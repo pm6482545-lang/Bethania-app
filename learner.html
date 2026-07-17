@@ -16,8 +16,13 @@
     <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen px-4">
         <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
             <div class="card-body p-6 sm:p-8 text-center space-y-4">
-                <div class="avatar bg-white p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16">
-                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="portal-logo" alt="Bethania Academy" class="rounded-full overflow-hidden" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                <!-- Swapped out remote image to prevent browser tainting canvas errors entirely -->
+                <div class="avatar bg-slate-900 p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-12 h-12">
+                        <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
+                        <path d="M50 20 L75 35 L75 65 L50 80 L25 65 L25 35 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                        <text x="50" y="52" font-family="sans-serif" font-size="22" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
+                    </svg>
                 </div>
                 <div>
                     <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
@@ -39,9 +44,12 @@
         <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 border-b border-amber-500/30">
             <div class="flex-1">
                 <div class="flex items-center gap-3">
-                    <div class="avatar bg-white p-1 rounded-full border border-amber-400">
-                        <div class="w-8 h-8 rounded-full overflow-hidden">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" />
+                    <div class="avatar bg-slate-900 p-1 rounded-full border border-amber-400">
+                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6">
+                                <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
+                                <text x="50" y="52" font-family="sans-serif" font-size="26" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
+                            </svg>
                         </div>
                     </div>
                     <div>
@@ -433,10 +441,23 @@
             const allowed = CBC_SUBJECT_TIERS[tier];
             const isJuniorPoints = (type === 'points');
 
-            _supabase.from('subjects').select('*').then(({data}) => {
-                const filteredSubjects = (data || []).filter(s => allowed.includes(s.subject_name.trim()));
-                const rankings = calculateRankings(filteredSubjects, isJuniorPoints);
+            try {
+                // Bypassed database queries during generation trigger to resolve mobile thread lockouts
+                const staticSubjects = allowed.map((subjectName, index) => {
+                    const foundPaper = globalPapers.find(p => p.subject_name === subjectName);
+                    return {
+                        id: foundPaper ? foundPaper.subject_id : index + 999,
+                        subject_name: subjectName
+                    };
+                });
+
+                const rankings = calculateRankings(staticSubjects, isJuniorPoints);
                 const me = rankings.find(r => r.id === activeStudent.id);
+
+                if (!me) {
+                    alert("Could not locate matching student record in current memory session.");
+                    return;
+                }
 
                 // LOCAL HIGH-RESOLUTION EMBEDDED CREST (Completely bypasses CORS/Network issues)
                 const secureLogoSvg = `
@@ -502,7 +523,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${filteredSubjects.map(sub => {
+                                    ${staticSubjects.map(sub => {
                                         const record = me.subjectBreakdown[sub.subject_name];
                                         let compText = "-";
                                         if(record && record.label !== "-") {
@@ -531,7 +552,7 @@
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Calculated Mean</span>
                                     <strong style="font-size: 16px; color: #1e40af;">${me.average.toFixed(1)}${isJuniorPoints ? ' Pts' : '%'}</strong>
-                                </div>
+                                }</div>
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Position</span>
                                     <strong style="font-size: 16px; color: #0f172a;">Rank #${me.position} of ${rankings.length}</strong>
@@ -570,17 +591,17 @@
                 const opt = {
                     margin:       [0.3, 0.3, 0.3, 0.3],
                     filename:     `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`,
-                    image:        { type: 'jpeg', quality: 1.0 },
+                    image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { 
                         scale: 2, 
-                        useCORS: false, // Bypasses network security blocks entirely
-                        allowTaint: false,
+                        useCORS: false,      // Off to protect sandbox on mobile safari/chrome
+                        allowTaint: true,     // Resolves internal canvas errors
                         letterRendering: true 
                     },
                     jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
                 };
 
-                // Execute the download with error capturing to pinpoint issues
+                // Compile and stream download
                 html2pdf()
                     .from(pdfCanvas)
                     .set(opt)
@@ -592,7 +613,11 @@
                         console.error("html2pdf rendering failed:", err);
                         alert("There was an error compiling your PDF. Please view your browser console for details.");
                     });
-            });
+
+            } catch (criticalErr) {
+                console.error("Compilation process exception caught:", criticalErr);
+                alert("Runtime compiling exception: Data array mapping error.");
+            }
         }
     </script>
 </body>
