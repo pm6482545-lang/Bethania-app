@@ -42,6 +42,35 @@
 
     <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
 
+        <!-- 🧑‍🏫 TEACHER LOGIN PORTAL CARD -->
+        <div class="card bg-white shadow-xl border border-slate-200 max-w-md mx-auto my-4 rounded-2xl">
+            <div class="card-body p-6 space-y-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🧑‍🏫</span>
+                    <div>
+                        <h2 class="card-title text-base font-extrabold text-slate-900 uppercase tracking-tight">Faculty Dashboard</h2>
+                        <p class="text-xs text-slate-500">Log in to enter scores and record CBA metrics.</p>
+                    </div>
+                </div>
+                
+                <div class="divider my-1"></div>
+
+                <div class="form-control">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Account Email</label>
+                    <input type="email" id="teacher-email" placeholder="teacher@bethania.com" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" />
+                </div>
+
+                <div class="form-control">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Password</label>
+                    <input type="password" id="teacher-password" placeholder="••••••••" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" />
+                </div>
+
+                <button id="teacher-login-btn" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition mt-2">
+                    🔐 Enter Teacher Portal
+                </button>
+            </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
             <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
                 <span class="text-base sm:text-lg">👤</span>
@@ -725,6 +754,43 @@
             
         searchBar.addEventListener('input', (e) => {
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
+        });
+
+        // 🧑‍🏫 FACULTY AUTHENTICATION CONTROLLER EVENT LISTENER
+        document.getElementById('teacher-login-btn').addEventListener('click', async () => {
+            const emailInput = document.getElementById('teacher-email').value.trim();
+            const passwordInput = document.getElementById('teacher-password').value.trim();
+
+            if (!emailInput || !passwordInput) {
+                return alert("Please enter both email and password credentials.");
+            }
+
+            const loginBtn = document.getElementById('teacher-login-btn');
+            loginBtn.disabled = true;
+            loginBtn.innerText = "Authenticating...";
+
+            try {
+                const { data, error } = await _supabase
+                    .from('teachers_auth')
+                    .select('*')
+                    .eq('email', emailInput)
+                    .eq('password', passwordInput)
+                    .single();
+
+                if (error || !data) {
+                    throw new Error("Invalid username/email or password verification mismatch.");
+                }
+
+                localStorage.setItem('teacher_session_email', data.email);
+                alert(`Welcome back, Instructor! Routing to processing terminal...`);
+                window.location.href = "teacher_dashboard.html"; 
+
+            } catch (err) {
+                alert("Authentication Failed: " + err.message);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerText = "🔐 Enter Teacher Portal";
+            }
         });
 
         window.addEventListener('DOMContentLoaded', async () => {
