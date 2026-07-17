@@ -25,452 +25,443 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        /* Lock page until admin authenticates */
-        body { display: none; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
 
-    <!-- EXECUTIVE HEADER -->
-    <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20">
-        <div class="flex-1">
-            <div class="flex items-center gap-3.5">
-                <div class="avatar bg-white p-1 rounded-full ring-2 ring-amber-400/50">
-                    <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
-                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
-                    </div>
-                </div>
-                <div>
-                    <h1 class="text-sm sm:text-base font-extrabold tracking-wider uppercase text-amber-400" id="school-title">Bethania Academy</h1>
-                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-widest uppercase">Executive CBA Management Portal</p>
+    <!-- 🔐 ADMINISTRATIVE GATEWAY LOGIN WALL OVERLAY -->
+    <div id="admin-login-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 text-center space-y-5">
+            <div class="avatar bg-slate-100 p-2 rounded-full mx-auto ring-4 ring-amber-400/30">
+                <div class="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center">
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" />
                 </div>
             </div>
-        </div>
-        <div class="flex-none gap-2">
-            <span class="text-[10px] sm:text-xs font-mono bg-slate-800/80 border border-slate-700/60 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Syncing Server...
-            </span>
-            <button id="admin-logout-btn" class="btn btn-error btn-xs sm:btn-sm font-bold text-white shadow-sm">
-                🚪 Exit Portal
+            <div>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight uppercase">Executive Login Required</h2>
+                <p class="text-xs text-slate-500 mt-1">Please authenticate with your Supabase Admin Credentials</p>
+            </div>
+            <div class="space-y-3 text-left">
+                <div class="form-control">
+                    <label class="label-text font-bold text-slate-600 text-[11px] uppercase tracking-wider mb-1">Admin Username</label>
+                    <input type="text" id="admin-login-user" placeholder="Enter username" class="input input-bordered input-sm w-full focus:outline-none" />
+                </div>
+                <div class="form-control">
+                    <label class="label-text font-bold text-slate-600 text-[11px] uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="admin-login-pass" placeholder="••••••••" class="input input-bordered input-sm w-full focus:outline-none" />
+                </div>
+            </div>
+            <button id="admin-login-btn" class="btn btn-primary btn-sm w-full text-white font-bold tracking-wide uppercase">
+                🚀 Authenticate Dashboard
             </button>
         </div>
-    </header>
+    </div>
 
-    <!-- IN-PAGE MODAL FOR INSTANT PDF PREVIEW AND ACTION -->
-    <dialog id="pdf-modal" class="modal">
-        <div class="modal-box w-11/12 max-w-5xl bg-white p-6 relative rounded-2xl shadow-2xl">
-            <form method="dialog">
-                <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-slate-500 hover:bg-slate-100">✕</button>
-            </form>
-            <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
-                📄 Document Export Sandbox
-            </h3>
-            
-            <!-- Embedded PDF Preview Area (A4 Landscape aspect ratio representation) -->
-            <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
-                <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative; overflow: hidden;">
-                    <!-- Dynamically populated PDF view with watermark -->
+    <!-- MAIN CONTROL PORTAL PORTFOLIO HOUSING CONTENT (HIDDEN BY DEFAULT UNTIL VERIFIED) -->
+    <div id="portal-dashboard-wrapper" class="hidden">
+        <!-- EXECUTIVE HEADER -->
+        <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20">
+            <div class="flex-1">
+                <div class="flex items-center gap-3.5">
+                    <div class="avatar bg-white p-1 rounded-full ring-2 ring-amber-400/50">
+                        <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-base font-extrabold tracking-wider uppercase text-amber-400" id="school-title">Bethania Academy</h1>
+                        <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-widest uppercase">Executive CBA Management Portal</p>
+                    </div>
                 </div>
             </div>
-
-            <div class="modal-action flex justify-between items-center mt-6">
-                <p class="text-xs text-slate-500 italic">Verify structural formatting. Click Download to save directly as a valid .pdf file.</p>
-                <div class="flex gap-3">
-                    <form method="dialog">
-                        <button class="btn btn-sm btn-ghost">Close</button>
-                    </form>
-                    <button id="execute-pdf-download-btn" class="btn btn-sm btn-primary text-white font-bold">
-                        💾 Download as .pdf File
-                    </button>
-                </div>
+            <div class="flex-none gap-2">
+                <span class="text-[10px] sm:text-xs font-mono bg-slate-800/80 border border-slate-700/60 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Syncing Server...
+                </span>
             </div>
-        </div>
-    </dialog>
+        </header>
 
-    <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2">
-
-        <!-- 👥 MANAGE LEARNERS BOARD -->
-        <section class="card bg-white shadow-md border border-slate-200/60">
-            <div class="card-body p-5 sm:p-6">
-                <div class="flex items-center gap-2.5 mb-4">
-                    <span class="text-xl">👥</span>
-                    <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Manage Learners</h2>
-                </div>
+        <!-- IN-PAGE MODAL FOR INSTANT PDF PREVIEW AND ACTION -->
+        <dialog id="pdf-modal" class="modal">
+            <div class="modal-box w-11/12 max-w-5xl bg-white p-6 relative rounded-2xl shadow-2xl">
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-slate-500 hover:bg-slate-100">✕</button>
+                </form>
+                <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
+                    📄 Document Export Sandbox
+                </h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Select Grade to Edit</label>
-                            <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium focus:outline-none focus:border-slate-400">
-                                <option value="" disabled selected>Choose Grade...</option>
-                                <option value="-2">PP1</option>
-                                <option value="-1">PP2</option>
-                                <option value="1">Grade 1</option>
-                                <option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option>
-                                <option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option>
-                                <option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option>
-                                <option value="8">Grade 8</option>
-                                <option value="9">Grade 9</option>
-                            </select>
-                        </div>
-                        <div id="manage-learner-list" class="max-h-60 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100">
-                            <p class="text-xs text-slate-400 text-center py-8 italic">Select a grade to load learners...</p>
-                        </div>
+                <!-- Embedded PDF Preview Area (A4 Landscape aspect ratio representation) -->
+                <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
+                    <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative; overflow: hidden;">
+                        <!-- Dynamically populated PDF view with watermark -->
+                    </div>
+                </div>
+
+                <div class="modal-action flex justify-between items-center mt-6">
+                    <p class="text-xs text-slate-500 italic">Verify structural formatting. Click Download to save directly as a valid .pdf file.</p>
+                    <div class="flex gap-3">
+                        <form method="dialog">
+                            <button class="btn btn-sm btn-ghost">Close</button>
+                        </form>
+                        <button id="execute-pdf-download-btn" class="btn btn-sm btn-primary text-white font-bold">
+                            💾 Download as .pdf File
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </dialog>
+
+        <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2">
+
+            <!-- 🧑‍🏫 REGISTER & ACCOMMODATE TEACHERS MANAGEMENT BOARD -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <span class="text-xl">🧑‍🏫</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Manage & Register Teachers</h2>
                     </div>
                     
-                    <div class="bg-slate-50/80 p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50/80 p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                            <div class="space-y-3">
+                                <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Add New Staff Faculty Account</span>
+                                <div class="form-control">
+                                    <input type="text" id="new-teacher-name" placeholder="Teacher Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 italic">The engine will auto-assign a uniquely secure Username and Password instantly for logging into index.html.</p>
+                            </div>
+                            <button id="add-teacher-btn" class="btn btn-sm btn-secondary w-full text-white font-bold mt-4 shadow-sm">
+                                🔑 Generate Staff Access Credentials
+                            </button>
+                        </div>
+
                         <div class="space-y-3">
-                            <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Register New Learner</span>
-                            <div class="form-control">
-                                <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
-                            </div>
-                            <div class="form-control">
-                                <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Staff Members Roster & Active Access Logins</label>
+                            <div id="manage-teacher-list" class="max-h-48 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100">
+                                <p class="text-xs text-slate-400 text-center py-8 italic">Loading current faculty roster...</p>
                             </div>
                         </div>
-                        <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold mt-4 shadow-sm">
-                            ✨ Save Learner
-                        </button>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- ASSESSMENT CYCLE DEPLOYER -->
-        <section class="card bg-white shadow-md border border-slate-200/60">
-            <div class="card-body p-5 sm:p-6">
-                <div class="flex items-center gap-2.5 mb-2">
-                    <span class="text-xl">🚀</span>
-                    <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
-                </div>
-                <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts and targets only the specified evaluation model.</p>
-
-                <div class="divider my-3"></div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-                    <div class="form-control bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4">
-                        <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase">1. Select Assessment Type</label>
-                        <div class="flex gap-3">
-                            <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
-                                <input type="radio" name="exam_class" value="main" class="radio radio-xs sm:radio-sm radio-primary" checked id="radio-main" />
-                                <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🏫 Main Exam</span>
-                            </label>
-                            <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
-                                <input type="radio" name="exam_class" value="contest" class="radio radio-xs sm:radio-sm radio-secondary" id="radio-contest" />
-                                <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🧮 Contest</span>
-                            </label>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="form-control">
-                                <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Calendar Year</label>
-                                <select id="cycle-year" class="select select-bordered select-sm w-full font-medium focus:outline-none">
-                                    <option value="2026">2026</option>
-                                    <option value="2027">2027</option>
+            <!-- 👥 MANAGE LEARNERS BOARD -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <span class="text-xl">👥</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Manage Learners</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Select Grade to Edit</label>
+                                <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium focus:outline-none focus:border-slate-400">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option>
+                                    <option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
                                 </select>
                             </div>
-                            <div class="form-control">
-                                <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Target Term</label>
-                                <select id="cycle-term" class="select select-bordered select-sm w-full font-medium focus:outline-none">
-                                    <option value="Term 1">Term 1</option>
-                                    <option value="Term 2" selected>Term 2</option>
-                                    <option value="Term 3">Term 3</option>
-                                </select>
+                            <div id="manage-learner-list" class="max-h-60 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100">
+                                <p class="text-xs text-slate-400 text-center py-8 italic">Select a grade to load learners...</p>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4 flex flex-col justify-between">
-                        <div id="main-exam-options" class="space-y-2">
-                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Main Exam Series</label>
-                            <select id="main-series" class="select select-bordered select-sm w-full font-medium focus:outline-none">
-                                <option value="Opener Exam">Opener Exam</option>
-                                <option value="Mid Term Exam" selected>Mid Term Exam</option>
-                                <option value="End Term Exam">End Term Exam</option>
-                            </select>
-                        </div>
-
-                        <div id="contest-options" class="space-y-2 hidden">
-                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Contest Identifier Series</label>
-                            <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase mb-1">3. Closing Submission Deadline</label>
-                            <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-actions justify-end mt-5">
-                    <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto transition-colors duration-150">
-                        ⚡ Publish Active Exam Context
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- 🧑‍🏫 TEACHER PROVISIONING CONTROL BOARD -->
-        <section class="card bg-white shadow-md border border-slate-200/60">
-            <div class="card-body p-5 sm:p-6">
-                <div class="flex items-center gap-2.5 mb-2">
-                    <span class="text-xl">🧑‍🏫</span>
-                    <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Onboard Faculty Members</h2>
-                </div>
-                <p class="text-xs text-slate-500">Register new instructional profiles here. Credentials saved within this console authorize educators to immediately log into the dashboard.</p>
-                <div class="divider my-2"></div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Form Wrapper -->
-                    <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 flex flex-col justify-between">
-                        <div class="space-y-4">
-                            <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">New Faculty Profile</span>
-                            <div class="form-control">
-                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Account Username / Email</label>
-                                <input type="email" id="reg-teacher-email" placeholder="e.g. teacher@bethania.com" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
-                            </div>
-                            <div class="form-control">
-                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Secure Password</label>
-                                <input type="text" id="reg-teacher-password" placeholder="Create unique password for login" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
-                            </div>
-                        </div>
-                        <button id="register-teacher-btn" class="btn btn-primary btn-sm font-bold text-white px-6 shadow-sm w-full mt-5">
-                            💾 Register Faculty Account
-                        </button>
-                    </div>
-
-                    <!-- Interactive Live Registry List View -->
-                    <div>
-                        <label class="label-text font-bold text-xs text-slate-600 tracking-wider uppercase mb-2 block">Registered Faculty Profiles & Passwords</label>
-                        <div id="manage-teachers-list" class="max-h-52 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100 shadow-inner">
-                            <p class="text-xs text-slate-400 text-center py-8 italic">Loading faculty registry...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- THREE-COLUMN ACTION LAYOUT -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- CONTROL COLUMNS -->
-            <div class="space-y-6 lg:col-span-1">
-                
-                <!-- SUBMISSION MONITOR -->
-                <div class="card bg-white shadow-md border border-slate-200/60">
-                    <div class="card-body p-4 sm:p-5 space-y-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg">📡</span>
-                            <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Submission Tracker</h3>
-                        </div>
-                        <p class="text-xs text-slate-500">Analyze real-time data uploads. Subjects filter automatically according to the grade tier selected.</p>
-
-                        <div class="divider my-1"></div>
-
-                        <div class="form-control">
-                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Class Level</label>
-                            <select id="tracker-grade" class="select select-bordered select-sm w-full font-medium">
-                                <option value="" disabled selected>Choose Class...</option>
-                                <option value="-2">PP1</option>
-                                <option value="-1">PP2</option>
-                                <option value="1">Grade 1</option>
-                                <option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option>
-                                <option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option>
-                                <option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option>
-                                <option value="8">Grade 8</option>
-                                <option value="9">Grade 9</option>
-                            </select>
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Subject Component</label>
-                            <select id="tracker-subject" class="select select-bordered select-sm w-full font-medium" disabled>
-                                <option value="" disabled selected>Choose class level first...</option>
-                            </select>
-                        </div>
-
-                        <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
-
-                        <div class="border border-slate-200/80 rounded-lg overflow-hidden bg-slate-50">
-                            <div class="bg-slate-100/80 p-2.5 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600 tracking-wider uppercase">
-                                <span>Learner Name</span>
-                                <span>Upload Status</span>
-                            </div>
-                            <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
-                                <p class="text-center py-8 text-xs italic text-slate-400">Select parameters to audit...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- LEARNING AREA MANAGER -->
-                <div class="card bg-white shadow-md border border-slate-200/60">
-                    <div class="card-body p-4 sm:p-5 space-y-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg">🛠️</span>
-                            <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Manage Learning Areas</h3>
-                        </div>
-                        <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam papers/components, or remove outdated selections from the portals.</p>
-
-                        <div class="divider my-1"></div>
-
-                        <div class="tabs tabs-boxed bg-slate-100/80 p-1 mb-2">
-                            <button class="tab tab-active tab-xs w-1/2 font-bold transition-all" id="tab-add-sub">Add Content</button>
-                            <button class="tab tab-xs w-1/2 font-bold transition-all" id="tab-del-sub">Remove Content</button>
-                        </div>
-
-                        <div id="sub-panel-add" class="space-y-3">
-                            <div class="form-control">
-                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">1. Subject / Learning Area Title</label>
-                                <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
-                            </div>
-
-                            <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
-                                <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block mb-1">Optional Component Paper Setup</span>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" id="cfg-paper-name" placeholder="Paper name (e.g. Paper 1)" class="input input-bordered input-xs w-full" />
-                                    <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
+                        
+                        <div class="bg-slate-50/80 p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                            <div class="space-y-3">
+                                <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Register New Learner</span>
+                                <div class="form-control">
+                                    <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                                </div>
+                                <div class="form-control">
+                                    <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
                                 </div>
                             </div>
-                            <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold shadow-sm">✨ Save Subjects & Components</button>
+                            <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold mt-4 shadow-sm">
+                                ✨ Save Learner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ASSESSMENT CYCLE DEPLOYER -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="text-xl">🚀</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
+                    </div>
+                    <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts and targets only the specified evaluation model.</p>
+
+                    <div class="divider my-3"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+                        <div class="form-control bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4">
+                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase">1. Select Assessment Type</label>
+                            <div class="flex gap-3">
+                                <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
+                                    <input type="radio" name="exam_class" value="main" class="radio radio-xs sm:radio-sm radio-primary" checked id="radio-main" />
+                                    <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🏫 Main Exam</span>
+                                </label>
+                                <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
+                                    <input type="radio" name="exam_class" value="contest" class="radio radio-xs sm:radio-sm radio-secondary" id="radio-contest" />
+                                    <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🧮 Contest</span>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="form-control">
+                                    <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Calendar Year</label>
+                                    <select id="cycle-year" class="select select-bordered select-sm w-full font-medium focus:outline-none">
+                                        <option value="2026">2026</option>
+                                        <option value="2027">2027</option>
+                                    </select>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Target Term</label>
+                                    <select id="cycle-term" class="select select-bordered select-sm w-full font-medium focus:outline-none">
+                                        <option value="Term 1">Term 1</option>
+                                        <option value="Term 2" selected>Term 2</option>
+                                        <option value="Term 3">Term 3</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="sub-panel-del" class="space-y-3 hidden">
-                            <div class="form-control">
-                                <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Target Subject to Delete</label>
-                                <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
-                                    <option value="" disabled selected>Select from database...</option>
+                        <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4 flex flex-col justify-between">
+                            <div id="main-exam-options" class="space-y-2">
+                                <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Main Exam Series</label>
+                                <select id="main-series" class="select select-bordered select-sm w-full font-medium focus:outline-none">
+                                    <option value="Opener Exam">Opener Exam</option>
+                                    <option value="Mid Term Exam" selected>Mid Term Exam</option>
+                                    <option value="End Term Exam">End Term Exam</option>
                                 </select>
                             </div>
-                            <p class="text-[10px] text-red-500 font-semibold italic bg-red-50 p-2 rounded-lg border border-red-100">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
-                            <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold shadow-sm">🗑️ Delete Selected Subject</button>
+
+                            <div id="contest-options" class="space-y-2 hidden">
+                                <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Contest Identifier Series</label>
+                                <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase mb-1">3. Closing Submission Deadline</label>
+                                <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            </div>
-
-            <!-- BROAD SHEET LEDGER GENERATOR -->
-            <div class="card bg-white shadow-md border border-slate-200/60 lg:col-span-2">
-                <div class="card-body p-4 sm:p-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">📊</span>
-                            <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase">Performance Analytical Engine</h2>
-                        </div>
-                        <span class="badge badge-warning text-[9px] sm:text-[10px] font-bold uppercase py-2.5 px-3 tracking-wide" id="detected-active-label">No Deployed Exam Series Found</span>
-                    </div>
-                    <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
-
-                    <div class="divider my-2"></div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 items-end">
-                        <div class="form-control">
-                            <label class="label-text font-bold text-slate-600 text-[11px] tracking-wider uppercase mb-1.5">Class Cohort</label>
-                            <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
-                                <option value="" disabled selected>Choose Grade...</option>
-                                <option value="-2">PP1</option>
-                                <option value="-1">PP2</option>
-                                <option value="1">Grade 1</option>
-                                <option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option>
-                                <option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option>
-                                <option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option>
-                                <option value="8">Grade 8</option>
-                                <option value="9">Grade 9</option>
-                            </select>
-                        </div>
-
-                        <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full transition-all">
-                            📊 Compile Broad Sheet
+                    <div class="card-actions justify-end mt-5">
+                        <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto transition-colors duration-150">
+                            ⚡ Publish Active Exam Context
                         </button>
                     </div>
+                </div>
+            </section>
 
-                    <div class="overflow-x-auto rounded-xl border border-slate-200/80 mt-5">
-                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
-                            <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
-                                <tr>
-                                    <th class="py-3 px-4 text-left">Learner Name</th>
-                                    <th class="py-3 px-4 text-left">Loading Column Configuration...</th>
-                                </tr>
-                            </thead>
-                            <tbody id="broadsheet-rows" class="font-mono text-xs">
-                                <tr>
-                                    <td colspan="2" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <!-- THREE-COLUMN ACTION LAYOUT -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- CONTROL COLUMNS -->
+                <div class="space-y-6 lg:col-span-1">
+                    
+                    <!-- SUBMISSION MONITOR -->
+                    <div class="card bg-white shadow-md border border-slate-200/60">
+                        <div class="card-body p-4 sm:p-5 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">📡</span>
+                                <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Submission Tracker</h3>
+                            </div>
+                            <p class="text-xs text-slate-500">Analyze real-time data uploads. Subjects filter automatically according to the grade tier selected.</p>
+
+                            <div class="divider my-1"></div>
+
+                            <div class="form-control">
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Class Level</label>
+                                <select id="tracker-grade" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="" disabled selected>Choose Class...</option>
+                                    <option value="-2">PP1</option>
+                                    <option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                </select>
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Subject Component</label>
+                                <select id="tracker-subject" class="select select-bordered select-sm w-full font-medium" disabled>
+                                    <option value="" disabled selected>Choose class level first...</option>
+                                </select>
+                            </div>
+
+                            <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
+
+                            <div class="border border-slate-200/80 rounded-lg overflow-hidden bg-slate-50">
+                                <div class="bg-slate-100/80 p-2.5 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600 tracking-wider uppercase">
+                                    <span>Learner Name</span>
+                                    <span>Upload Status</span>
+                                </div>
+                                <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
+                                    <p class="text-center py-8 text-xs italic text-slate-400">Select parameters to audit...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5">
-                        <div id="analytical-summary-badges" class="flex flex-wrap gap-2 justify-center sm:justify-start"></div>
-                        <div class="flex gap-2.5 w-full sm:w-auto">
-                            <button id="download-marks-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
-                                📄 Export Marks (PDF)
+                    <!-- LEARNING AREA MANAGER -->
+                    <div class="card bg-white shadow-md border border-slate-200/60">
+                        <div class="card-body p-4 sm:p-5 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">🛠️</span>
+                                <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Manage Learning Areas</h3>
+                            </div>
+                            <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam papers/components, or remove outdated selections from the portals.</p>
+
+                            <div class="divider my-1"></div>
+
+                            <div class="tabs tabs-boxed bg-slate-100/80 p-1 mb-2">
+                                <button class="tab tab-active tab-xs w-1/2 font-bold transition-all" id="tab-add-sub">Add Content</button>
+                                <button class="tab tab-xs w-1/2 font-bold transition-all" id="tab-del-sub">Remove Content</button>
+                            </div>
+
+                            <div id="sub-panel-add" class="space-y-3">
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">1. Subject / Learning Area Title</label>
+                                    <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
+                                </div>
+
+                                <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                                    <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block mb-1">Optional Component Paper Setup</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="cfg-paper-name" placeholder="Paper name (e.g. Paper 1)" class="input input-bordered input-xs w-full" />
+                                        <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
+                                    </div>
+                                </div>
+                                <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold shadow-sm">✨ Save Subjects & Components</button>
+                            </div>
+
+                            <div id="sub-panel-del" class="space-y-3 hidden">
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Target Subject to Delete</label>
+                                    <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
+                                        <option value="" disabled selected>Select from database...</option>
+                                    </select>
+                            </div>
+                                <p class="text-[10px] text-red-500 font-semibold italic bg-red-50 p-2 rounded-lg border border-red-100">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
+                                <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold shadow-sm">🗑️ Delete Selected Subject</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BROAD SHEET LEDGER GENERATOR -->
+                <div class="card bg-white shadow-md border border-slate-200/60 lg:col-span-2">
+                    <div class="card-body p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">📊</span>
+                                <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                            </div>
+                            <span class="badge badge-warning text-[9px] sm:text-[10px] font-bold uppercase py-2.5 px-3 tracking-wide" id="detected-active-label">No Deployed Exam Series Found</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
+
+                        <div class="divider my-2"></div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 items-end">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-slate-600 text-[11px] tracking-wider uppercase mb-1.5">Class Cohort</label>
+                                <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option>
+                                    <option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                </select>
+                            </div>
+
+                            <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full transition-all">
+                                📊 Compile Broad Sheet
                             </button>
-                            <button id="download-points-pdf-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
-                                📄 Export Points (PDF)
-                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200/80 mt-5">
+                            <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                                <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left">Learner Name</th>
+                                        <th class="py-3 px-4 text-left">Loading Column Configuration...</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="broadsheet-rows" class="font-mono text-xs">
+                                    <tr>
+                                        <td colspan="2" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5">
+                            <div id="analytical-summary-badges" class="flex flex-wrap gap-2 justify-center sm:justify-start"></div>
+                            <div class="flex gap-2.5 w-full sm:w-auto">
+                                <button id="download-marks-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                    📄 Export Marks (PDF)
+                                </button>
+                                <button id="download-points-pdf-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                    📄 Export Points (PDF)
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-        </div>
-    </main>
+            </div>
+        </main>
+    </div>
 
     <script>
-        // Supabase Configuration Base Anchors
+        // Supabase Configuration
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Enhanced Asynchronous Admin Security Verification Check Block
-        async function checkAuth() {
-            const token = prompt("Enter Executive Portal Passcode or Admin Email Identifier:");
-            if (!token) {
-                window.location.href = "index.html";
-                return;
-            }
-            
-            // Hardcoded quick-access local bypass token check
-            if (token === "bethania2026") {
-                document.body.style.display = "block";
-                return;
-            }
+        // Gateway Verification Elements
+        const adminLoginOverlay = document.getElementById('admin-login-overlay');
+        const portalDashboardWrapper = document.getElementById('portal-dashboard-wrapper');
+        const adminLoginUser = document.getElementById('admin-login-user');
+        const adminLoginPass = document.getElementById('admin-login-pass');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
 
-            // Real-time Supabase Table verification fallback fallback for admin row context matching
-            if (token.includes('@')) {
-                const pass = prompt("Enter Secure Account Password:");
-                try {
-                    const { data, error } = await _supabase
-                        .from('teachers_auth')
-                        .select('*')
-                        .eq('email', token.trim())
-                        .eq('password', pass)
-                        .limit(1);
-                        
-                    if (data && data.length > 0) {
-                        document.body.style.display = "block";
-                        return;
-                    }
-                } catch(e) {
-                    console.error("Auth check internal failure", e);
-                }
-            }
-            
-            alert("Unauthorized Access. Redirecting out...");
-            window.location.href = "index.html";
-        }
-        checkAuth();
+        // Staff Faculty Elements
+        const newTeacherName = document.getElementById('new-teacher-name');
+        const addTeacherBtn = document.getElementById('add-teacher-btn');
+        const manageTeacherList = document.getElementById('manage-teacher-list');
 
         // State Elements
         const dbStatus = document.getElementById('db-status');
@@ -506,13 +497,6 @@
         const downloadMarksPdfBtn = document.getElementById('download-marks-pdf-btn');
         const downloadPointsPdfBtn = document.getElementById('download-points-pdf-btn');
         const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
-
-        // New Faculty Elements
-        const regTeacherEmail = document.getElementById('reg-teacher-email');
-        const regTeacherPassword = document.getElementById('reg-teacher-password');
-        const registerTeacherBtn = document.getElementById('register-teacher-btn');
-        const manageTeachersList = document.getElementById('manage-teachers-list');
-        const adminLogoutBtn = document.getElementById('admin-logout-btn');
 
         // Config elements
         const tabAddSub = document.getElementById('tab-add-sub');
@@ -625,6 +609,41 @@
             return "BE2";
         }
 
+        // ADMINISTRATIVE USER AUTHENTICATION CONTROLLER TRIGGER
+        adminLoginBtn.addEventListener('click', async () => {
+            const user = adminLoginUser.value.trim();
+            const pass = adminLoginPass.value.trim();
+            if (!user || !pass) return alert("Please fill out all credentials!");
+
+            adminLoginBtn.disabled = true;
+            adminLoginBtn.innerText = "Authenticating...";
+
+            try {
+                const { data, error } = await _supabase.from('users')
+                    .select('*')
+                    .eq('username', user)
+                    .eq('password', pass)
+                    .limit(1);
+
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    alert("Access Denied: Invalid Administrative Credentials.");
+                    adminLoginBtn.disabled = false;
+                    adminLoginBtn.innerText = "🚀 Authenticate Dashboard";
+                    return;
+                }
+
+                // Remove gateway block structure overlay and trigger initial data loads
+                adminLoginOverlay.classList.add('hidden');
+                portalDashboardWrapper.classList.remove('hidden');
+                initAdminEngine();
+            } catch (err) {
+                alert("Database Authentication Failure: " + err.message);
+                adminLoginBtn.disabled = false;
+                adminLoginBtn.innerText = "🚀 Authenticate Dashboard";
+            }
+        });
+
         async function detectMarksSchema() {
             try {
                 const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
@@ -646,7 +665,7 @@
         async function initAdminEngine() {
             try {
                 await detectMarksSchema();
-                await fetchTeachersList(); // Pull Faculty lists
+                await fetchTeachersRoster();
 
                 const { data: students, error: studentErr } = await _supabase.from('students').select('*');
                 if (studentErr) throw studentErr;
@@ -672,6 +691,76 @@
                 dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-error"></span> Connection Offline`;
             }
         }
+
+        // TEACHER ROSTER CREDENTIAL MANAGEMENT UTILITIES
+        async function fetchTeachersRoster() {
+            manageTeacherList.innerHTML = '<p class="text-xs text-center py-4">Loading roster...</p>';
+            try {
+                const { data, error } = await _supabase.from('teachers').select('*').order('name');
+                if (error) throw error;
+                
+                manageTeacherList.innerHTML = (data || []).map(t => `
+                    <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-900">${t.name}</span>
+                            <div class="flex items-center gap-3 text-[10px] text-slate-500 font-mono mt-0.5">
+                                <span>User: <strong class="text-blue-600">${t.username || 'N/A'}</strong></span>
+                                <span>Pass: <strong class="text-emerald-600">${t.password || 'N/A'}</strong></span>
+                            </div>
+                        </div>
+                        <button onclick="removeTeacher('${t.id}')" class="btn btn-error btn-xs text-white px-2.5">Remove</button>
+                    </div>
+                `).join('');
+                if (!data || data.length === 0) {
+                    manageTeacherList.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No staff profiles registered yet.</p>';
+                }
+            } catch (err) {
+                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>`;
+            }
+        }
+
+        addTeacherBtn.addEventListener('click', async () => {
+            const name = newTeacherName.value.trim();
+            if (!name) return alert("Staff member name cannot be empty!");
+
+            addTeacherBtn.disabled = true;
+            addTeacherBtn.innerText = "Generating Profiles...";
+
+            // Create numeric safe usernames and passwords pairs
+            const generatedUser = "tr_" + Math.floor(1000 + Math.random() * 9000);
+            const generatedPass = Math.floor(100000 + Math.random() * 900000).toString();
+
+            try {
+                const { error } = await _supabase.from('teachers').insert([{
+                    name,
+                    username: generatedUser,
+                    password: generatedPass
+                }]);
+                if (error) throw error;
+
+                alert(`Account Configured Successfully!\nStaff Username: ${generatedUser}\nPassword: ${generatedPass}`);
+                newTeacherName.value = "";
+                await fetchTeachersRoster();
+            } catch (err) {
+                alert("Profile configuration error: " + err.message);
+            } finally {
+                addTeacherBtn.disabled = false;
+                addTeacherBtn.innerText = "🔑 Generate Staff Access Credentials";
+            }
+        });
+
+        async function removeTeacher(id) {
+            if (!confirm("Are you sure? This will instantly terminate login credentials for this teacher.")) return;
+            try {
+                const { error } = await _supabase.from('teachers').delete().eq('id', id);
+                if (error) throw error;
+                alert("Staff account detached.");
+                await fetchTeachersRoster();
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+        window.removeTeacher = removeTeacher;
 
         function generateStudentID() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -749,71 +838,6 @@
                 addLearnerBtn.disabled = false;
                 addLearnerBtn.innerText = "✨ Save Learner";
             }
-        });
-
-        // Pull Realtime Table Registry for Faculty Verification & Cleartext Passwords
-        async function fetchTeachersList() {
-            manageTeachersList.innerHTML = '<p class="text-xs text-center py-4">Loading faculty registry...</p>';
-            try {
-                const { data, error } = await _supabase.from('teachers_auth').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                
-                manageTeachersList.innerHTML = (data || []).map(t => `
-                    <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
-                        <div class="flex flex-col">
-                            <span class="font-bold text-slate-800">${t.email}</span>
-                            <span class="text-[11px] text-amber-600 font-mono mt-0.5 font-bold">Key Pass: <span class="bg-amber-100 px-1 py-0.5 rounded border border-amber-300 select-all">${t.password || '—'}</span></span>
-                        </div>
-                        <button onclick="removeTeacher('${t.id}')" class="btn btn-error btn-xs text-white px-2">Remove</button>
-                    </div>
-                `).join('');
-                if (!data || data.length === 0) {
-                    manageTeachersList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No faculty accounts registered.</p>';
-                }
-            } catch (err) {
-                manageTeachersList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
-            }
-        }
-
-        async function removeTeacher(id) {
-            if (!confirm("Are you sure you want to remove this faculty profile access?")) return;
-            try {
-                const { error } = await _supabase.from('teachers_auth').delete().eq('id', id);
-                if (error) throw error;
-                alert("Faculty account removed.");
-                await fetchTeachersList();
-            } catch(e) {
-                alert("Error: " + e.message);
-            }
-        }
-        window.removeTeacher = removeTeacher;
-
-        // Faculty Provisioning Listener
-        registerTeacherBtn.addEventListener('click', async () => {
-            const email = regTeacherEmail.value.trim();
-            const pass = regTeacherPassword.value.trim();
-            if (!email || !pass) return alert("Provide both account identifiers!");
-
-            registerTeacherBtn.disabled = true;
-            registerTeacherBtn.innerText = "Saving Account...";
-            try {
-                const { error } = await _supabase.from('teachers_auth').insert([{ email: email, password: pass }]);
-                if (error) throw error;
-                alert(`Faculty profile committed! Passwords can be verified instantly inside the table grid.`);
-                regTeacherEmail.value = "";
-                regTeacherPassword.value = "";
-                await fetchTeachersList();
-            } catch(e) {
-                alert("Error: " + e.message);
-            } finally {
-                registerTeacherBtn.disabled = false;
-                registerTeacherBtn.innerText = "💾 Register Faculty Account";
-            }
-        });
-
-        // Safe Return Handler 
-        adminLogoutBtn.addEventListener('click', () => {
-            window.location.href = "index.html";
         });
 
         tabAddSub.addEventListener('click', () => { 
@@ -942,7 +966,7 @@
             const allowed = CBC_SUBJECT_TIERS[tier];
 
             try {
-                const { data, error = null } = await _supabase.from('subjects').select('*').order('subject_name');
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
                 if (error) throw error;
                 if (data) {
                     const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
@@ -1613,8 +1637,6 @@
                 printablePointsReportHtml.pointsStatsHtml
             );
         });
-
-        window.addEventListener('DOMContentLoaded', initAdminEngine);
     </script>
 </body>
 </html>
