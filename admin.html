@@ -222,20 +222,33 @@
                 </div>
                 <p class="text-xs text-slate-500">Register new instructional profiles here. Credentials saved within this console authorize educators to immediately log into the dashboard.</p>
                 <div class="divider my-2"></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200/60">
-                    <div class="form-control">
-                        <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Account Username / Email</label>
-                        <input type="email" id="reg-teacher-email" placeholder="e.g. teacher@bethania.com" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Form Wrapper -->
+                    <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">New Faculty Profile</span>
+                            <div class="form-control">
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Account Username / Email</label>
+                                <input type="email" id="reg-teacher-email" placeholder="e.g. teacher@bethania.com" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Secure Password</label>
+                                <input type="text" id="reg-teacher-password" placeholder="Create unique password for login" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
+                            </div>
+                        </div>
+                        <button id="register-teacher-btn" class="btn btn-primary btn-sm font-bold text-white px-6 shadow-sm w-full mt-5">
+                            💾 Register Faculty Account
+                        </button>
                     </div>
-                    <div class="form-control">
-                        <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Secure Password</label>
-                        <input type="password" id="reg-teacher-password" placeholder="••••••••" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
+
+                    <!-- Interactive Live Registry List View -->
+                    <div>
+                        <label class="label-text font-bold text-xs text-slate-600 tracking-wider uppercase mb-2 block">Registered Faculty Profiles & Passwords</label>
+                        <div id="manage-teachers-list" class="max-h-52 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100 shadow-inner">
+                            <p class="text-xs text-slate-400 text-center py-8 italic">Loading faculty registry...</p>
+                        </div>
                     </div>
-                </div>
-                <div class="card-actions justify-end mt-4">
-                    <button id="register-teacher-btn" class="btn btn-primary btn-sm font-bold text-white px-6 shadow-sm w-full sm:w-auto">
-                        💾 Register Faculty Account
-                    </button>
                 </div>
             </div>
         </section>
@@ -415,21 +428,49 @@
     </main>
 
     <script>
-        // Admin Security Check Block
-        (function checkAuth() {
-            const token = prompt("Enter Executive Portal Passcode:");
-            if (token === "bethania2026") {
-                document.body.style.display = "block";
-            } else {
-                alert("Unauthorized Access. Redirecting out...");
-                window.location.href = "index.html";
-            }
-        })();
-
-        // Supabase Configuration
+        // Supabase Configuration Base Anchors
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Enhanced Asynchronous Admin Security Verification Check Block
+        async function checkAuth() {
+            const token = prompt("Enter Executive Portal Passcode or Admin Email Identifier:");
+            if (!token) {
+                window.location.href = "index.html";
+                return;
+            }
+            
+            // Hardcoded quick-access local bypass token check
+            if (token === "bethania2026") {
+                document.body.style.display = "block";
+                return;
+            }
+
+            // Real-time Supabase Table verification fallback fallback for admin row context matching
+            if (token.includes('@')) {
+                const pass = prompt("Enter Secure Account Password:");
+                try {
+                    const { data, error } = await _supabase
+                        .from('teachers_auth')
+                        .select('*')
+                        .eq('email', token.trim())
+                        .eq('password', pass)
+                        .limit(1);
+                        
+                    if (data && data.length > 0) {
+                        document.body.style.display = "block";
+                        return;
+                    }
+                } catch(e) {
+                    console.error("Auth check internal failure", e);
+                }
+            }
+            
+            alert("Unauthorized Access. Redirecting out...");
+            window.location.href = "index.html";
+        }
+        checkAuth();
 
         // State Elements
         const dbStatus = document.getElementById('db-status');
@@ -470,6 +511,7 @@
         const regTeacherEmail = document.getElementById('reg-teacher-email');
         const regTeacherPassword = document.getElementById('reg-teacher-password');
         const registerTeacherBtn = document.getElementById('register-teacher-btn');
+        const manageTeachersList = document.getElementById('manage-teachers-list');
         const adminLogoutBtn = document.getElementById('admin-logout-btn');
 
         // Config elements
@@ -604,6 +646,7 @@
         async function initAdminEngine() {
             try {
                 await detectMarksSchema();
+                await fetchTeachersList(); // Pull Faculty lists
 
                 const { data: students, error: studentErr } = await _supabase.from('students').select('*');
                 if (studentErr) throw studentErr;
@@ -708,6 +751,43 @@
             }
         });
 
+        // Pull Realtime Table Registry for Faculty Verification & Cleartext Passwords
+        async function fetchTeachersList() {
+            manageTeachersList.innerHTML = '<p class="text-xs text-center py-4">Loading faculty registry...</p>';
+            try {
+                const { data, error } = await _supabase.from('teachers_auth').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                
+                manageTeachersList.innerHTML = (data || []).map(t => `
+                    <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-800">${t.email}</span>
+                            <span class="text-[11px] text-amber-600 font-mono mt-0.5 font-bold">Key Pass: <span class="bg-amber-100 px-1 py-0.5 rounded border border-amber-300 select-all">${t.password || '—'}</span></span>
+                        </div>
+                        <button onclick="removeTeacher('${t.id}')" class="btn btn-error btn-xs text-white px-2">Remove</button>
+                    </div>
+                `).join('');
+                if (!data || data.length === 0) {
+                    manageTeachersList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No faculty accounts registered.</p>';
+                }
+            } catch (err) {
+                manageTeachersList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
+            }
+        }
+
+        async function removeTeacher(id) {
+            if (!confirm("Are you sure you want to remove this faculty profile access?")) return;
+            try {
+                const { error } = await _supabase.from('teachers_auth').delete().eq('id', id);
+                if (error) throw error;
+                alert("Faculty account removed.");
+                await fetchTeachersList();
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+        }
+        window.removeTeacher = removeTeacher;
+
         // Faculty Provisioning Listener
         registerTeacherBtn.addEventListener('click', async () => {
             const email = regTeacherEmail.value.trim();
@@ -719,9 +799,10 @@
             try {
                 const { error } = await _supabase.from('teachers_auth').insert([{ email: email, password: pass }]);
                 if (error) throw error;
-                alert(`Faculty user info details successfully committed!`);
+                alert(`Faculty profile committed! Passwords can be verified instantly inside the table grid.`);
                 regTeacherEmail.value = "";
                 regTeacherPassword.value = "";
+                await fetchTeachersList();
             } catch(e) {
                 alert("Error: " + e.message);
             } finally {
