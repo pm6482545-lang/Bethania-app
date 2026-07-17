@@ -4,9 +4,13 @@
   "icons": [
     {
       "src": "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg",
-      "type": "image/jpeg",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
     }
   ],
   "start_url": "/index.html",
