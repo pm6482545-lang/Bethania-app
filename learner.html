@@ -599,35 +599,13 @@
                     jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait', compress: true }
                 };
 
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-                if (isMobile) {
-                    // Optimized mobile stream generator
-                    html2pdf()
-                        .from(pdfCanvas)
-                        .set(opt)
-                        .outputPdf('blob') // Robust worker execution method
-                        .then((pdfBlob) => {
-                            const blobURL = URL.createObjectURL(pdfBlob);
-                            const newTab = window.open();
-                            if (newTab) {
-                                newTab.location.href = blobURL;
-                            } else {
-                                window.location.href = blobURL;
-                            }
-                        })
-                        .catch(err => {
-                            console.error("Mobile PDF compilation failed:", err);
-                            alert("Error generating mobile PDF stream output.");
-                        });
-                } else {
-                    html2pdf().from(pdfCanvas).set(opt).save().then(() => {
-                        console.log("PDF generated and downloaded successfully.");
-                    }).catch(err => {
-                        console.error("html2pdf rendering failed:", err);
-                        alert("There was an error compiling your PDF. Please view your browser console for details.");
-                    });
-                }
+                // Streamlined execution: .save() is universally stable on mobile and desktop
+                html2pdf().from(pdfCanvas).set(opt).save().then(() => {
+                    console.log("PDF generated and saved successfully.");
+                }).catch(err => {
+                    console.error("html2pdf rendering failed:", err);
+                    alert("There was an error compiling your PDF. Please view your browser console for details.");
+                });
 
             } catch (criticalErr) {
                 console.error("Compilation process exception caught:", criticalErr);
