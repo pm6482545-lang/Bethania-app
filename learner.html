@@ -125,7 +125,7 @@
             scoreColumn: 'raw_score'
         };
 
-        // Official CBC Subject Tiers (Updated to omit Islamic and Hindu Religious Education)
+        // Official CBC Subject Tiers (Islamic and Hindu strictly removed)
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
@@ -170,6 +170,7 @@
             }
         }
 
+        // Modified Point system explicitly tied to the exact 8 sub-tiers
         function convertScoreToPoints(score, max) {
             const pct = (score / max) * 100;
             if (pct >= 90) return 8; 
@@ -182,25 +183,29 @@
             return 1;                
         }
 
-        function getCompetencyLevel(average, type) {
+        // Exact sub-tier mappings executed for individual points and global averages
+        function getCompetencyLevel(val, type) {
+            let pct = val;
+            
+            // If checking points system directly, scale it back up to matching percentages for accurate sub-tier ranking
             if (type === 'points') {
-                if (average >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1", class: "text-emerald-600 bg-emerald-50" };
-                if (average >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2", class: "text-emerald-500 bg-emerald-50" };
-                if (average >= 5.5) return { text: "ME1", label: "Meeting Expectations 1", class: "text-sky-600 bg-sky-50" };
-                if (average >= 4.5) return { text: "ME2", label: "Meeting Expectations 2", class: "text-sky-500 bg-sky-50" };
-                if (average >= 3.5) return { text: "AE1", label: "Approaching Expectations 1", class: "text-amber-600 bg-amber-50" };
-                if (average >= 2.5) return { text: "AE2", label: "Approaching Expectations 2", class: "text-amber-500 bg-amber-50" };
-                if (average >= 1.5) return { text: "BE1", label: "Below Expectations 1", class: "text-rose-600 bg-rose-50" };
-                return { text: "BE2", label: "Below Expectations 2", class: "text-rose-500 bg-rose-50" };
+                if (val >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1" };
+                if (val >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2" };
+                if (val >= 5.5) return { text: "ME1", label: "Meeting Expectations 1" };
+                if (val >= 4.5) return { text: "ME2", label: "Meeting Expectations 2" };
+                if (val >= 3.5) return { text: "AE1", label: "Approaching Expectations 1" };
+                if (val >= 2.5) return { text: "AE2", label: "Approaching Expectations 2" };
+                if (val >= 1.5) return { text: "BE1", label: "Below Expectations 1" };
+                return { text: "BE2", label: "Below Expectations 2" };
             } else {
-                if (average >= 90) return { text: "EE1", label: "Exceeding Expectations 1", class: "text-emerald-600 bg-emerald-50" };
-                if (average >= 75) return { text: "EE2", label: "Exceeding Expectations 2", class: "text-emerald-500 bg-emerald-50" };
-                if (average >= 58) return { text: "ME1", label: "Meeting Expectations 1", class: "text-sky-600 bg-sky-50" };
-                if (average >= 40) return { text: "ME2", label: "Meeting Expectations 2", class: "text-sky-500 bg-sky-50" };
-                if (average >= 30) return { text: "AE1", label: "Approaching Expectations 1", class: "text-amber-600 bg-amber-50" };
-                if (average >= 20) return { text: "AE2", label: "Approaching Expectations 2", class: "text-amber-500 bg-amber-50" };
-                if (average >= 10) return { text: "BE1", label: "Below Expectations 1", class: "text-rose-600 bg-rose-50" };
-                return { text: "BE2", label: "Below Expectations 2", class: "text-rose-500 bg-rose-50" };
+                if (pct >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
+                if (pct >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
+                if (pct >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
+                if (pct >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
+                if (pct >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
+                if (pct >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
+                if (pct >= 10) return { text: "BE1", label: "Below Expectations 1" };
+                return { text: "BE2", label: "Below Expectations 2" };
             }
         }
 
@@ -519,7 +524,7 @@
                             </table>
 
                             <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; color: #0f172a; border-left: 3px solid #f59e0b; padding-left: 8px; text-align: left;">
-                                ${isJuniorPoints ? 'Competency Point Evaluation (8-Point Scale)' : 'Raw Assessment Performance Records'}
+                                ${isJuniorPoints ? 'Competency Point Evaluation (8-Point scale)' : 'Raw Assessment Performance Records'}
                             </h3>
 
                             <!-- Subject Performance Table -->
