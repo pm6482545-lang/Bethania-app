@@ -17,7 +17,7 @@
         <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
             <div class="card-body p-6 sm:p-8 text-center space-y-4">
                 <div class="avatar bg-white p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16">
-                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" crossorigin="anonymous" id="portal-logo" alt="Bethania Academy" class="rounded-full overflow-hidden" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="portal-logo" alt="Bethania Academy" class="rounded-full overflow-hidden" onerror="this.src='https://placehold.co/100x100?text=BA'" />
                 </div>
                 <div>
                     <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
@@ -41,7 +41,7 @@
                 <div class="flex items-center gap-3">
                     <div class="avatar bg-white p-1 rounded-full border border-amber-400">
                         <div class="w-8 h-8 rounded-full overflow-hidden">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" crossorigin="anonymous" alt="Bethania Academy Logo" />
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" />
                         </div>
                     </div>
                     <div>
@@ -438,6 +438,18 @@
                 const rankings = calculateRankings(filteredSubjects, isJuniorPoints);
                 const me = rankings.find(r => r.id === activeStudent.id);
 
+                // LOCAL HIGH-RESOLUTION EMBEDDED CREST (Completely bypasses CORS/Network issues)
+                const secureLogoSvg = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 60px; height: 60px;">
+                        <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
+                        <path d="M50 20 L75 35 L75 65 L50 80 L25 65 L25 35 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                        <path d="M50 25 L68 36 L68 64 L50 75 L32 64 L32 36 Z" fill="#f59e0b" opacity="0.2"/>
+                        <path d="M35 45 Q50 35 65 45" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M35 55 Q50 65 65 55" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <text x="50" y="52" font-family="sans-serif" font-size="22" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
+                    </svg>
+                `;
+
                 let reportHtml = `
                     <div style="border: 2px solid #0f172a; padding: 25px; border-radius: 8px; font-family: system-ui, -apple-system, sans-serif; min-height: 980px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; background-color: #ffffff;">
                         
@@ -445,7 +457,9 @@
                             <!-- School Header -->
                             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 12px; margin-bottom: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" crossorigin="anonymous" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #f59e0b; object-fit: cover;" />
+                                    <div style="width: 60px; height: 60px;">
+                                        ${secureLogoSvg}
+                                    </div>
                                     <div>
                                         <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">BETHANIA ACADEMY</h1>
                                         <p style="font-size: 11px; color: #f59e0b; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; text-align: left;">Motto: "Determination is Nobility"</p>
@@ -559,8 +573,8 @@
                     image:        { type: 'jpeg', quality: 1.0 },
                     html2canvas:  { 
                         scale: 2, 
-                        useCORS: true, 
-                        allowTaint: true,
+                        useCORS: false, // Bypasses network security blocks entirely
+                        allowTaint: false,
                         letterRendering: true 
                     },
                     jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
