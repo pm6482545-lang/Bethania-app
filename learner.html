@@ -114,6 +114,7 @@
 
         let activeSessionName = "Assessment";
         let activeStudent = null;
+        let globalSubjects = [];
         let globalPapers = [];
         let allStudentsInCohort = [];
         let cohortMarks = [];
@@ -259,6 +260,7 @@
             // 2. Fetch active subjects matching standard CBC lists
             const { data: dbSubjects } = await _supabase.from('subjects').select('*');
             const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+            globalSubjects = validSubjects;
             const subjectIds = validSubjects.map(s => s.id);
 
             // 3. Fetch component papers
@@ -430,9 +432,9 @@
 
             try {
                 const staticSubjects = allowed.map((subjectName, index) => {
-                    const foundPaper = globalPapers.find(p => p.subject_name === subjectName);
+                    const foundSubject = globalSubjects.find(s => s.subject_name.trim() === subjectName.trim());
                     return {
-                        id: foundPaper ? foundPaper.subject_id : index + 999,
+                        id: foundSubject ? foundSubject.id : index + 999,
                         subject_name: subjectName
                     };
                 });
