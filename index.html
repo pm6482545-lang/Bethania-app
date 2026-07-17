@@ -21,135 +21,103 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
 
-    <header class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-8 sticky top-0 z-50 border-b-2 border-amber-500">
-        <div class="flex-1 gap-3">
-            <div class="avatar">
-                <div class="w-10 h-10 rounded-full ring ring-amber-400 ring-offset-base-100 ring-offset-2 overflow-hidden bg-white">
-                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Logo" />
-                </div>
-            </div>
-            <div>
-                <h1 class="text-sm sm:text-lg font-extrabold tracking-wider uppercase text-amber-400 leading-none">Bethania Academy</h1>
-                <p class="text-[9px] sm:text-[10px] text-slate-300 font-bold tracking-widest uppercase mt-1">CBA Teacher Portal & Marks Ledger</p>
-            </div>
-        </div>
-        <div class="flex-none">
-            <span id="active-session-banner" class="text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-3 sm:px-4 rounded-xl flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> Connecting to DB...
-            </span>
-        </div>
-    </header>
-
-    <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
-
-        <!-- 🧑‍🏫 TEACHER LOGIN PORTAL CARD -->
-        <div class="card bg-white shadow-xl border border-slate-200 max-w-md mx-auto my-4 rounded-2xl">
-            <div class="card-body p-6 space-y-4">
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl">🧑‍🏫</span>
-                    <div>
-                        <h2 class="card-title text-base font-extrabold text-slate-900 uppercase tracking-tight">Faculty Dashboard</h2>
-                        <p class="text-xs text-slate-500">Log in to enter scores and record CBA metrics.</p>
+    <!-- ================= AUTHENTICATION WALL (GATED INTERFACE) ================= -->
+    <div id="auth-wall" class="flex-grow flex items-center justify-center p-4 bg-slate-900">
+        <div class="card w-full max-w-md bg-white shadow-2xl rounded-3xl border border-slate-200 overflow-hidden">
+            <div class="p-8 text-center bg-slate-50 border-b border-slate-100 flex flex-col items-center">
+                <div class="avatar mb-4">
+                    <div class="w-16 h-16 rounded-full ring ring-amber-400 ring-offset-2 overflow-hidden bg-white">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Logo" />
                     </div>
                 </div>
-                
-                <div class="divider my-1"></div>
-
+                <h2 class="text-xl font-extrabold text-slate-900 uppercase tracking-wide">Teacher Authentication</h2>
+                <p class="text-xs text-slate-500 mt-1">Please enter your CBA Teacher Access Credentials</p>
+            </div>
+            <form id="auth-form" class="card-body p-8 space-y-4">
                 <div class="form-control">
-                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Account Email</label>
-                    <input type="email" id="teacher-email" placeholder="teacher@bethania.com" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" />
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Teacher Username</label>
+                    <input type="text" id="auth-username" placeholder="e.g. tr_7886" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none font-code text-sm" required />
                 </div>
-
                 <div class="form-control">
-                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Password</label>
-                    <input type="password" id="teacher-password" placeholder="••••••••" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" />
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Access Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none font-code text-sm" required />
                 </div>
+                <div class="pt-4">
+                    <button type="submit" id="btn-login" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition">
+                        Sign In to Portal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                <button id="teacher-login-btn" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition mt-2">
-                    🔐 Enter Teacher Portal
+    <!-- ================= MAIN CBA PORTAL INTERFACE (HIDDEN BY DEFAULT) ================= -->
+    <div id="portal-content" class="hidden flex-col min-h-screen">
+        <header class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-8 sticky top-0 z-50 border-b-2 border-amber-500">
+            <div class="flex-1 gap-3">
+                <div class="avatar">
+                    <div class="w-10 h-10 rounded-full ring ring-amber-400 ring-offset-base-100 ring-offset-2 overflow-hidden bg-white">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Logo" />
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-lg font-extrabold tracking-wider uppercase text-amber-400 leading-none">Bethania Academy</h1>
+                    <p class="text-[9px] sm:text-[10px] text-slate-300 font-bold tracking-widest uppercase mt-1">CBA Teacher Portal & Marks Ledger</p>
+                </div>
+            </div>
+            <div class="flex-none gap-2 sm:gap-4">
+                <span id="active-session-banner" class="text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-3 sm:px-4 rounded-xl flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> Connecting to DB...
+                </span>
+                <button id="btn-logout" class="btn btn-ghost btn-xs sm:btn-sm text-red-400 hover:text-red-500 hover:bg-slate-800 rounded-lg font-bold">
+                    Logout 🚪
                 </button>
             </div>
-        </div>
+        </header>
 
-        <div class="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
-                <span class="text-base sm:text-lg">👤</span>
-                <span class="text-xs sm:text-sm font-extrabold tracking-tight">Student Roster</span>
-            </button>
-            <button id="tab-marks" class="btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200">
-                <span class="text-base sm:text-lg text-emerald-600">📝</span>
-                <span class="text-xs sm:text-sm font-extrabold tracking-tight">Marks Entry</span>
-            </button>
-        </div>
+        <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
 
-        <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
-            <span class="text-xl">⚠️</span>
-            <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
-        </div>
+            <div class="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
+                    <span class="text-base sm:text-lg">👤</span>
+                    <span class="text-xs sm:text-sm font-extrabold tracking-tight">Student Roster</span>
+                </button>
+                <button id="tab-marks" class="btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200">
+                    <span class="text-base sm:text-lg text-emerald-600">📝</span>
+                    <span class="text-xs sm:text-sm font-extrabold tracking-tight">Marks Entry</span>
+                </button>
+            </div>
 
-        <div id="screen-roster" class="space-y-6">
-            <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
-                <div class="card-body p-4 sm:p-8">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-2xl">👤</span>
-                                <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Register Student Profiles</h2>
-                            </div>
-                            <p class="text-xs text-slate-500 mt-0.5">Admit learners to the school directory individually or via bulk copy-paste roster.</p>
-                        </div>
-                        <div class="join bg-slate-100 p-1 rounded-xl border border-slate-200 self-end sm:self-center">
-                            <button id="btn-mode-single" class="btn btn-ghost btn-xs sm:btn-sm rounded-lg text-xs font-bold btn-active bg-white shadow-sm">Single Admission</button>
-                            <button id="btn-mode-batch" class="btn btn-ghost btn-xs sm:btn-sm rounded-lg text-xs font-bold">📋 Batch Import</button>
-                        </div>
-                    </div>
-                    
-                    <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Student's Full Name</label>
-                            <input type="text" id="stud-name" placeholder="e.g. Peter Musau" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required />
-                        </div>
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class / Grade Level</label>
-                            <select id="stud-grade" class="select select-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required>
-                                <option value="" disabled selected>Select Grade...</option>
-                                <option value="-2">PP1</option><option value="-1">PP2</option>
-                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                            </select>
-                        </div>
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Stream / Arm</label>
-                            <input type="text" id="stud-stream" value="A" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required />
-                        </div>
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Maths Club Family</label>
-                            <select id="stud-family" class="select select-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none">
-                                <option value="" selected>None</option>
-                                <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
-                            </select>
-                        </div>
-                        <div class="form-control md:col-span-2 mt-4">
-                            <button type="submit" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg hover:shadow-slate-300 transition duration-300 border-none">
-                                Admit & Register Student
-                            </button>
-                        </div>
-                    </form>
+            <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
+                <span class="text-xl">⚠️</span>
+                <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
+            </div>
 
-                    <div id="batch-form-container" class="space-y-4 hidden">
-                        <div class="alert alert-info bg-sky-50 border border-sky-200 text-xs text-sky-900 rounded-xl py-3.5 px-4 flex gap-2">
-                            <span>💡</span>
+            <div id="screen-roster" class="space-y-6">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
                             <div>
-                                <strong class="font-bold">Instructions:</strong> Copy columns or list rows of student names from your Excel file and paste them here (one name per line). The system will register them to the chosen target grade and stream automatically.
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">👤</span>
+                                    <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Register Student Profiles</h2>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">Admit learners to the school directory individually or via bulk copy-paste roster.</p>
+                            </div>
+                            <div class="join bg-slate-100 p-1 rounded-xl border border-slate-200 self-end sm:self-center">
+                                <button id="btn-mode-single" class="btn btn-ghost btn-xs sm:btn-sm rounded-lg text-xs font-bold btn-active bg-white shadow-sm">Single Admission</button>
+                                <button id="btn-mode-batch" class="btn btn-ghost btn-xs sm:btn-sm rounded-lg text-xs font-bold">📋 Batch Import</button>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Target Grade Level</label>
-                                <select id="batch-grade" class="select select-bordered w-full rounded-xl">
+                        <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Student's Full Name</label>
+                                <input type="text" id="stud-name" placeholder="e.g. Peter Musau" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required />
+                            </div>
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class / Grade Level</label>
+                                <select id="stud-grade" class="select select-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required>
                                     <option value="" disabled selected>Select Grade...</option>
                                     <option value="-2">PP1</option><option value="-1">PP2</option>
                                     <option value="1">Grade 1</option><option value="2">Grade 2</option>
@@ -158,108 +126,78 @@
                                     <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
                                 </select>
                             </div>
-                            <div class="form-control">
-                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Default Stream</label>
-                                <input type="text" id="batch-default-stream" value="A" class="input input-bordered w-full rounded-xl" />
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Stream / Arm</label>
+                                <input type="text" id="stud-stream" value="A" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required />
                             </div>
-                        </div>
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Maths Club Family</label>
+                                <select id="stud-family" class="select select-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none">
+                                    <option value="" selected>None</option>
+                                    <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
+                                </select>
+                            </div>
+                            <div class="form-control md:col-span-2 mt-4">
+                                <button type="submit" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg hover:shadow-slate-300 transition duration-300 border-none">
+                                    Admit & Register Student
+                                </button>
+                            </div>
+                        </form>
 
+                        <div id="batch-form-container" class="space-y-4 hidden">
+                            <div class="alert alert-info bg-sky-50 border border-sky-200 text-xs text-sky-900 rounded-xl py-3.5 px-4 flex gap-2">
+                                <span>💡</span>
+                                <div>
+                                    <strong class="font-bold">Instructions:</strong> Copy columns or list rows of student names from your Excel file and paste them here (one name per line). The system will register them to the chosen target grade and stream automatically.
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Target Grade Level</label>
+                                    <select id="batch-grade" class="select select-bordered w-full rounded-xl">
+                                        <option value="" disabled selected>Select Grade...</option>
+                                        <option value="-2">PP1</option><option value="-1">PP2</option>
+                                        <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                        <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                        <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                        <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                    </select>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Default Stream</label>
+                                    <input type="text" id="batch-default-stream" value="A" class="input input-bordered w-full rounded-xl" />
+                                </div>
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Paste Student Roster (One Name Per Line)</label>
+                                <textarea id="batch-names" rows="6" placeholder="Jane Atieno&#10;David Kiprop&#10;Mary Wanjiku" class="textarea textarea-bordered font-code text-xs w-full rounded-xl focus:outline-none focus:border-amber-400"></textarea>
+                            </div>
+
+                            <button id="btn-trigger-batch" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition">
+                                🚀 Pull & Import Student Roster
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="edit-student-box" class="card bg-amber-50 border-2 border-amber-300 shadow-lg p-5 rounded-2xl hidden space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-amber-200">
+                        <h3 class="font-extrabold text-sm text-slate-950 uppercase tracking-wide flex items-center gap-2">
+                            <span>✏️</span> Edit Student Profile: <span id="edit-display-name" class="text-amber-800"></span>
+                        </h3>
+                        <button id="btn-close-edit" class="btn btn-ghost btn-xs text-slate-500 font-extrabold hover:bg-amber-100">Cancel</button>
+                    </div>
+                    <input type="hidden" id="edit-student-id">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Paste Student Roster (One Name Per Line)</label>
-                            <textarea id="batch-names" rows="6" placeholder="Jane Atieno&#10;David Kiprop&#10;Mary Wanjiku" class="textarea textarea-bordered font-code text-xs w-full rounded-xl focus:outline-none focus:border-amber-400"></textarea>
+                            <label class="label-text font-bold text-[10px] text-slate-700">Full Name</label>
+                            <input type="text" id="edit-stud-name" class="input input-bordered input-sm w-full rounded-lg" />
                         </div>
-
-                        <button id="btn-trigger-batch" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition">
-                            🚀 Pull & Import Student Roster
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="edit-student-box" class="card bg-amber-50 border-2 border-amber-300 shadow-lg p-5 rounded-2xl hidden space-y-4">
-                <div class="flex justify-between items-center pb-3 border-b border-amber-200">
-                    <h3 class="font-extrabold text-sm text-slate-950 uppercase tracking-wide flex items-center gap-2">
-                        <span>✏️</span> Edit Student Profile: <span id="edit-display-name" class="text-amber-800"></span>
-                    </h3>
-                    <button id="btn-close-edit" class="btn btn-ghost btn-xs text-slate-500 font-extrabold hover:bg-amber-100">Cancel</button>
-                </div>
-                <input type="hidden" id="edit-student-id">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div class="form-control">
-                        <label class="label-text font-bold text-[10px] text-slate-700">Full Name</label>
-                        <input type="text" id="edit-stud-name" class="input input-bordered input-sm w-full rounded-lg" />
-                    </div>
-                    <div class="form-control">
-                        <label class="label-text font-bold text-[10px] text-slate-700">Grade Level</label>
-                        <select id="edit-stud-grade" class="select select-bordered select-sm w-full rounded-lg">
-                            <option value="-2">PP1</option><option value="-1">PP2</option>
-                            <option value="1">Grade 1</option><option value="2">Grade 2</option>
-                            <option value="3">Grade 3</option><option value="4">Grade 4</option>
-                            <option value="5">Grade 5</option><option value="6">Grade 6</option>
-                            <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
-                        </select>
-                    </div>
-                    <div class="form-control">
-                        <label class="label-text font-bold text-[10px] text-slate-700">Stream</label>
-                        <input type="text" id="edit-stud-stream" class="input input-bordered input-sm w-full rounded-lg" />
-                    </div>
-                    <div class="form-control">
-                        <label class="label-text font-bold text-[10px] text-slate-700">Maths Club Family</label>
-                        <select id="edit-stud-family" class="select select-bordered select-sm w-full rounded-lg">
-                            <option value="">None</option>
-                            <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end pt-2">
-                    <button id="btn-save-student-edit" class="btn btn-warning btn-sm px-6 text-slate-950 font-extrabold rounded-lg">Save Updates</button>
-                </div>
-            </div>
-
-            <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
-                <div class="card-body p-4 sm:p-8">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">🗂️</span>
-                            <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Active Student Database</h2>
-                        </div>
-                        <input type="text" id="search-bar" placeholder="🔍 Search learners by name..." class="input input-bordered input-sm w-full sm:w-80 rounded-xl" />
-                    </div>
-                    <div class="overflow-x-auto rounded-xl border border-slate-200">
-                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
-                            <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
-                                <tr>
-                                    <th class="p-3.5 text-left">Login ID</th>
-                                    <th class="p-3.5 text-left">Full Name</th>
-                                    <th class="p-3.5 text-center">Grade</th>
-                                    <th class="p-3.5 text-center">Stream</th>
-                                    <th class="p-3.5 text-center">Maths Club Family</th>
-                                    <th class="p-3.5 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="student-list-rows" class="font-code text-xs">
-                                <tr><td colspan="6" class="text-center py-8 text-slate-400 italic">Pulling records from system...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="screen-marks" class="space-y-6 hidden">
-            <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
-                <div class="card-body p-4 sm:p-8">
-                    <div class="flex items-center gap-2.5 mb-2">
-                        <span class="text-2xl">📝</span>
-                        <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
-                    </div>
-                    <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort and subject learning area to load assessment rosters.</p>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class/Grade Target</label>
-                            <select id="filter-grade" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none">
-                                <option value="" disabled selected>Choose Grade...</option>
+                            <label class="label-text font-bold text-[10px] text-slate-700">Grade Level</label>
+                            <select id="edit-stud-grade" class="select select-bordered select-sm w-full rounded-lg">
                                 <option value="-2">PP1</option><option value="-1">PP2</option>
                                 <option value="1">Grade 1</option><option value="2">Grade 2</option>
                                 <option value="3">Grade 3</option><option value="4">Grade 4</option>
@@ -268,41 +206,110 @@
                             </select>
                         </div>
                         <div class="form-control">
-                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Subject Selection</label>
-                            <select id="filter-subject" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none" disabled>
-                                <option disabled selected>Pick Grade First</option>
+                            <label class="label-text font-bold text-[10px] text-slate-700">Stream</label>
+                            <input type="text" id="edit-stud-stream" class="input input-bordered input-sm w-full rounded-lg" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] text-slate-700">Maths Club Family</label>
+                            <select id="edit-stud-family" class="select select-bordered select-sm w-full rounded-lg">
+                                <option value="">None</option>
+                                <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
                             </select>
                         </div>
                     </div>
-
-                    <div class="overflow-x-auto rounded-xl border border-slate-200">
-                        <table class="table table-xs table-zebra w-full font-medium text-slate-700">
-                            <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
-                                <tr>
-                                    <th class="p-3.5 text-left">Student Name</th>
-                                    <th class="p-3.5 text-center">Stream</th>
-                                    <th id="paper-max-header" class="p-3.5 text-center">Raw Score Input (Max 100 Marks)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="marks-entry-rows" class="text-xs">
-                                <tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="flex justify-end pt-2">
+                        <button id="btn-save-student-edit" class="btn btn-warning btn-sm px-6 text-slate-950 font-extrabold rounded-lg">Save Updates</button>
                     </div>
-                    <div class="flex justify-end mt-6">
-                        <button id="save-marks-btn" class="btn btn-success text-white font-extrabold px-10 shadow-lg w-full sm:w-auto rounded-xl hover:bg-emerald-600 transition border-none" disabled>
-                            💾 Save All Marks
-                        </button>
+                </div>
+
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">🗂️</span>
+                                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Active Student Database</h2>
+                            </div>
+                            <input type="text" id="search-bar" placeholder="🔍 Search learners by name..." class="input input-bordered input-sm w-full sm:w-80 rounded-xl" />
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                                <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-3.5 text-left">Login ID</th>
+                                        <th class="p-3.5 text-left">Full Name</th>
+                                        <th class="p-3.5 text-center">Grade</th>
+                                        <th class="p-3.5 text-center">Stream</th>
+                                        <th class="p-3.5 text-center">Maths Club Family</th>
+                                        <th class="p-3.5 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-list-rows" class="font-code text-xs">
+                                    <tr><td colspan="6" class="text-center py-8 text-slate-400 italic">Pulling records from system...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </main>
+            <div id="screen-marks" class="space-y-6 hidden">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex items-center gap-2.5 mb-2">
+                            <span class="text-2xl">📝</span>
+                            <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort and subject learning area to load assessment rosters.</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class/Grade Target</label>
+                                <select id="filter-grade" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Subject Selection</label>
+                                <select id="filter-subject" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none" disabled>
+                                    <option disabled selected>Pick Grade First</option>
+                                </select>
+                            </div>
+                        </div>
 
-    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto border-t border-slate-800">
-        <p>© 2026 Bethania Academy CBA System. Powered by Supabase Backend.</p>
-    </footer>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                                <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-3.5 text-left">Student Name</th>
+                                        <th class="p-3.5 text-center">Stream</th>
+                                        <th id="paper-max-header" class="p-3.5 text-center">Raw Score Input (Max 100 Marks)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marks-entry-rows" class="text-xs">
+                                    <tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button id="save-marks-btn" class="btn btn-success text-white font-extrabold px-10 shadow-lg w-full sm:w-auto rounded-xl hover:bg-emerald-600 transition border-none" disabled>
+                                💾 Save All Marks
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto border-t border-slate-800">
+            <p>© 2026 Bethania Academy CBA System. Powered by Supabase Backend.</p>
+        </footer>
+    </div>
 
     <script>
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
@@ -314,7 +321,16 @@
         let localStudentsCache = [];
         let subjectsCache = [];
 
-        // DOM Handles
+        // Auth handles
+        const authWall = document.getElementById('auth-wall');
+        const portalContent = document.getElementById('portal-content');
+        const authForm = document.getElementById('auth-form');
+        const authUsername = document.getElementById('auth-username');
+        const authPassword = document.getElementById('auth-password');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
+
+        // Portal DOM Handles
         const tabRoster = document.getElementById('tab-roster');
         const tabMarks = document.getElementById('tab-marks');
         const screenRoster = document.getElementById('screen-roster');
@@ -402,6 +418,76 @@
         }
 
         const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
+
+        // ------------------ AUTHENTICATION ENGINE ------------------
+        
+        async function checkActiveSession() {
+            const activeTeacher = sessionStorage.getItem('activeTeacher');
+            if (activeTeacher) {
+                showPortalContent();
+            } else {
+                showAuthWall();
+            }
+        }
+
+        function showAuthWall() {
+            authWall.style.display = 'flex';
+            portalContent.classList.add('hidden');
+            portalContent.classList.remove('flex');
+        }
+
+        function showPortalContent() {
+            authWall.style.display = 'none';
+            portalContent.classList.remove('hidden');
+            portalContent.classList.add('flex');
+            initializeSystem();
+        }
+
+        // Login Handler
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usernameInput = authUsername.value.trim();
+            const passwordInput = authPassword.value.trim();
+
+            btnLogin.disabled = true;
+            btnLogin.innerText = "Verifying Access...";
+
+            // Query public.teachers for credentials matching username and password
+            const { data, error } = await _supabase
+                .from('teachers')
+                .select('id, name, username')
+                .eq('username', usernameInput)
+                .eq('password', passwordInput)
+                .limit(1);
+
+            if (error) {
+                alert("❌ Connection Error: " + error.message);
+            } else if (data && data.length > 0) {
+                // Success - Save Session
+                sessionStorage.setItem('activeTeacher', JSON.stringify(data[0]));
+                authForm.reset();
+                showPortalContent();
+            } else {
+                alert("⛔ Access Denied: Invalid Teacher Username or Password.");
+            }
+            btnLogin.disabled = false;
+            btnLogin.innerText = "Sign In to Portal";
+        });
+
+        // Logout Handler
+        btnLogout.addEventListener('click', () => {
+            sessionStorage.removeItem('activeTeacher');
+            showAuthWall();
+        });
+
+        // Initialize App Operations
+        async function initializeSystem() {
+            await pullActiveCycleState();
+            await loadStudentRoster();
+            await fetchSubjects();
+        }
+
+        // ------------------ END AUTHENTICATION ENGINE ------------------
 
         // Visible buttons navigation toggle logic
         tabRoster.addEventListener('click', () => { 
@@ -664,7 +750,7 @@
                 .select('student_id, raw_score')
                 .eq('test_name', activeExamContextName)
                 .in('student_id', studentIds)
-                .eq('subject_id', subId) // Query specific to the subject selection
+                .eq('subject_id', subId) 
                 .is('paper_id', null);
 
             if (error) console.error("Error loading existing marks:", error);
@@ -703,12 +789,10 @@
                 return alert("⚠️ System is currently Closed. Data submission rejected.");
             }
             
-            // SAFEGUARD: Ensure we have an active exam session context loaded
             if (!activeExamContextName) {
                 return alert("⚠️ Error: No active exam session context found. Please refresh the page and try again.");
             }
 
-            // SAFEGUARD: Extract selected subject_id for proper database relation alignment
             const selectedSubjectId = filterSubject.value;
             if (!selectedSubjectId) {
                 return alert("⚠️ Error: Please select a subject before saving.");
@@ -719,10 +803,10 @@
                 .map(input => {
                     return {
                         student_id: input.getAttribute('data-sid'),
-                        subject_id: selectedSubjectId, // ✅ Included subject relation
+                        subject_id: selectedSubjectId, 
                         test_name: activeExamContextName,
                         raw_score: parseFloat(input.value) || 0.00,
-                        paper_id: null // Explicitly null because components are removed
+                        paper_id: null 
                     };
                 });
 
@@ -733,7 +817,6 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Match conflict resolution target constraint: student_id, test_name, paper_id
             const { data, error } = await _supabase
                 .from('marks_entry')
                 .upsert(entries, { onConflict: 'student_id,test_name,paper_id' }) 
@@ -743,7 +826,7 @@
                 alert("❌ Database Error: " + error.message);
                 console.error("Upsert Error Details:", error);
             } else if (!data || data.length === 0) {
-                alert("⚠️ Warning: Marks were submitted but the database rejected the write. This usually happens if your unique constraint or Row Level Security (RLS) policies are configured incorrectly.");
+                alert("⚠️ Warning: Marks were submitted but database rejected the write.");
             } else {
                 alert(`✨ Success! ${data.length} marks successfully captured & saved inside the database!`); 
             }
@@ -756,47 +839,9 @@
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
 
-        // 🧑‍🏫 FACULTY AUTHENTICATION CONTROLLER EVENT LISTENER
-        document.getElementById('teacher-login-btn').addEventListener('click', async () => {
-            const emailInput = document.getElementById('teacher-email').value.trim();
-            const passwordInput = document.getElementById('teacher-password').value.trim();
-
-            if (!emailInput || !passwordInput) {
-                return alert("Please enter both email and password credentials.");
-            }
-
-            const loginBtn = document.getElementById('teacher-login-btn');
-            loginBtn.disabled = true;
-            loginBtn.innerText = "Authenticating...";
-
-            try {
-                const { data, error } = await _supabase
-                    .from('teachers_auth')
-                    .select('*')
-                    .eq('email', emailInput)
-                    .eq('password', passwordInput)
-                    .single();
-
-                if (error || !data) {
-                    throw new Error("Invalid username/email or password verification mismatch.");
-                }
-
-                localStorage.setItem('teacher_session_email', data.email);
-                alert(`Welcome back, Instructor! Routing to processing terminal...`);
-                window.location.href = "teacher_dashboard.html"; 
-
-            } catch (err) {
-                alert("Authentication Failed: " + err.message);
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.innerText = "🔐 Enter Teacher Portal";
-            }
-        });
-
+        // Safe load verification
         window.addEventListener('DOMContentLoaded', async () => {
-            await pullActiveCycleState();
-            await loadStudentRoster();
-            await fetchSubjects();
+            await checkActiveSession();
         });
     </script>
 </body>
