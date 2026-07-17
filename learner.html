@@ -434,7 +434,7 @@
             return list;
         }
 
-        // PDF Generation and Styling - Clean, Left-Aligned, Streamless & Exactly One Page
+        // PDF Generation and Styling - Clean, Left-Aligned, Streamless, Exactly One Page & Mobile-Optimized
         function generatePDFSlip(type) {
             const grade = activeStudent.grade;
             const tier = getGradeTier(grade);
@@ -587,32 +587,48 @@
 
                 pdfCanvas.innerHTML = reportHtml;
 
-                // Configuration setup ensuring a perfect fit on a single portrait A4 sheet
+                const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
+
+                // Configuration setup ensuring a perfect fit on a single portrait A4 sheet with memory compression
                 const opt = {
                     margin:       [0.3, 0.3, 0.3, 0.3],
-                    filename:     `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
+                    filename:     filename,
+                    image:        { type: 'jpeg', quality: 0.95 },
                     html2canvas:  { 
-                        scale: 2, 
+                        scale: 1.5,           // Sized perfectly to avoid crash bounds on mid-range phones
                         useCORS: true,        // Safely configured for CORS requests
                         allowTaint: false,    // Safe canvas context export
                         letterRendering: true 
                     },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait', compress: true } // compress: true prevents large raw payload errors on iOS
                 };
 
-                // Compile and stream download
-                html2pdf()
-                    .from(pdfCanvas)
-                    .set(opt)
-                    .save()
-                    .then(() => {
+                // Detect Mobile Platforms safely
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                    // Generate Blob and stream straight to URL context to allow seamless system sharing & viewing
+                    html2pdf().from(pdfCanvas).set(opt).outputPdf('blob').then((pdfBlob) => {
+                        const blobURL = URL.createObjectURL(pdfBlob);
+                        const newTab = window.open();
+                        if (newTab) {
+                            newTab.location.href = blobURL;
+                        } else {
+                            window.location.href = blobURL; // Backup navigation if browser popups are restricted
+                        }
+                    }).catch(err => {
+                        console.error("Mobile PDF compilation failed:", err);
+                        alert("Error generating mobile PDF stream output.");
+                    });
+                } else {
+                    // Desktop default clean client-side down-saver
+                    html2pdf().from(pdfCanvas).set(opt).save().then(() => {
                         console.log("PDF generated and downloaded successfully.");
-                    })
-                    .catch(err => {
+                    }).catch(err => {
                         console.error("html2pdf rendering failed:", err);
                         alert("There was an error compiling your PDF. Please view your browser console for details.");
                     });
+                }
 
             } catch (criticalErr) {
                 console.error("Compilation process exception caught:", criticalErr);
