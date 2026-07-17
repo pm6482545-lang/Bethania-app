@@ -16,7 +16,6 @@
     <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen px-4">
         <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
             <div class="card-body p-6 sm:p-8 text-center space-y-4">
-                <!-- Swapped out remote image to prevent browser tainting canvas errors entirely -->
                 <div class="avatar bg-slate-900 p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-12 h-12">
                         <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
@@ -261,7 +260,7 @@
             loginBtn.disabled = false;
         });
 
-        // Pull Cohort Data dynamically avoiding mismatch on database columns
+        // Pull Cohort Data dynamically
         async function loadCohortPerformances() {
             const grade = activeStudent.grade;
             const tier = getGradeTier(grade);
@@ -280,7 +279,7 @@
             const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
             globalPapers = dbPapers || [];
 
-            // 4. Fetch cohort marks, querying dynamic columns resolved via sniffer
+            // 4. Fetch cohort marks
             const classmateIds = allStudentsInCohort.map(c => c.id);
             const { data: marks } = await _supabase.from('marks_entry')
                 .select('*')
@@ -337,7 +336,7 @@
                     </div>
                 `;
             } else {
-                // Primary School: Single Report slip Option (No conversion necessary)
+                // Primary School: Single Option
                 html += `
                     <div class="col-span-2 border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div class="space-y-1">
@@ -359,7 +358,7 @@
             slipsContainer.innerHTML = html;
         }
 
-        // Calculation Engine with Dynamic Column Fallbacks & Consolidated Marks Handling
+        // Calculation Engine with Dynamic Column Fallbacks
         function calculateRankings(subjects, convertToPoints) {
             const list = allStudentsInCohort.map(stud => {
                 let totals = 0;
@@ -387,13 +386,13 @@
                         });
                     }
 
-                    // 2. Fallback or direct check for aggregate subject level marks (where paper_id is null/missing)
+                    // 2. Fallback check for direct aggregate subject level marks
                     const directScoreObj = cohortMarks.find(m => m.student_id === stud.id && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
                     if (directScoreObj) {
                         const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
                         if (!isNaN(val)) {
                             rawSum = val;
-                            maxSum = 100; // Consolidated scores default out of 100
+                            maxSum = 100;
                             studentHasScore = true;
                         }
                     }
@@ -434,7 +433,7 @@
             return list;
         }
 
-        // PDF Generation and Styling - Clean, Left-Aligned, Streamless, Exactly One Page & Mobile-Optimized
+        // PDF Generation and Styling
         function generatePDFSlip(type) {
             const grade = activeStudent.grade;
             const tier = getGradeTier(grade);
@@ -442,7 +441,6 @@
             const isJuniorPoints = (type === 'points');
 
             try {
-                // Bypassed database queries during generation trigger to resolve mobile thread lockouts
                 const staticSubjects = allowed.map((subjectName, index) => {
                     const foundPaper = globalPapers.find(p => p.subject_name === subjectName);
                     return {
@@ -459,7 +457,6 @@
                     return;
                 }
 
-                // Encoded Logo to Base64 to bypass mobile HTML5 Canvas taint errors completely
                 const secureLogoBase64 = "data:image/svg+xml;base64," + btoa(`
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="60" height="60">
                         <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
@@ -493,7 +490,7 @@
                                 </div>
                             </div>
 
-                            <!-- Bio Info Table (With stream removed to give full width to learner's name) -->
+                            <!-- Bio Info Table -->
                             <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
                                 <tr>
                                     <td style="padding: 4px 0; color: #64748b; font-weight: bold; width: 15%;">LEARNER:</td>
@@ -589,39 +586,36 @@
 
                 const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
 
-                // Configuration setup ensuring a perfect fit on a single portrait A4 sheet with memory compression
                 const opt = {
                     margin:       [0.3, 0.3, 0.3, 0.3],
                     filename:     filename,
                     image:        { type: 'jpeg', quality: 0.95 },
                     html2canvas:  { 
-                        scale: 1.5,           // Sized perfectly to avoid crash bounds on mid-range phones
-                        useCORS: true,        // Safely configured for CORS requests
-                        allowTaint: false,    // Safe canvas context export
+                        scale: 1.5,
+                        useCORS: true,
+                        allowTaint: false,
                         letterRendering: true 
                     },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait', compress: true } // compress: true prevents large raw payload errors on iOS
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait', compress: true }
                 };
 
-                // Detect Mobile Platforms safely
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                 if (isMobile) {
-                    // Generate Blob and stream straight to URL context to allow seamless system sharing & viewing
-                    html2pdf().from(pdfCanvas).set(opt).outputPdf('blob').then((pdfBlob) => {
+                    // Correct Promise method chain explicitly resolves to a Blob for system preview fallbacks
+                    html2pdf().from(pdfCanvas).set(opt).toPdf().output('blob').then((pdfBlob) => {
                         const blobURL = URL.createObjectURL(pdfBlob);
                         const newTab = window.open();
                         if (newTab) {
                             newTab.location.href = blobURL;
                         } else {
-                            window.location.href = blobURL; // Backup navigation if browser popups are restricted
+                            window.location.href = blobURL;
                         }
                     }).catch(err => {
                         console.error("Mobile PDF compilation failed:", err);
                         alert("Error generating mobile PDF stream output.");
                     });
                 } else {
-                    // Desktop default clean client-side down-saver
                     html2pdf().from(pdfCanvas).set(opt).save().then(() => {
                         console.log("PDF generated and downloaded successfully.");
                     }).catch(err => {
