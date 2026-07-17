@@ -25,6 +25,8 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        /* Lock page until admin authenticates */
+        body { display: none; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
@@ -48,6 +50,9 @@
             <span class="text-[10px] sm:text-xs font-mono bg-slate-800/80 border border-slate-700/60 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Syncing Server...
             </span>
+            <button id="admin-logout-btn" class="btn btn-error btn-xs sm:btn-sm font-bold text-white shadow-sm">
+                🚪 Exit Portal
+            </button>
         </div>
     </header>
 
@@ -203,6 +208,33 @@
                 <div class="card-actions justify-end mt-5">
                     <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto transition-colors duration-150">
                         ⚡ Publish Active Exam Context
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🧑‍🏫 TEACHER PROVISIONING CONTROL BOARD -->
+        <section class="card bg-white shadow-md border border-slate-200/60">
+            <div class="card-body p-5 sm:p-6">
+                <div class="flex items-center gap-2.5 mb-2">
+                    <span class="text-xl">🧑‍🏫</span>
+                    <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Onboard Faculty Members</h2>
+                </div>
+                <p class="text-xs text-slate-500">Register new instructional profiles here. Credentials saved within this console authorize educators to immediately log into the dashboard.</p>
+                <div class="divider my-2"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200/60">
+                    <div class="form-control">
+                        <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Account Username / Email</label>
+                        <input type="email" id="reg-teacher-email" placeholder="e.g. teacher@bethania.com" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Secure Password</label>
+                        <input type="password" id="reg-teacher-password" placeholder="••••••••" class="input input-sm input-bordered focus:outline-none focus:border-slate-400 w-full" />
+                    </div>
+                </div>
+                <div class="card-actions justify-end mt-4">
+                    <button id="register-teacher-btn" class="btn btn-primary btn-sm font-bold text-white px-6 shadow-sm w-full sm:w-auto">
+                        💾 Register Faculty Account
                     </button>
                 </div>
             </div>
@@ -383,6 +415,17 @@
     </main>
 
     <script>
+        // Admin Security Check Block
+        (function checkAuth() {
+            const token = prompt("Enter Executive Portal Passcode:");
+            if (token === "bethania2026") {
+                document.body.style.display = "block";
+            } else {
+                alert("Unauthorized Access. Redirecting out...");
+                window.location.href = "index.html";
+            }
+        })();
+
         // Supabase Configuration
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
@@ -422,6 +465,12 @@
         const downloadMarksPdfBtn = document.getElementById('download-marks-pdf-btn');
         const downloadPointsPdfBtn = document.getElementById('download-points-pdf-btn');
         const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
+
+        // New Faculty Elements
+        const regTeacherEmail = document.getElementById('reg-teacher-email');
+        const regTeacherPassword = document.getElementById('reg-teacher-password');
+        const registerTeacherBtn = document.getElementById('register-teacher-btn');
+        const adminLogoutBtn = document.getElementById('admin-logout-btn');
 
         // Config elements
         const tabAddSub = document.getElementById('tab-add-sub');
@@ -659,6 +708,33 @@
             }
         });
 
+        // Faculty Provisioning Listener
+        registerTeacherBtn.addEventListener('click', async () => {
+            const email = regTeacherEmail.value.trim();
+            const pass = regTeacherPassword.value.trim();
+            if (!email || !pass) return alert("Provide both account identifiers!");
+
+            registerTeacherBtn.disabled = true;
+            registerTeacherBtn.innerText = "Saving Account...";
+            try {
+                const { error } = await _supabase.from('teachers_auth').insert([{ email: email, password: pass }]);
+                if (error) throw error;
+                alert(`Faculty user info details successfully committed!`);
+                regTeacherEmail.value = "";
+                regTeacherPassword.value = "";
+            } catch(e) {
+                alert("Error: " + e.message);
+            } finally {
+                registerTeacherBtn.disabled = false;
+                registerTeacherBtn.innerText = "💾 Register Faculty Account";
+            }
+        });
+
+        // Safe Return Handler 
+        adminLogoutBtn.addEventListener('click', () => {
+            window.location.href = "index.html";
+        });
+
         tabAddSub.addEventListener('click', () => { 
             tabAddSub.classList.add('tab-active'); 
             tabDelSub.classList.remove('tab-active'); 
@@ -785,7 +861,7 @@
             const allowed = CBC_SUBJECT_TIERS[tier];
 
             try {
-                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                const { data, error = null } = await _supabase.from('subjects').select('*').order('subject_name');
                 if (error) throw error;
                 if (data) {
                     const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
