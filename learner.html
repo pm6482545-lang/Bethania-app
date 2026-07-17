@@ -125,7 +125,7 @@
             scoreColumn: 'raw_score'
         };
 
-        // Official CBC Subject Tiers
+        // Official CBC Subject Tiers (Updated to omit Islamic and Hindu Religious Education)
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
@@ -135,13 +135,12 @@
             upper_primary: [
                 "English", "Kiswahili", "Mathematics", "Science and Technology",
                 "Agriculture and Nutrition", "Creative Arts", "Social Studies", 
-                "Christian Religious Education (C.R.E)", "Islamic Religious Education (I.R.E)", "Hindu Religious Education (H.R.E)"
+                "Christian Religious Education (C.R.E)"
             ],
             junior_school: [
                 "English", "Kiswahili", "Mathematics", "Integrated Science",
                 "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
-                "Creative Arts and Sports", "Christian Religious Education (C.R.E)", 
-                "Islamic Religious Education (I.R.E)", "Hindu Religious Education (H.R.E)"
+                "Creative Arts and Sports", "Christian Religious Education (C.R.E)"
             ]
         };
 
@@ -185,15 +184,23 @@
 
         function getCompetencyLevel(average, type) {
             if (type === 'points') {
-                if (average >= 6.5) return { text: "EE", label: "Exceeding Expectations", class: "text-emerald-600 bg-emerald-50" };
-                if (average >= 5.0) return { text: "ME", label: "Meeting Expectations", class: "text-sky-600 bg-sky-50" };
-                if (average >= 3.0) return { text: "AE", label: "Approaching Expectations", class: "text-amber-600 bg-amber-50" };
-                return { text: "BE", label: "Below Expectations", class: "text-rose-600 bg-rose-50" };
+                if (average >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1", class: "text-emerald-600 bg-emerald-50" };
+                if (average >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2", class: "text-emerald-500 bg-emerald-50" };
+                if (average >= 5.5) return { text: "ME1", label: "Meeting Expectations 1", class: "text-sky-600 bg-sky-50" };
+                if (average >= 4.5) return { text: "ME2", label: "Meeting Expectations 2", class: "text-sky-500 bg-sky-50" };
+                if (average >= 3.5) return { text: "AE1", label: "Approaching Expectations 1", class: "text-amber-600 bg-amber-50" };
+                if (average >= 2.5) return { text: "AE2", label: "Approaching Expectations 2", class: "text-amber-500 bg-amber-50" };
+                if (average >= 1.5) return { text: "BE1", label: "Below Expectations 1", class: "text-rose-600 bg-rose-50" };
+                return { text: "BE2", label: "Below Expectations 2", class: "text-rose-500 bg-rose-50" };
             } else {
-                if (average >= 80) return { text: "EE", label: "Exceeding Expectations", class: "text-emerald-600 bg-emerald-50" };
-                if (average >= 50) return { text: "ME", label: "Meeting Expectations", class: "text-sky-600 bg-sky-50" };
-                if (average >= 30) return { text: "AE", label: "Approaching Expectations", class: "text-amber-600 bg-amber-50" };
-                return { text: "BE", label: "Below Expectations", class: "text-rose-600 bg-rose-50" };
+                if (average >= 90) return { text: "EE1", label: "Exceeding Expectations 1", class: "text-emerald-600 bg-emerald-50" };
+                if (average >= 75) return { text: "EE2", label: "Exceeding Expectations 2", class: "text-emerald-500 bg-emerald-50" };
+                if (average >= 58) return { text: "ME1", label: "Meeting Expectations 1", class: "text-sky-600 bg-sky-50" };
+                if (average >= 40) return { text: "ME2", label: "Meeting Expectations 2", class: "text-sky-500 bg-sky-50" };
+                if (average >= 30) return { text: "AE1", label: "Approaching Expectations 1", class: "text-amber-600 bg-amber-50" };
+                if (average >= 20) return { text: "AE2", label: "Approaching Expectations 2", class: "text-amber-500 bg-amber-50" };
+                if (average >= 10) return { text: "BE1", label: "Below Expectations 1", class: "text-rose-600 bg-rose-50" };
+                return { text: "BE2", label: "Below Expectations 2", class: "text-rose-500 bg-rose-50" };
             }
         }
 
