@@ -17,7 +17,7 @@
         <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
             <div class="card-body p-6 sm:p-8 text-center space-y-4">
                 <div class="avatar bg-white p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16">
-                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="portal-logo" alt="Bethania Academy" class="rounded-full overflow-hidden" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" crossorigin="anonymous" id="portal-logo" alt="Bethania Academy" class="rounded-full overflow-hidden" onerror="this.src='https://placehold.co/100x100?text=BA'" />
                 </div>
                 <div>
                     <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
@@ -41,7 +41,7 @@
                 <div class="flex items-center gap-3">
                     <div class="avatar bg-white p-1 rounded-full border border-amber-400">
                         <div class="w-8 h-8 rounded-full overflow-hidden">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo" />
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" crossorigin="anonymous" alt="Bethania Academy Logo" />
                         </div>
                     </div>
                     <div>
@@ -125,13 +125,13 @@
         let allStudentsInCohort = [];
         let cohortMarks = [];
 
-        // Schema Cache matching admin.html's sniffing architecture
+        // Schema Cache matching admin.html's architecture
         let dbSchemaCache = {
             examColumn: 'test_name',
             scoreColumn: 'raw_score'
         };
 
-        // Official CBC Subject Tiers matching admin.html
+        // Official CBC Subject Tiers
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
@@ -433,22 +433,19 @@
             const allowed = CBC_SUBJECT_TIERS[tier];
             const isJuniorPoints = (type === 'points');
 
-            const logoImg = document.getElementById('portal-logo');
-            const isLogoValid = logoImg.complete && logoImg.naturalHeight !== 0;
-
             _supabase.from('subjects').select('*').then(({data}) => {
                 const filteredSubjects = (data || []).filter(s => allowed.includes(s.subject_name.trim()));
                 const rankings = calculateRankings(filteredSubjects, isJuniorPoints);
                 const me = rankings.find(r => r.id === activeStudent.id);
 
                 let reportHtml = `
-                    <div style="border: 2px solid #0f172a; padding: 25px; border-radius: 8px; font-family: system-ui, -apple-system, sans-serif; min-height: 980px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+                    <div style="border: 2px solid #0f172a; padding: 25px; border-radius: 8px; font-family: system-ui, -apple-system, sans-serif; min-height: 980px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; background-color: #ffffff;">
                         
                         <div>
                             <!-- School Header -->
                             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 12px; margin-bottom: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #f59e0b; object-fit: cover;" />
+                                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" crossorigin="anonymous" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #f59e0b; object-fit: cover;" />
                                     <div>
                                         <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">BETHANIA ACADEMY</h1>
                                         <p style="font-size: 11px; color: #f59e0b; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; text-align: left;">Motto: "Determination is Nobility"</p>
@@ -555,16 +552,32 @@
 
                 pdfCanvas.innerHTML = reportHtml;
 
-                // Configuration setup ensuring a perfect fit on a single portrait letter/A4 sheet
+                // Configuration setup ensuring a perfect fit on a single portrait A4 sheet
                 const opt = {
                     margin:       [0.3, 0.3, 0.3, 0.3],
                     filename:     `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`,
                     image:        { type: 'jpeg', quality: 1.0 },
-                    html2canvas:  { scale: 2.5, useCORS: true, letterRendering: true },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        allowTaint: true,
+                        letterRendering: true 
+                    },
                     jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
                 };
 
-                html2pdf().from(pdfCanvas).set(opt).save();
+                // Execute the download with error capturing to pinpoint issues
+                html2pdf()
+                    .from(pdfCanvas)
+                    .set(opt)
+                    .save()
+                    .then(() => {
+                        console.log("PDF generated and downloaded successfully.");
+                    })
+                    .catch(err => {
+                        console.error("html2pdf rendering failed:", err);
+                        alert("There was an error compiling your PDF. Please view your browser console for details.");
+                    });
             });
         }
     </script>
