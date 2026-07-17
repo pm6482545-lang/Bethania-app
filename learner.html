@@ -7,8 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf library for clean, client-side PDF downloads -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Upgraded PDF Compilation & Rendering Dependencies matching admin.html -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
 
@@ -16,12 +17,8 @@
     <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen px-4">
         <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
             <div class="card-body p-6 sm:p-8 text-center space-y-4">
-                <div class="avatar bg-slate-900 p-1.5 rounded-full border-2 border-amber-400 mx-auto w-16 h-16 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-12 h-12">
-                        <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
-                        <path d="M50 20 L75 35 L75 65 L50 80 L25 65 L25 35 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
-                        <text x="50" y="52" font-family="sans-serif" font-size="22" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
-                    </svg>
+                <div class="avatar bg-white p-1 rounded-full ring-4 ring-amber-400/30 mx-auto w-16 h-16 flex items-center justify-center overflow-hidden">
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" class="rounded-full" onerror="this.src='https://placehold.co/100x100?text=BA'"/>
                 </div>
                 <div>
                     <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
@@ -30,7 +27,7 @@
                 <div class="divider my-1"></div>
                 <div class="form-control w-full text-left">
                     <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Enter Unique Student Login ID</label>
-                    <input type="text" id="student-id-input" placeholder="e.g. AA1234" class="input input-bordered input-md w-full font-mono text-center text-lg uppercase tracking-widest font-bold" />
+                    <input type="text" id="student-id-input" placeholder="e.g. AA1234" class="input input-bordered input-md w-full font-mono text-center text-lg uppercase tracking-widest font-bold focus:outline-none" />
                 </div>
                 <button id="login-btn" class="btn btn-neutral btn-md w-full text-white font-bold uppercase tracking-wider">🔓 Access Assessment Records</button>
             </div>
@@ -43,12 +40,9 @@
         <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 border-b border-amber-500/30">
             <div class="flex-1">
                 <div class="flex items-center gap-3">
-                    <div class="avatar bg-slate-900 p-1 rounded-full border border-amber-400">
+                    <div class="avatar bg-white p-0.5 rounded-full ring-2 ring-amber-400/50">
                         <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6">
-                                <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
-                                <text x="50" y="52" font-family="sans-serif" font-size="26" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
-                            </svg>
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" onerror="this.src='https://placehold.co/100x100?text=BA'"/>
                         </div>
                     </div>
                     <div>
@@ -425,12 +419,14 @@
             return list;
         }
 
-        // PDF Generation and Styling
-        function generatePDFSlip(type) {
+        // Advanced Portrait PDF Compiler matching Admin layout perfectly
+        async function generatePDFSlip(type) {
             const grade = activeStudent.grade;
             const tier = getGradeTier(grade);
             const allowed = CBC_SUBJECT_TIERS[tier];
             const isJuniorPoints = (type === 'points');
+
+            const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
 
             try {
                 const staticSubjects = allowed.map((subjectName, index) => {
@@ -449,63 +445,81 @@
                     return;
                 }
 
-                // FIXED: Direct pure HTML parsing string fed into html2pdf engine to solve mobile view canvas computation bugs.
-                let reportHtml = `
-                    <div style="border: 2px solid #0f172a; padding: 25px; border-radius: 8px; font-family: system-ui, -apple-system, sans-serif; min-height: 980px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; background-color: #ffffff;">
+                // Initialize portrait jsPDF matching Admin's structural options
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: 'a4'
+                });
+
+                // Create isolated sandbox element to render pure print CSS styles cleanly
+                const offscreenContainer = document.createElement('div');
+                offscreenContainer.style.position = 'absolute';
+                offscreenContainer.style.left = '-9999px';
+                offscreenContainer.style.width = '720px'; // Set standard safe A4 layout width
+                offscreenContainer.style.backgroundColor = '#ffffff';
+                document.body.appendChild(offscreenContainer);
+
+                const page = document.createElement('div');
+                page.style.padding = '40px 35px';
+                page.style.color = '#000000';
+                page.style.position = 'relative';
+                page.style.minHeight = '980px';
+                page.style.fontFamily = "system-ui, -apple-system, sans-serif";
+                page.style.boxSizing = 'border-box';
+
+                page.innerHTML = `
+                    <!-- Premium Double Border -->
+                    <div style="border: 4px double #0f172a; padding: 25px; border-radius: 6px; min-height: 900px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative;">
                         
-                        <div>
-                            <!-- School Header -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 12px; margin-bottom: 15px;">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="width: 60px; height: 60px;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="60" height="60" style="display: block;">
-                                            <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
-                                            <path d="M50 20 L75 35 L75 65 L50 80 L25 65 L25 35 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
-                                            <path d="M50 25 L68 36 L68 64 L50 75 L32 64 L32 36 Z" fill="#f59e0b" opacity="0.2"/>
-                                            <path d="M35 45 Q50 35 65 45" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-                                            <path d="M35 55 Q50 65 65 55" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-                                            <text x="50" y="52" font-family="sans-serif" font-size="22" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">BETHANIA ACADEMY</h1>
-                                        <p style="font-size: 11px; color: #f59e0b; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; text-align: left;">Motto: "Determination is Nobility"</p>
-                                    </div>
+                        <!-- Background Watermark Layer -->
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 340px; height: 340px; opacity: 0.05; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                        
+                        <div style="position: relative; z-index: 1;">
+                            <!-- School Executive Header with Dual Logos -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 15px; margin-bottom: 20px;">
+                                <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                                <div style="text-align: center; flex: 1; padding: 0 10px;">
+                                    <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Times New Roman', serif;">BETHANIA ACADEMY</h1>
+                                    <p style="font-size: 10px; color: #f59e0b; margin: 3px 0 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;">Motto: "Determination is Nobility"</p>
                                 </div>
-                                <div style="text-align: right;">
-                                    <span style="display: inline-block; padding: 4px 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 9px; font-weight: bold; color: #475569; text-transform: uppercase;">
-                                        ${activeSessionName}
-                                    </span>
-                                </div>
+                                <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                             </div>
 
-                            <!-- Bio Info Table -->
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
+                            <!-- Bio Information Matrix -->
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 22px;">
                                 <tr>
-                                    <td style="padding: 4px 0; color: #64748b; font-weight: bold; width: 15%;">LEARNER:</td>
-                                    <td style="padding: 4px 0; font-weight: 800; color: #0f172a; text-transform: uppercase; text-align: left; font-size: 12px;">${me.name}</td>
-                                    <td style="padding: 4px 0; color: #64748b; font-weight: bold; width: 15%; text-align: right;">GRADE:</td>
-                                    <td style="padding: 4px 0; font-weight: 800; color: #0f172a; text-align: right; width: 15%;">${grade <= 0 ? (grade === -2 ? "PP1" : "PP2") : 'Grade ' + grade}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 18%;">LEARNER NAME:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-transform: uppercase; text-align: left; font-size: 12px; border-bottom: 1px solid #e2e8f0;">${me.name}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 15%; text-align: right;">GRADE:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; width: 18%; border-bottom: 1px solid #e2e8f0;">${grade <= 0 ? (grade === -2 ? "PP1" : "PP2") : 'Grade ' + grade}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 4px 0; color: #64748b; font-weight: bold;">STUDENT ID:</td>
-                                    <td style="padding: 4px 0; font-weight: 800; color: #0f172a; font-family: monospace; text-align: left;">${activeStudent.login_id}</td>
-                                    <td style="padding: 4px 0; color: #64748b; font-weight: bold; text-align: right;">CURRICULUM:</td>
-                                    <td style="padding: 4px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase;">CBC Framework</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold;">STUDENT ID:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; font-family: monospace; text-align: left; border-bottom: 1px solid #e2e8f0;">${activeStudent.login_id}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; text-align: right;">CURRICULUM:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">CBC Framework</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold;">ACADEMIC CYCLE:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #1e40af; text-align: left; border-bottom: 1px solid #e2e8f0;">${activeSessionName}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; text-align: right;">REPORT TYPE:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">${isJuniorPoints ? 'Competency Slip' : 'Academic Marks'}</td>
                                 </tr>
                             </table>
 
-                            <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; color: #0f172a; border-left: 3px solid #0f172a; padding-left: 6px; text-align: left;">
+                            <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; color: #0f172a; border-left: 3px solid #f59e0b; padding-left: 8px; text-align: left;">
                                 ${isJuniorPoints ? 'Competency Point Evaluation (8-Point Scale)' : 'Raw Assessment Performance Records'}
                             </h3>
 
                             <!-- Subject Performance Table -->
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
                                 <thead>
                                     <tr style="background-color: #0f172a; color: #ffffff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">
-                                        <th style="padding: 7px 10px; text-align: left; border: 1px solid #1e293b;">Learning Area / Component</th>
-                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #1e293b; width: 160px;">Score / Scale Output</th>
-                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #1e293b; width: 140px;">Remarks</th>
+                                        <th style="padding: 7px 10px; text-align: left; border: 1px solid #0f172a;">Learning Area / Component</th>
+                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #0f172a; width: 140px;">Score / Scale Output</th>
+                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #0f172a; width: 120px;">Evaluation Rating</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -518,9 +532,9 @@
                                         }
                                         return `
                                             <tr>
-                                                <td style="padding: 6px 10px; border: 1px solid #e2e8f0; font-weight: bold; color: #334155; text-align: left;">${sub.subject_name}</td>
-                                                <td style="padding: 6px 10px; border: 1px solid #e2e8f0; text-align: center; font-family: monospace; font-weight: bold; color: #0f172a;">${record ? record.label : '-'}</td>
-                                                <td style="padding: 6px 10px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #1e293b;">${compText}</td>
+                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: bold; color: #334155; text-align: left;">${sub.subject_name}</td>
+                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; font-family: monospace; font-weight: bold; color: #0f172a;">${record ? record.label : '-'}</td>
+                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; color: #1e293b;">${compText}</td>
                                             </tr>
                                         `;
                                     }).join('')}
@@ -528,20 +542,21 @@
                             </table>
                         </div>
 
+                        <!-- Footer Block containing Scores & Official Stamp Area -->
                         <div>
-                            <!-- Overall Metrics Grid Row -->
-                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                            <!-- Overall Metrics Row -->
+                            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                                 <div style="text-align: left;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cumulative Total</span>
-                                    <strong style="font-size: 16px; color: #0f172a;">${isJuniorPoints ? me.totals.toFixed(0) : me.totals.toFixed(1)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
+                                    <strong style="font-size: 15px; color: #0f172a;">${isJuniorPoints ? me.totals.toFixed(0) : me.totals.toFixed(1)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
                                 </div>
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Calculated Mean</span>
-                                    <strong style="font-size: 16px; color: #1e40af;">${me.average.toFixed(1)}${isJuniorPoints ? ' Pts' : '%'}</strong>
+                                    <strong style="font-size: 15px; color: #1e40af;">${me.average.toFixed(1)}${isJuniorPoints ? ' Pts' : '%'}</strong>
                                 </div>
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Position</span>
-                                    <strong style="font-size: 16px; color: #0f172a;">Rank #${me.position} of ${rankings.length}</strong>
+                                    <strong style="font-size: 15px; color: #0f172a;">Rank #${me.position} of ${rankings.length}</strong>
                                 </div>
                                 <div style="text-align: right;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Evaluation Rating</span>
@@ -552,17 +567,17 @@
                             </div>
 
                             <!-- Footer & Official Stamp Area -->
-                            <div style="display: flex; justify-content: space-between; font-size: 9px; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 15px;">
-                                <div style="text-align: center; width: 170px;">
-                                    <div style="height: 30px;"></div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                                <div style="text-align: center; width: 160px;">
+                                    <div style="height: 35px;"></div>
                                     <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">Class Teacher Signature</div>
                                 </div>
-                                <div style="text-align: center; width: 170px;">
-                                    <div style="height: 30px; line-height: 30px; color: #94a3b8; font-style: italic; font-weight: bold; font-size: 8px;">OFFICIAL INSTITUTIONAL SEAL</div>
+                                <div style="text-align: center; width: 160px;">
+                                    <div style="height: 35px; line-height: 35px; color: #cbd5e1; font-style: italic; font-weight: bold; font-size: 8px; letter-spacing: 1px;">OFFICIAL SEAL</div>
                                     <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">School Stamp</div>
                                 </div>
-                                <div style="text-align: center; width: 170px;">
-                                    <div style="height: 30px;"></div>
+                                <div style="text-align: center; width: 160px;">
+                                    <div style="height: 35px;"></div>
                                     <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">Headteacher Signature</div>
                                 </div>
                             </div>
@@ -571,32 +586,31 @@
                     </div>
                 `;
 
-                const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
+                offscreenContainer.appendChild(page);
 
-                const opt = {
-                    margin:       [0.2, 0.2, 0.2, 0.2],
-                    filename:     filename,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { 
-                        scale: 2, // High resolution crisp display
-                        useCORS: true,
-                        logging: false,
-                        letterRendering: true 
-                    },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait', compress: true }
-                };
-
-                // Streamlined execution: compiling via raw string (.from(reportHtml)) works reliably on all mobile viewports
-                html2pdf().from(reportHtml).set(opt).save().then(() => {
-                    console.log("PDF generated successfully.");
-                }).catch(err => {
-                    console.error("html2pdf processing failure:", err);
-                    alert("There was an error compiling your PDF. Please view your browser console for details.");
+                // Run compilation through high-resolution html2canvas matching admin specifications
+                const canvas = await html2canvas(page, {
+                    scale: 2, 
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true
                 });
+
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                
+                // Add rendered canvas representation to PDF
+                doc.addImage(imgData, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+
+                // Clean up background DOM sandbox instantly
+                document.body.removeChild(offscreenContainer);
+
+                // Export File
+                const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
+                doc.save(filename);
 
             } catch (criticalErr) {
                 console.error("Compilation process exception caught:", criticalErr);
-                alert("Runtime compiling exception: Data array mapping error.");
+                alert("An error occurred while compiling your report PDF. Check browser console logs.");
             }
         }
     </script>
