@@ -457,17 +457,7 @@
                     return;
                 }
 
-                const secureLogoBase64 = "data:image/svg+xml;base64," + btoa(`
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="60" height="60">
-                        <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
-                        <path d="M50 20 L75 35 L75 65 L50 80 L25 65 L25 35 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
-                        <path d="M50 25 L68 36 L68 64 L50 75 L32 64 L32 36 Z" fill="#f59e0b" opacity="0.2"/>
-                        <path d="M35 45 Q50 35 65 45" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-                        <path d="M35 55 Q50 65 65 55" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-                        <text x="50" y="52" font-family="sans-serif" font-size="22" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
-                    </svg>
-                `.trim());
-
+                // FIXED: Raw inline SVG elements inside our layout string prevent mobile canvas-tainting security blocks.
                 let reportHtml = `
                     <div style="border: 2px solid #0f172a; padding: 25px; border-radius: 8px; font-family: system-ui, -apple-system, sans-serif; min-height: 980px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; background-color: #ffffff;">
                         
@@ -475,8 +465,16 @@
                             <!-- School Header -->
                             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 12px; margin-bottom: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
+                                    <!-- INLINED SVG BLOCK INSTEAD OF BASE64 IMG TAG -->
                                     <div style="width: 60px; height: 60px;">
-                                        <img src="${secureLogoBase64}" width="60" height="60" style="display: block;" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="60" height="60" style="display: block;">
+                                            <circle cx="50" cy="50" r="46" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
+                                            <path d="M50 20 L75 35 L75 65 L50 80 L25 65 L25 35 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                                            <path d="M50 25 L68 36 L68 64 L50 75 L32 64 L32 36 Z" fill="#f59e0b" opacity="0.2"/>
+                                            <path d="M35 45 Q50 35 65 45" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                                            <path d="M35 55 Q50 65 65 55" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                                            <text x="50" y="52" font-family="sans-serif" font-size="22" font-weight="950" fill="#f59e0b" text-anchor="middle" alignment-baseline="middle">B</text>
+                                        </svg>
                                     </div>
                                     <div>
                                         <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">BETHANIA ACADEMY</h1>
