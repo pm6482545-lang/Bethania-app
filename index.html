@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bethania Academy - Portal Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #1e293b;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 3px solid #f59e0b;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        header p {
+            color: #64748b;
+            margin-top: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .portal-card {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+        }
+
+        /* Portal Themes */
+        .admin-card::before { background: #ef4444; }
+        .teacher-card::before { background: #f59e0b; }
+        .learner-card::before { background: #10b981; }
+
+        .portal-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.2rem;
+            margin-bottom: 24px;
+        }
+
+        .admin-card .icon-wrapper { background: #fef2f2; color: #ef4444; }
+        .teacher-card .icon-wrapper { background: #fffbeb; color: #f59e0b; }
+        .learner-card .icon-wrapper { background: #ecfdf5; color: #10b981; }
+
+        .portal-card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+
+        .portal-card p {
+            font-size: 0.95rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            flex-grow: 1;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
+        }
+
+        .admin-btn { background-color: #ef4444; }
+        .admin-btn:hover { background-color: #dc2626; }
+
+        .teacher-btn { background-color: #f59e0b; }
+        .teacher-btn:hover { background-color: #d97706; }
+
+        .learner-btn { background-color: #10b981; }
+        .learner-btn:hover { background-color: #059669; }
+
+        footer {
+            margin-top: 60px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Academy Logo">
+            </div>
+            <h1>Bethania Academy</h1>
+            <p>Select your dashboard portal to sign in using your access credentials</p>
+        </header>
+
+        <main class="portal-grid">
+            <!-- Administration Portal -->
+            <a href="admin.html" class="portal-card admin-card">
+                <div class="icon-wrapper">⚙️</div>
+                <h2>Administration</h2>
+                <p>Manage users, view institution-wide configurations, system locks, and handle master control panels.</p>
+                <div class="btn admin-btn">Admin Login</div>
+            </a>
+
+            <!-- Teachers Portal -->
+            <a href="teacher.html" class="portal-card teacher-card">
+                <div class="icon-wrapper">👨‍🏫</div>
+                <h2>CBA Teachers</h2>
+                <p>Manage class lists, execute batch student roster imports, and record CBA ledger marks entries.</p>
+                <div class="btn teacher-btn">Teacher Login</div>
+            </a>
+
+            <!-- Learners Portal -->
+            <a href="learner.html" class="portal-card learner-card">
+                <div class="icon-wrapper">🎓</div>
+                <h2>Learner Portal</h2>
+                <p>Track your assessment profiles, review scorecards, and view performance timelines.</p>
+                <div class="btn learner-btn">Learner Login</div>
+            </a>
+        </main>
+
+        <footer>
+            <p>© 2026 Bethania Academy CBA System. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+</body>
+</html>
