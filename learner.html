@@ -277,9 +277,10 @@
 
             // Check if fee lockouts exist for this structural scope
             try {
+                // Query using both the internal database id AND the alphanumeric login_id to be safe
                 const { data: lockRows } = await _supabase.from('fee_lockouts')
                     .select('*')
-                    .eq('student_id', activeStudent.login_id)
+                    .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
                     .eq('restricted', true);
 
                 isCurrentSessionLocked = false;
@@ -288,7 +289,6 @@
                     const lockedMatch = lockRows.some(r => {
                         const rowYear = r.year || (r.exam_context ? r.exam_context.split(' ')[0] : '');
                         const rowTerm = r.term || (r.exam_context && r.exam_context.includes('Term') ? r.exam_context.match(/Term \d+/)?.[0] : '');
-                        const rowExam = r.exam_category || '';
                         
                         return (rowYear == yr && rowTerm == tm) || r.exam_context === activeSessionName;
                     });
@@ -346,7 +346,7 @@
             try {
                 const { data: initialLocks } = await _supabase.from('fee_lockouts')
                     .select('*')
-                    .eq('student_id', activeStudent.login_id)
+                    .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
                     .eq('restricted', true);
                 
                 if (initialLocks && initialLocks.length > 0) {
