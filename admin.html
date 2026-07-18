@@ -82,6 +82,22 @@
             </div>
         </header>
 
+        <!-- DYNAMIC MARKS ENTRY MODAL -->
+        <dialog id="admin-marks-modal" class="modal">
+            <div class="modal-box bg-white text-slate-800 max-w-sm rounded-xl border p-5">
+                <h3 class="font-bold text-sm uppercase tracking-tight mb-2">Adjust Student Score</h3>
+                <p id="admin-marks-modal-desc" class="text-xs text-slate-500 mb-4"></p>
+                <div class="form-control w-full mb-4">
+                    <label class="label-text font-bold text-xs text-slate-600 mb-1">Keyed Score Value</label>
+                    <input type="number" id="admin-modal-score-input" min="0" max="100" class="input input-bordered input-sm focus:outline-none" placeholder="e.g. 84" />
+                </div>
+                <div class="modal-action gap-2 mt-0">
+                    <button type="button" onclick="document.getElementById('admin-marks-modal').close()" class="btn btn-sm btn-ghost">Cancel</button>
+                    <button type="button" id="admin-modal-save-btn" class="btn btn-sm btn-primary text-white font-bold px-4">Save Entry</button>
+                </div>
+            </div>
+        </dialog>
+
         <!-- IN-PAGE MODAL FOR INSTANT PDF PREVIEW AND ACTION -->
         <dialog id="pdf-modal" class="modal">
             <div class="modal-box w-11/12 max-w-5xl bg-white p-6 relative rounded-2xl shadow-2xl">
@@ -193,6 +209,129 @@
                                 ✨ Save Learner
                             </button>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NEW LEARNER SLIP & ACCESS FEE MANAGEMENT CONTROL PANEL -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="text-xl">💳</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Learner Access & Fee Management Control</h2>
+                    </div>
+                    <p class="text-xs text-slate-500">Select standard parameters below to flag leaners who are restricted from downloading examination slips on learner.html due to outstanding balances.</p>
+                    
+                    <div class="divider my-2"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Target Year</label>
+                            <select id="fee-ctrl-year" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Target Term</label>
+                            <select id="fee-ctrl-term" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2" selected>Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Exam Category</label>
+                            <select id="fee-ctrl-series" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid Term Exam">Mid Term Exam</option>
+                                <option value="End Term Exam">End Term Exam</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Grade Tier</label>
+                            <select id="fee-ctrl-grade" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="" disabled selected>Select Grade...</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="fee-lockout-matrix-container" class="hidden mt-4 space-y-3">
+                        <div class="flex justify-between items-center bg-slate-100 px-3 py-2 rounded-lg border">
+                            <span class="text-xs font-bold text-slate-700 uppercase">Enrolled Cohort Lockout Options</span>
+                            <button id="save-fee-restrictions-btn" class="btn btn-xs btn-primary text-white font-bold">🔒 Save Restrictions Matrix</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-white max-h-52 overflow-y-auto p-2 border rounded-lg" id="fee-lockout-checkbox-grid">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HISTORICAL PERFORMANCE LEDGER ACCESSIBILITY MODULE -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="text-xl">🗄️</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Historical Performance Ledger</h2>
+                    </div>
+                    <p class="text-xs text-slate-500">Access, query, and generate landscape reports from inactive historical database cycles by adjusting parameters below.</p>
+                    
+                    <div class="divider my-2"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Archive Year</label>
+                            <select id="hist-year" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Archive Term</label>
+                            <select id="hist-term" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2" selected>Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Archive Series</label>
+                            <select id="hist-series" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid Term Exam">Mid Term Exam</option>
+                                <option value="End Term Exam">End Term Exam</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Grade Class</label>
+                            <select id="hist-grade" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="" disabled selected>Choose Grade...</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                        <button id="compile-historical-btn" class="btn btn-sm btn-secondary font-bold text-white shadow-sm w-full">🗂️ Compile Historical Ledger</button>
                     </div>
                 </div>
             </section>
@@ -318,7 +457,7 @@
                             <div class="border border-slate-200/80 rounded-lg overflow-hidden bg-slate-50">
                                 <div class="bg-slate-100/80 p-2.5 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600 tracking-wider uppercase">
                                     <span>Learner Name</span>
-                                    <span>Upload Status</span>
+                                    <span>Action Logs</span>
                                 </div>
                                 <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
                                     <p class="text-center py-8 text-xs italic text-slate-400">Select parameters to audit...</p>
@@ -516,10 +655,27 @@
         const pdfRenderCanvas = document.getElementById('pdf-render-canvas');
         const executePdfDownloadBtn = document.getElementById('execute-pdf-download-btn');
 
+        // New Elements Added
+        const feeCtrlYear = document.getElementById('fee-ctrl-year');
+        const feeCtrlTerm = document.getElementById('fee-ctrl-term');
+        const feeCtrlSeries = document.getElementById('fee-ctrl-series');
+        const feeCtrlGrade = document.getElementById('fee-ctrl-grade');
+        const feeLockoutMatrixContainer = document.getElementById('fee-lockout-matrix-container');
+        const feeLockoutCheckboxGrid = document.getElementById('fee-lockout-checkbox-grid');
+        const saveFeeRestrictionsBtn = document.getElementById('save-fee-restrictions-btn');
+
+        const histYear = document.getElementById('hist-year');
+        const histTerm = document.getElementById('hist-term');
+        const histSeries = document.getElementById('hist-series');
+        const histGrade = document.getElementById('hist-grade');
+        const compileHistoricalBtn = document.getElementById('compile-historical-btn');
+
         let currentActiveExamName = "";
         let globalPapersList = [];
         let localStudentsCache = [];
         let currentPdfTitle = "";
+        let selectedTrackerStudentId = null;
+        let selectedTrackerSubjectId = null;
 
         let dbSchemaCache = {
             examColumn: 'test_name',
@@ -991,6 +1147,7 @@
                 return;
             }
 
+            selectedTrackerSubjectId = subId;
             trackerOutput.innerHTML = '<p class="text-center py-8 text-xs italic text-slate-400">Computing Uploads...</p>';
             try {
                 const studIds = targetStudents.map(s => s.id);
@@ -1015,219 +1172,288 @@
                                 <span class="font-semibold text-slate-800">${s.name}</span>
                                 <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails}</span>
                             </div>
-                            <div>
+                            <div class="flex items-center gap-2">
                                 ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
+                                <button onclick="openAdminMarksEditor('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${hasUploaded ? studentMark[dbSchemaCache.scoreColumn] : 'null'})" class="btn btn-[10px] btn-ghost btn-xs text-blue-600 font-bold underline">Edit</button>
                             </div>
                         </div>
                     `;
                 }).join('');
             } catch (err) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>';`;
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
             }
         });
 
-        // MODAL PREVIEW & PDF STREAMING COMPILER
-        let cachedPdfData = { title: "", header: "", body: "", stats: "" };
+        // 1. INLINE MARKS INTERACTION ENGINE HANDLERS
+        window.openAdminMarksEditor = function(studentId, name, currentScore) {
+            selectedTrackerStudentId = studentId;
+            document.getElementById('admin-marks-modal-desc').innerText = `Editing entry parameters for ${name}`;
+            document.getElementById('admin-modal-score-input').value = currentScore !== null ? currentScore : "";
+            document.getElementById('admin-marks-modal').showModal();
+        };
 
-        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
-            cachedPdfData = { title, header: headerHtml, body: bodyHtml, stats: statsHtml };
-            currentPdfTitle = title;
+        document.getElementById('admin-modal-save-btn').addEventListener('click', async () => {
+            const scoreVal = document.getElementById('admin-modal-score-input').value.trim();
+            if (!scoreVal || isNaN(scoreVal)) return alert("Please enter a valid numeric mark score!");
 
-            // Render exact landscape view structure inside the modal sandbox with centered watermark background styling
-            pdfRenderCanvas.innerHTML = `
-                <!-- Page 1 Container -->
-                <div style="width: 100%; box-sizing: border-box; margin-bottom: 2rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1.5rem; position: relative; min-height: 520px; overflow: hidden;">
-                    <!-- Centered Watermark Layer with Adjusted Opacity -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
-                            </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div style="margin-top: 15px;">${headerHtml}</div>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
-                            ${bodyHtml}
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Page 2 Container -->
-                <div style="width: 100%; box-sizing: border-box; position: relative; min-height: 520px; overflow: hidden;">
-                    <!-- Centered Watermark Layer with Adjusted Opacity -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
-                            </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div style="margin-top: 15px;">${statsHtml}</div>
-                    </div>
-                </div>
-            `;
-
-            // Apply styling rule specifically targeting modal view tables
-            const tables = pdfRenderCanvas.querySelectorAll('table');
-            tables.forEach(t => {
-                t.style.width = '100%';
-                t.style.borderCollapse = 'collapse';
-                t.style.fontSize = '10px';
-                t.style.marginTop = '10px';
-            });
-            const cells = pdfRenderCanvas.querySelectorAll('th, td');
-            cells.forEach(c => {
-                c.style.border = '1px solid #1e293b';
-                c.style.padding = '4px 5px';
-            });
-            const headers = pdfRenderCanvas.querySelectorAll('th');
-            headers.forEach(h => {
-                h.style.backgroundColor = '#f1f5f9';
-                h.style.color = '#0f172a';
-                h.style.fontWeight = 'bold';
-            });
-
-            pdfModal.showModal();
-        }
-
-        // Direct Download as .pdf File Trigger
-        executePdfDownloadBtn.addEventListener('click', async () => {
-            executePdfDownloadBtn.disabled = true;
-            executePdfDownloadBtn.innerText = "Compiling PDF File...";
+            const parsedScore = parseFloat(scoreVal);
+            document.getElementById('admin-modal-save-btn').innerText = "Saving...";
 
             try {
-                const { jsPDF } = window.jspdf;
-                // Standard Landscape layout declaration
-                const doc = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'px',
-                    format: 'a4'
-                });
+                const { data, error: selectErr } = await _supabase.from('marks_entry')
+                    .select('id')
+                    .eq(dbSchemaCache.examColumn, currentActiveExamName)
+                    .eq('student_id', selectedTrackerStudentId)
+                    .eq('subject_id', selectedTrackerSubjectId)
+                    .is('paper_id', null);
 
-                // Structure temporary isolated nodes to compile separate pages
-                const offscreenContainer = document.createElement('div');
-                offscreenContainer.style.position = 'absolute';
-                offscreenContainer.style.left = '-9999px';
-                offscreenContainer.style.width = '1000px'; 
-                offscreenContainer.style.backgroundColor = '#ffffff';
-                document.body.appendChild(offscreenContainer);
+                if (selectErr) throw selectErr;
 
-                const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+                let responseError;
+                if (data && data.length > 0) {
+                    const updateObj = {};
+                    updateObj[dbSchemaCache.scoreColumn] = parsedScore;
+                    const { error } = await _supabase.from('marks_entry').update(updateObj).eq('id', data[0].id);
+                    responseError = error;
+                } else {
+                    const insertObj = {
+                        student_id: selectedTrackerStudentId,
+                        subject_id: selectedTrackerSubjectId,
+                        paper_id: null
+                    };
+                    insertObj[dbSchemaCache.examColumn] = currentActiveExamName;
+                    insertObj[dbSchemaCache.scoreColumn] = parsedScore;
+                    const { error } = await _supabase.from('marks_entry').insert([insertObj]);
+                    responseError = error;
+                }
 
-                // PAGE 1 Compilation with dynamic centered watermark styling
-                const page1 = document.createElement('div');
-                page1.style.padding = '40px';
-                page1.style.color = '#000000';
-                page1.style.position = 'relative';
-                page1.style.minHeight = '650px';
-                page1.style.overflow = 'hidden';
-                page1.innerHTML = `
-                    <!-- Background Watermark Layer -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
-                            </div>
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        ${cachedPdfData.header}
-                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
-                            ${cachedPdfData.body}
-                        </table>
-                    </div>
-                `;
-                offscreenContainer.appendChild(page1);
-
-                // Re-apply styled borders inside the canvas compile container
-                page1.querySelectorAll('th, td').forEach(cell => {
-                    cell.style.border = '1px solid #000000';
-                    cell.style.padding = '4px 5px';
-                });
-                page1.querySelectorAll('th').forEach(th => {
-                    th.style.backgroundColor = '#f1f5f9';
-                    th.style.fontWeight = 'bold';
-                });
-
-                // Generate Canvas 1
-                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
-                const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
-                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
-                // PAGE 2 Compilation with background watermark styling
-                offscreenContainer.innerHTML = ""; // Clear page 1 nodes
-                const page2 = document.createElement('div');
-                page2.style.padding = '40px';
-                page2.style.color = '#000000';
-                page2.style.position = 'relative';
-                page2.style.minHeight = '650px';
-                page2.style.overflow = 'hidden';
-                page2.innerHTML = `
-                    <!-- Background Watermark Layer -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
-                            </div>
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        ${cachedPdfData.stats}
-                    </div>
-                `;
-                offscreenContainer.appendChild(page2);
-
-                page2.querySelectorAll('th, td').forEach(cell => {
-                    cell.style.border = '1px solid #000000';
-                    cell.style.padding = '4px 5px';
-                });
-
-                // Generate Canvas 2
-                const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
-                const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
-                
-                doc.addPage();
-                doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
-                // Clean up DOM Sandbox
-                document.body.removeChild(offscreenContainer);
-
-                // Build a pure binary Blob containing exact PDF bytes to trigger actual OS Download
-                const pdfBlob = doc.output('blob');
-                const cleanFileName = currentPdfTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
-
-                const blobUrl = URL.createObjectURL(pdfBlob);
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.href = blobUrl;
-                downloadAnchor.download = cleanFileName;
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                
-                // Cleanup URL memory space
-                document.body.removeChild(downloadAnchor);
-                URL.revokeObjectURL(blobUrl);
-
-                pdfModal.close();
-            } catch (err) {
-                alert("Error compilation: " + err.message);
-                console.error(err);
+                if (responseError) throw responseError;
+                alert("Score entry adjusted successfully!");
+                document.getElementById('admin-marks-modal').close();
+                checkUploadsBtn.click();
+            } catch(err) {
+                alert("Failed to modify score parameters: " + err.message);
             } finally {
-                executePdfDownloadBtn.disabled = false;
-                executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
+                document.getElementById('admin-modal-save-btn').innerText = "Save Entry";
+            }
+        });
+
+        // 2. ARCHIVAL CONTEXT MATRIX PROCESSING ENGINE
+        compileHistoricalBtn.addEventListener('click', async () => {
+            const grade = parseInt(histGrade.value);
+            if (isNaN(grade)) return alert("Please select a target grade tier cohort!");
+
+            const historicalContextLabel = `${histYear.value} ${histTerm.value} ${histSeries.value}`;
+            compileHistoricalBtn.disabled = true;
+            compileHistoricalBtn.innerText = "Compiling Records...";
+
+            try {
+                const tier = getGradeTier(grade);
+                const allowed = CBC_SUBJECT_TIERS[tier];
+                const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+
+                if (targetStudents.length === 0) {
+                    alert("No enrolled student matching this specific class level was found.");
+                    return;
+                }
+
+                const { data: dbSubjects, error: subErr } = await _supabase.from('subjects').select('*');
+                if (subErr) throw subErr;
+
+                const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+                const subjectIds = filteredSubjects.map(s => s.id);
+                const studentIds = targetStudents.map(s => s.id);
+
+                const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
+                    .select('*')
+                    .eq(dbSchemaCache.examColumn, historicalContextLabel)
+                    .in('student_id', studentIds)
+                    .in('subject_id', subjectIds)
+                    .is('paper_id', null);
+
+                if (marksErr) throw marksErr;
+                const historicalMarks = marks || [];
+
+                if (historicalMarks.length === 0) {
+                    alert(`No historical dataset metrics found matching the cycle context: "${historicalContextLabel}"`);
+                    return;
+                }
+
+                const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
+                const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+                const subjectMarksStats = {};
+                filteredSubjects.forEach(sub => {
+                    subjectMarksStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                });
+
+                const compiledHistoricalData = targetStudents.map(s => {
+                    let totalMarks = 0, count = 0, subjectScores = {};
+                    filteredSubjects.forEach(sub => {
+                        const m = historicalMarks.find(md => md.student_id === s.id && md.subject_id === sub.id);
+                        if (m) {
+                            const score = parseFloat(m[dbSchemaCache.scoreColumn]);
+                            totalMarks += score;
+                            subjectScores[sub.subject_name] = score;
+                            count++;
+                            subjectMarksStats[sub.subject_name].total += score;
+                            subjectMarksStats[sub.subject_name].count++;
+                            subjectMarksStats[sub.subject_name].dist[getMarksRating(score)]++;
+                        } else {
+                            subjectScores[sub.subject_name] = null;
+                        }
+                    });
+                    const average = count > 0 ? (totalMarks / count) : 0;
+                    marksDistribution[getMarksRating(average)]++;
+                    return { name: s.name, subjectScores, totals: totalMarks, average, rating: getMarksRating(average) };
+                }).sort((a, b) => b.totals - a.totals);
+
+                compiledHistoricalData.forEach((cs, i) => { cs.position = i + 1; });
+                const subjectMarksList = filteredSubjects.map(sub => ({
+                    name: sub.subject_name, avg: subjectMarksStats[sub.subject_name].count > 0 ? subjectMarksStats[sub.subject_name].total / subjectMarksStats[sub.subject_name].count : 0
+                })).sort((a, b) => b.avg - a.avg);
+
+                let marksHeaderHtml = `
+                    <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
+                        <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${historicalContextLabel.toUpperCase()}</h2>
+                        <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">HISTORICAL CBA ARCHIVE REPORT BALANCES</h3>
+                    </div>
+                `;
+
+                let marksBodyHtml = `
+                    <thead>
+                        <tr>
+                            <th style="width: 35px; text-align: center;">NO.</th>
+                            <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
+                            ${filteredSubjects.map(sub => `<th style="width: 50px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
+                            <th style="width: 55px; text-align: center;">TOTAL</th>
+                            <th style="width: 55px; text-align: center;">AVRG</th>
+                            <th style="width: 60px; text-align: center;">RATE</th>
+                            <th style="width: 50px; text-align: center;">POS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${compiledHistoricalData.map((cs, index) => `
+                            <tr>
+                                <td style="text-align: center;">${index + 1}</td>
+                                <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap;">${cs.name}</td>
+                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
+                                <td style="font-weight: bold; color: #0284c7; text-align: center;">${cs.average.toFixed(0)}%</td>
+                                <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
+                                <td style="font-weight: 900; text-align: center;">${cs.position}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+
+                let marksStatsHtml = `
+                    <div style="font-weight: bold; font-size: 10px;">
+                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ARCHIVE ARCHITECTURE</div>
+                        ${ratingKeys.map(key => {
+                            const count = marksDistribution[key] || 0;
+                            return `
+                                <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
+                                    <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
+                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                    <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
+                openEmbeddedPdfPreview(`${historicalContextLabel} Archive Report`, marksHeaderHtml, marksBodyHtml, marksStatsHtml);
+            } catch (err) {
+                alert("Archival processing failure: " + err.message);
+            } finally {
+                compileHistoricalBtn.disabled = false;
+                compileHistoricalBtn.innerText = "🗂️ Compile Historical Ledger";
+            }
+        });
+
+        // 3. FINANCIAL SECURITY SLIP MANAGEMENT ENGINE INTERACTION HANDLERS
+        feeCtrlGrade.addEventListener('change', async () => {
+            const selectedGrade = parseInt(feeCtrlGrade.value);
+            if (isNaN(selectedGrade)) return;
+
+            feeLockoutCheckboxGrid.innerHTML = '<p class="text-xs text-slate-400 italic text-center col-span-full">Querying structural roster configuration...</p>';
+            feeLockoutMatrixContainer.classList.remove('hidden');
+
+            try {
+                const targetStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+                if (targetStudents.length === 0) {
+                    feeLockoutCheckboxGrid.innerHTML = '<p class="text-xs text-error font-semibold text-center col-span-full">No learners enrolled inside this specific class level roster context.</p>';
+                    return;
+                }
+
+                const targetExamContext = `${feeCtrlYear.value} ${feeCtrlTerm.value} ${feeCtrlSeries.value}`;
+                
+                const { data: balanceLocks, error } = await _supabase.from('fee_lockouts')
+                    .select('student_id')
+                    .eq('exam_context', targetExamContext);
+
+                if (error) throw error;
+                const lockedIds = (balanceLocks || []).map(l => l.student_id);
+
+                feeLockoutCheckboxGrid.innerHTML = targetStudents.map(s => {
+                    const isChecked = lockedIds.includes(s.id) ? "checked" : "";
+                    return `
+                        <label class="flex items-center gap-2.5 p-2 rounded border border-slate-100 hover:bg-slate-50 cursor-pointer text-xs">
+                            <input type="checkbox" name="lockout_student_box" value="${s.id}" ${isChecked} class="checkbox checkbox-xs checkbox-primary" />
+                            <span class="truncate font-medium text-slate-700">${s.name} <strong class="text-[10px] text-slate-400 font-mono">(${s.stream})</strong></span>
+                        </label>
+                    `;
+                }).join('');
+            } catch (err) {
+                feeLockoutCheckboxGrid.innerHTML = `<p class="text-xs text-error col-span-full font-bold">Failed to load locks: ${err.message}</p>`;
+            }
+        });
+
+        saveFeeRestrictionsBtn.addEventListener('click', async () => {
+            const selectedGrade = parseInt(feeCtrlGrade.value);
+            if (isNaN(selectedGrade)) return alert("Specify target class cohorts configuration first!");
+
+            const targetExamContext = `${feeCtrlYear.value} ${feeCtrlTerm.value} ${feeCtrlSeries.value}`;
+            const checkBoxes = document.querySelectorAll('input[name="lockout_student_box"]');
+            
+            const targetStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+            const studentIdsInGrade = targetStudents.map(s => s.id);
+
+            const selectedStudentIds = [];
+            checkBoxes.forEach(box => {
+                if (box.checked) selectedStudentIds.push(box.value);
+            });
+
+            saveFeeRestrictionsBtn.disabled = true;
+            saveFeeRestrictionsBtn.innerText = "Syncing Overrides...";
+
+            try {
+                if (studentIdsInGrade.length > 0) {
+                    const { error: deleteErr } = await _supabase.from('fee_lockouts')
+                        .delete()
+                        .eq('exam_context', targetExamContext)
+                        .in('student_id', studentIdsInGrade);
+
+                    if (deleteErr) throw deleteErr;
+                }
+
+                if (selectedStudentIds.length > 0) {
+                    const inserts = selectedStudentIds.map(sid => ({
+                        student_id: sid,
+                        exam_context: targetExamContext,
+                        restricted: true
+                    }));
+
+                    const { error: insertErr } = await _supabase.from('fee_lockouts').insert(inserts);
+                    if (insertErr) throw insertErr;
+                }
+
+                alert(`Financial restrictions matrix updated successfully for context series: "${targetExamContext}"`);
+            } catch (err) {
+                alert("Failed to write restriction blocks to database architecture: " + err.message);
+            } finally {
+                saveFeeRestrictionsBtn.disabled = false;
+                saveFeeRestrictionsBtn.innerText = "🔒 Save Restrictions Matrix";
             }
         });
 
@@ -1637,6 +1863,211 @@
                 printablePointsReportHtml.pointsBodyHtml,
                 printablePointsReportHtml.pointsStatsHtml
             );
+        });
+
+        // MODAL PREVIEW & PDF STREAMING COMPILER
+        let cachedPdfData = { title: "", header: "", body: "", stats: "" };
+
+        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
+            cachedPdfData = { title, header: headerHtml, body: bodyHtml, stats: statsHtml };
+            currentPdfTitle = title;
+
+            // Render exact landscape view structure inside the modal sandbox with centered watermark background styling
+            pdfRenderCanvas.innerHTML = `
+                <!-- Page 1 Container -->
+                <div style="width: 100%; box-sizing: border-box; margin-bottom: 2rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1.5rem; position: relative; min-height: 520px; overflow: hidden;">
+                    <!-- Centered Watermark Layer with Adjusted Opacity -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        </div>
+                        <div style="margin-top: 15px;">${headerHtml}</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
+                            ${bodyHtml}
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Page 2 Container -->
+                <div style="width: 100%; box-sizing: border-box; position: relative; min-height: 520px; overflow: hidden;">
+                    <!-- Centered Watermark Layer with Adjusted Opacity -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        </div>
+                        <div style="margin-top: 15px;">${statsHtml}</div>
+                    </div>
+                </div>
+            `;
+
+            // Apply styling rule specifically targeting modal view tables
+            const tables = pdfRenderCanvas.querySelectorAll('table');
+            tables.forEach(t => {
+                t.style.width = '100%';
+                t.style.borderCollapse = 'collapse';
+                t.style.fontSize = '10px';
+                t.style.marginTop = '10px';
+            });
+            const cells = pdfRenderCanvas.querySelectorAll('th, td');
+            cells.forEach(c => {
+                c.style.border = '1px solid #1e293b';
+                c.style.padding = '4px 5px';
+            });
+            const headers = pdfRenderCanvas.querySelectorAll('th');
+            headers.forEach(h => {
+                h.style.backgroundColor = '#f1f5f9';
+                h.style.color = '#0f172a';
+                h.style.fontWeight = 'bold';
+            });
+
+            pdfModal.showModal();
+        }
+
+        // Direct Download as .pdf File Trigger
+        executePdfDownloadBtn.addEventListener('click', async () => {
+            executePdfDownloadBtn.disabled = true;
+            executePdfDownloadBtn.innerText = "Compiling PDF File...";
+
+            try {
+                const { jsPDF } = window.jspdf;
+                // Standard Landscape layout declaration
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: 'a4'
+                });
+
+                // Structure temporary isolated nodes to compile separate pages
+                const offscreenContainer = document.createElement('div');
+                offscreenContainer.style.position = 'absolute';
+                offscreenContainer.style.left = '-9999px';
+                offscreenContainer.style.width = '1000px'; 
+                offscreenContainer.style.backgroundColor = '#ffffff';
+                document.body.appendChild(offscreenContainer);
+
+                const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+
+                // PAGE 1 Compilation with dynamic centered watermark styling
+                const page1 = document.createElement('div');
+                page1.style.padding = '40px';
+                page1.style.color = '#000000';
+                page1.style.position = 'relative';
+                page1.style.minHeight = '650px';
+                page1.style.overflow = 'hidden';
+                page1.innerHTML = `
+                    <!-- Background Watermark Layer -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        </div>
+                        ${cachedPdfData.header}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
+                            ${cachedPdfData.body}
+                        </table>
+                    </div>
+                `;
+                offscreenContainer.appendChild(page1);
+
+                // Re-apply styled borders inside the canvas compile container
+                page1.querySelectorAll('th, td').forEach(cell => {
+                    cell.style.border = '1px solid #000000';
+                    cell.style.padding = '4px 5px';
+                });
+                page1.querySelectorAll('th').forEach(th => {
+                    th.style.backgroundColor = '#f1f5f9';
+                    th.style.fontWeight = 'bold';
+                });
+
+                // Generate Canvas 1
+                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
+                const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
+                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+
+                // PAGE 2 Compilation with background watermark styling
+                offscreenContainer.innerHTML = ""; // Clear page 1 nodes
+                const page2 = document.createElement('div');
+                page2.style.padding = '40px';
+                page2.style.color = '#000000';
+                page2.style.position = 'relative';
+                page2.style.minHeight = '650px';
+                page2.style.overflow = 'hidden';
+                page2.innerHTML = `
+                    <!-- Background Watermark Layer -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                    
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        </div>
+                        ${cachedPdfData.stats}
+                    </div>
+                `;
+                offscreenContainer.appendChild(page2);
+
+                page2.querySelectorAll('th, td').forEach(cell => {
+                    cell.style.border = '1px solid #000000';
+                    cell.style.padding = '4px 5px';
+                });
+
+                // Generate Canvas 2
+                const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
+                const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
+                
+                doc.addPage();
+                doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+
+                // Clean up DOM Sandbox
+                document.body.removeChild(offscreenContainer);
+
+                // Build a pure binary Blob containing exact PDF bytes to trigger actual OS Download
+                const pdfBlob = doc.output('blob');
+                const cleanFileName = currentPdfTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
+
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = blobUrl;
+                downloadAnchor.download = cleanFileName;
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                
+                // Cleanup URL memory space
+                document.body.removeChild(downloadAnchor);
+                URL.revokeObjectURL(blobUrl);
+
+                pdfModal.close();
+            } catch (err) {
+                alert("Error compilation: " + err.message);
+                console.error(err);
+            } finally {
+                executePdfDownloadBtn.disabled = false;
+                executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
+            }
         });
     </script>
 </body>
