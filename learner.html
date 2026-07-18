@@ -73,6 +73,39 @@
                 </div>
             </div>
 
+            <!-- EXAM SELECTION COMPONENT -->
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6 space-y-3">
+                    <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide">🔍 Select Target Report Parameters</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="form-control w-full">
+                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Target Year</label>
+                            <select id="select-year" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
+                                <option value="2026" selected>2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Target Term</label>
+                            <select id="select-term" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2" selected>Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Exam Category</label>
+                            <select id="select-exam" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
+                                <option value="Opener Exam" selected>Opener Exam</option>
+                                <option value="Mid-Term Exam">Mid-Term Exam</option>
+                                <option value="End-Term Exam">End-Term Exam</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- DYNAMIC REPORT SLIPS PANEL -->
             <div class="card bg-white shadow-xl border border-slate-200">
                 <div class="card-body p-4 sm:p-6 space-y-4">
@@ -113,12 +146,17 @@
         const labelIdBadge = document.getElementById('student-badge-id');
         const slipsContainer = document.getElementById('slips-container');
 
+        const selectYear = document.getElementById('select-year');
+        const selectTerm = document.getElementById('select-term');
+        const selectExam = document.getElementById('select-exam');
+
         let activeSessionName = "Assessment";
         let activeStudent = null;
         let globalSubjects = [];
         let globalPapers = [];
         let allStudentsInCohort = [];
         let cohortMarks = [];
+        let isCurrentSessionLocked = false;
 
         // Schema Cache matching admin.html's architecture
         let dbSchemaCache = {
@@ -219,6 +257,55 @@
             labelTerm.innerText = `Active Cycle: ${activeSessionName}`;
         }
 
+        // Dropdown Parameter Change Handler
+        async function handleParameterSync() {
+            if(!activeStudent) return;
+            
+            slipsContainer.innerHTML = `
+                <div class="col-span-2 text-center py-8">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <p class="text-xs text-slate-400 mt-2 font-medium">Re-compiling historical parameters and data architectures...</p>
+                </div>
+            `;
+
+            const yr = selectYear.value;
+            const tm = selectTerm.value;
+            const ex = selectExam.value;
+            
+            // Construct runtime targeting string matching database naming architecture
+            activeSessionName = `${yr} ${tm} ${ex}`;
+
+            // Check if fee lockouts exist for this structural scope
+            try {
+                const { data: lockRows } = await _supabase.from('fee_lockouts')
+                    .select('*')
+                    .eq('student_id', activeStudent.login_id)
+                    .eq('restricted', true);
+
+                isCurrentSessionLocked = false;
+                if (lockRows && lockRows.length > 0) {
+                    // Match structural fallback strings if any match historical selectors
+                    const lockedMatch = lockRows.some(r => {
+                        const rowYear = r.year || (r.exam_context ? r.exam_context.split(' ')[0] : '');
+                        const rowTerm = r.term || (r.exam_context && r.exam_context.includes('Term') ? r.exam_context.match(/Term \d+/)?.[0] : '');
+                        const rowExam = r.exam_category || '';
+                        
+                        return (rowYear == yr && rowTerm == tm) || r.exam_context === activeSessionName;
+                    });
+                    if(lockedMatch) isCurrentSessionLocked = true;
+                }
+            } catch(e) {
+                console.warn("Restriction verification architecture fault:", e);
+            }
+
+            await loadCohortPerformances();
+        }
+
+        // Attach listeners to filter updates
+        selectYear.addEventListener('change', handleParameterSync);
+        selectTerm.addEventListener('change', handleParameterSync);
+        selectExam.addEventListener('change', handleParameterSync);
+
         // Login Handler
         loginBtn.addEventListener('click', async () => {
             const enteredId = idInput.value.trim().toUpperCase();
@@ -248,12 +335,35 @@
             labelIdBadge.innerText = activeStudent.login_id;
 
             await fetchSessionContext();
+            
+            // Sync parameters with whatever is default inside UI selectors
+            const yr = selectYear.value;
+            const tm = selectTerm.value;
+            const ex = selectExam.value;
+            activeSessionName = `${yr} ${tm} ${ex}`;
+
+            // Verify initial restrictions layout block
+            try {
+                const { data: initialLocks } = await _supabase.from('fee_lockouts')
+                    .select('*')
+                    .eq('student_id', activeStudent.login_id)
+                    .eq('restricted', true);
+                
+                if (initialLocks && initialLocks.length > 0) {
+                    const lockedMatch = initialLocks.some(r => {
+                        return (r.year == yr && r.term == tm) || r.exam_context === activeSessionName;
+                    });
+                    if(lockedMatch) isCurrentSessionLocked = true;
+                }
+            } catch(lErr) {}
+
             await loadCohortPerformances();
         });
 
         logoutBtn.addEventListener('click', () => {
             activeStudent = null;
             idInput.value = "";
+            isCurrentSessionLocked = false;
             loginScreen.classList.remove('hidden');
             dashboardScreen.classList.add('hidden');
             loginBtn.innerHTML = `🔓 Access Assessment Records`;
@@ -302,6 +412,17 @@
 
             let html = "";
 
+            // Handle lack of data records gracefully
+            if (!myMarkRecord || myMarkRecord.totals === 0) {
+                slipsContainer.innerHTML = `
+                    <div class="col-span-2 text-center py-8 bg-slate-100 rounded-xl border border-dashed border-slate-300">
+                        <p class="text-xs text-slate-500 font-bold">⚠️ No evaluation data architecture records found matching "${activeSessionName}".</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Please select an alternate target year, term, or schedule from the filters above.</p>
+                    </div>
+                `;
+                return;
+            }
+
             if (isJuniorSchool) {
                 // Junior School: Point conversion logic
                 const pointRankings = calculateRankings(subjects, true);
@@ -318,7 +439,10 @@
                                 <div>Class Rank: <strong class="text-slate-900">#${myMarkRecord.position} of ${markRankings.length}</strong></div>
                             </div>
                         </div>
-                        <button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📥 Download Raw Marks Slip</button>
+                        ${isCurrentSessionLocked ? 
+                            `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
+                            `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📄 Download Raw Marks Slip</button>`
+                        }
                     </div>
                 `;
 
@@ -333,7 +457,10 @@
                                 <div>Competency Rank: <strong class="text-slate-900">#${myPointRecord.position} of ${pointRankings.length}</strong></div>
                             </div>
                         </div>
-                        <button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📥 Download Competency Points Slip</button>
+                        ${isCurrentSessionLocked ? 
+                            `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
+                            `<button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📄 Download Competency Points Slip</button>`
+                        }
                     </div>
                 `;
             } else {
@@ -350,7 +477,10 @@
                                 <span class="block text-[10px] text-slate-400">Position</span>
                                 <strong class="text-slate-900 text-base">#${myMarkRecord.position}</strong> of ${markRankings.length}
                             </div>
-                            <button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📥 Download Performance Slip</button>
+                            ${isCurrentSessionLocked ? 
+                                `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200 w-full"><p>🔒 Access Restricted: Outstanding balances active.</p></div>` :
+                                `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📄 Download Performance Slip</button>`
+                            }
                         </div>
                     </div>
                 `;
