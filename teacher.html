@@ -89,6 +89,19 @@
                 </button>
             </div>
 
+            <!-- ================= DEDICATED COUNTDOWN TIMER BANNER (STANDALONE & ATTENTION CATCHING) ================= -->
+            <div id="countdown-banner-container" class="hidden max-w-2xl mx-auto w-full">
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-amber-400 shadow-xl rounded-2xl p-4 text-center space-y-2">
+                    <div class="text-[11px] sm:text-xs text-amber-400 tracking-widest uppercase font-extrabold flex items-center justify-center gap-1.5">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        CBA Submission Window Closing In:
+                    </div>
+                    <div id="countdown-timer-display" class="font-code text-xl sm:text-3xl font-black tracking-wider text-white select-none drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]">
+                        00d 00h:00m:00s
+                    </div>
+                </div>
+            </div>
+
             <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
                 <span class="text-xl">⚠️</span>
                 <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
@@ -386,6 +399,10 @@
         const screenMarks = document.getElementById('screen-marks');
         const activeSessionBanner = document.getElementById('active-session-banner');
         const portalLockAlert = document.getElementById('portal-lock-alert');
+        
+        // Countdown Elements Hooks
+        const countdownBannerContainer = document.getElementById('countdown-banner-container');
+        const countdownTimerDisplay = document.getElementById('countdown-timer-display');
 
         // Registration form toggle hooks
         const btnModeSingle = document.getElementById('btn-mode-single');
@@ -646,10 +663,16 @@
                         activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> Closed: ${activeExamContextName}`;
                         activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-rose-500/30 py-2 px-4 rounded-xl flex items-center gap-2 text-rose-400 font-bold";
                         portalLockAlert.classList.remove('hidden');
+                        countdownBannerContainer.classList.add('hidden');
                         if (examCountdownInterval) clearInterval(examCountdownInterval);
                     } else {
                         systemIsLocked = false;
                         
+                        activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Context: ${activeExamContextName}`;
+                        activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-4 rounded-xl flex items-center gap-2 text-white font-bold";
+                        portalLockAlert.classList.add('hidden');
+                        countdownBannerContainer.classList.remove('hidden');
+
                         const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                         const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
@@ -659,9 +682,7 @@
                         if (days > 0) timeString += `${days}d `;
                         timeString += `${hours.toString().padStart(2, '0')}h:${minutes.toString().padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
 
-                        activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Context: ${activeExamContextName} (${timeString} left)`;
-                        activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-4 rounded-xl flex items-center gap-2 text-white font-bold";
-                        portalLockAlert.classList.add('hidden');
+                        countdownTimerDisplay.innerText = timeString;
                     }
                 };
 
