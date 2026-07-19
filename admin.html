@@ -872,7 +872,7 @@
                     manageTeacherList.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No staff profiles registered yet.</p>';
                 }
             } catch (err) {
-                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>';
+                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>`;
             }
         }
 
@@ -948,7 +948,7 @@
                     manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners in grade.</p>';
                 }
             } catch (err) {
-                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>';
+                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
             }
         }
 
@@ -1180,7 +1180,7 @@
                     `;
                 }).join('');
             } catch (err) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>';
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
             }
         });
 
@@ -2006,43 +2006,24 @@
                 page1.style.minHeight = '650px';
                 page1.style.overflow = 'hidden';
                 page1.innerHTML = `
-                    <!-- Background Watermark Layer -->
                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
                     <div style="position: relative; z-index: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
                             <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
                                 <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
                             </div>
                             <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        ${cachedPdfData.header}
-                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
+                        <div>${cachedPdfData.header}</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 9px;">
                             ${cachedPdfData.body}
                         </table>
                     </div>
                 `;
-                offscreenContainer.appendChild(page1);
 
-                // Re-apply styled borders inside the canvas compile container
-                page1.querySelectorAll('th, td').forEach(cell => {
-                    cell.style.border = '1px solid #000000';
-                    cell.style.padding = '4px 5px';
-                });
-                page1.querySelectorAll('th').forEach(th => {
-                    th.style.backgroundColor = '#f1f5f9';
-                    th.style.fontWeight = 'bold';
-                });
-
-                // Generate Canvas 1
-                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
-                const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
-                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
-                // PAGE 2 Compilation with background watermark styling
-                offscreenContainer.innerHTML = ""; // Clear page 1 nodes
+                // PAGE 2 Compilation with metrics stats setup
                 const page2 = document.createElement('div');
                 page2.style.padding = '40px';
                 page2.style.color = '#000000';
@@ -2050,34 +2031,53 @@
                 page2.style.minHeight = '650px';
                 page2.style.overflow = 'hidden';
                 page2.innerHTML = `
-                    <!-- Background Watermark Layer -->
                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
                     <div style="position: relative; z-index: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
                             <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
                                 <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
                             </div>
                             <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        ${cachedPdfData.stats}
+                        <div style="margin-top: 10px;">${cachedPdfData.stats}</div>
                     </div>
                 `;
-                offscreenContainer.appendChild(page2);
 
-                // Run Canvas 2
+                // Apply dynamic shared styles across nodes
+                [page1, page2].forEach(p => {
+                    offscreenContainer.appendChild(p);
+                    p.querySelectorAll('table').forEach(t => {
+                        t.style.width = '100%';
+                        t.style.borderCollapse = 'collapse';
+                    });
+                    p.querySelectorAll('th, td').forEach(c => {
+                        c.style.border = '1px solid #000000';
+                        c.style.padding = '4px 4px';
+                    });
+                    p.querySelectorAll('th').forEach(th => {
+                        th.style.backgroundColor = '#e2e8f0';
+                        th.style.color = '#000000';
+                    });
+                });
+
+                // Stream out both nodes using html2canvas rendering pipelines directly to output targets
+                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
+                const imgData1 = canvas1.toDataURL('image/jpeg', 0.95);
+                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+
                 doc.addPage();
                 const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
-                const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
+                const imgData2 = canvas2.toDataURL('image/jpeg', 0.95);
                 doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
 
-                // Save Document Payload
-                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}_Master_Report.pdf`);
+                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}_Ledger.pdf`);
                 document.body.removeChild(offscreenContainer);
+                pdfModal.close();
             } catch (err) {
-                alert("PDF Document Generator crashed: " + err.message);
+                alert("PDF Compilation System Error: " + err.message);
+                console.error(err);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
