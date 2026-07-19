@@ -872,7 +872,7 @@
                     manageTeacherList.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No staff profiles registered yet.</p>';
                 }
             } catch (err) {
-                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>`;
+                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>';
             }
         }
 
@@ -948,7 +948,7 @@
                     manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners in grade.</p>';
                 }
             } catch (err) {
-                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
+                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>';
             }
         }
 
@@ -1180,7 +1180,7 @@
                     `;
                 }).join('');
             } catch (err) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>';
             }
         });
 
@@ -1254,6 +1254,8 @@
 
                 if (targetStudents.length === 0) {
                     alert("No enrolled student matching this specific class level was found.");
+                    compileHistoricalBtn.disabled = false;
+                    compileHistoricalBtn.innerText = "🗂️ Compile Historical Ledger";
                     return;
                 }
 
@@ -1276,46 +1278,58 @@
 
                 if (historicalMarks.length === 0) {
                     alert(`No historical dataset metrics found matching the cycle context: "${historicalContextLabel}"`);
+                    compileHistoricalBtn.disabled = false;
+                    compileHistoricalBtn.innerText = "🗂️ Compile Historical Ledger";
                     return;
                 }
 
+                // Check evaluation format preference for junior school tiers
+                let compilePoints = false;
+                if (tier === "junior_school") {
+                    compilePoints = confirm("Do you want to compile the Points Ledger for Junior School?\n\nClick [OK] for Points Ledger layout.\nClick [Cancel] for default Raw Marks Ledger layout.");
+                }
+
                 const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
-                const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
-                const subjectMarksStats = {};
+                const matrixDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+                const subjectMetricsStats = {};
                 filteredSubjects.forEach(sub => {
-                    subjectMarksStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                    subjectMetricsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
                 });
 
                 const compiledHistoricalData = targetStudents.map(s => {
-                    let totalMarks = 0, count = 0, subjectScores = {};
+                    let combinedTotals = 0, count = 0, subjectScores = {};
                     filteredSubjects.forEach(sub => {
                         const m = historicalMarks.find(md => md.student_id === s.id && md.subject_id === sub.id);
                         if (m) {
                             const score = parseFloat(m[dbSchemaCache.scoreColumn]);
-                            totalMarks += score;
-                            subjectScores[sub.subject_name] = score;
+                            const structuralValue = compilePoints ? convertScoreToPoints(score, 100) : score;
+                            combinedTotals += structuralValue;
+                            subjectScores[sub.subject_name] = structuralValue;
                             count++;
-                            subjectMarksStats[sub.subject_name].total += score;
-                            subjectMarksStats[sub.subject_name].count++;
-                            subjectMarksStats[sub.subject_name].dist[getMarksRating(score)]++;
+                            
+                            subjectMetricsStats[sub.subject_name].total += structuralValue;
+                            subjectMetricsStats[sub.subject_name].count++;
+                            const individualRating = compilePoints ? getPointsRating(structuralValue) : getMarksRating(score);
+                            subjectMetricsStats[sub.subject_name].dist[individualRating]++;
                         } else {
                             subjectScores[sub.subject_name] = null;
                         }
                     });
-                    const average = count > 0 ? (totalMarks / count) : 0;
-                    marksDistribution[getMarksRating(average)]++;
-                    return { name: s.name, subjectScores, totals: totalMarks, average, rating: getMarksRating(average) };
+                    const average = count > 0 ? (combinedTotals / count) : 0;
+                    const compositeRating = compilePoints ? getPointsRating(average) : getMarksRating(average);
+                    matrixDistribution[compositeRating]++;
+                    return { name: s.name, subjectScores, totals: combinedTotals, average, rating: compositeRating };
                 }).sort((a, b) => b.totals - a.totals);
 
                 compiledHistoricalData.forEach((cs, i) => { cs.position = i + 1; });
-                const subjectMarksList = filteredSubjects.map(sub => ({
-                    name: sub.subject_name, avg: subjectMarksStats[sub.subject_name].count > 0 ? subjectMarksStats[sub.subject_name].total / subjectMarksStats[sub.subject_name].count : 0
+                const arrangedSubjectList = filteredSubjects.map(sub => ({
+                    name: sub.subject_name, avg: subjectMetricsStats[sub.subject_name].count > 0 ? subjectMetricsStats[sub.subject_name].total / subjectMetricsStats[sub.subject_name].count : 0
                 })).sort((a, b) => b.avg - a.avg);
 
                 let marksHeaderHtml = `
                     <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
                         <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${historicalContextLabel.toUpperCase()}</h2>
-                        <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">HISTORICAL CBA ARCHIVE REPORT BALANCES</h3>
+                        <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">HISTORICAL CBA ARCHIVE REPORT BALANCES (${compilePoints ? 'POINTS' : 'MARKS'})</h3>
                     </div>
                 `;
 
@@ -1336,13 +1350,36 @@
                             <tr>
                                 <td style="text-align: center;">${index + 1}</td>
                                 <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap;">${cs.name}</td>
-                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? (compilePoints ? cs.subjectScores[sub.subject_name].toFixed(0) : cs.subjectScores[sub.subject_name]) : '-'}</td>`).join('')}
                                 <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
-                                <td style="font-weight: bold; color: #0284c7; text-align: center;">${cs.average.toFixed(0)}%</td>
+                                <td style="font-weight: bold; color: ${compilePoints ? '#15803d' : '#0284c7'}; text-align: center;">${compilePoints ? cs.average.toFixed(1) : cs.average.toFixed(0) + '%'}</td>
                                 <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
                                 <td style="font-weight: 900; text-align: center;">${cs.position}</td>
                             </tr>
                         `).join('')}
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
+                            ${filteredSubjects.map(sub => `<td style="text-align: center;">${subjectMetricsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
+                            <td style="text-align: center;">${compiledHistoricalData.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
+                            <td colspan="3" style="text-align: center;"></td>
+                        </tr>
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
+                            ${filteredSubjects.map(sub => {
+                                const stats = subjectMetricsStats[sub.subject_name];
+                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
+                            }).join('')}
+                            <td style="text-align: center;">${(compiledHistoricalData.reduce((acc, curr) => acc + curr.totals, 0) / targetStudents.length).toFixed(1)}</td>
+                            <td colspan="3" style="text-align: center;"></td>
+                        </tr>
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="2" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
+                            ${filteredSubjects.map(sub => {
+                                const rank = arrangedSubjectList.findIndex(x => x.name === sub.subject_name) + 1;
+                                return `<td style="text-align: center;">${rank}</td>`;
+                            }).join('')}
+                            <td colspan="4" style="text-align: center;"></td>
+                        </tr>
                     </tbody>
                 `;
 
@@ -1350,11 +1387,11 @@
                     <div style="font-weight: bold; font-size: 10px;">
                         <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ARCHIVE ARCHITECTURE</div>
                         ${ratingKeys.map(key => {
-                            const count = marksDistribution[key] || 0;
+                            const count = matrixDistribution[key] || 0;
                             return `
                                 <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
                                     <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
-                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectMetricsStats[sub.subject_name].dist[key]}</div>`).join('')}
                                     <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students</div>
                                 </div>
                             `;
@@ -2030,40 +2067,17 @@
                 `;
                 offscreenContainer.appendChild(page2);
 
-                page2.querySelectorAll('th, td').forEach(cell => {
-                    cell.style.border = '1px solid #000000';
-                    cell.style.padding = '4px 5px';
-                });
-
-                // Generate Canvas 2
+                // Run Canvas 2
+                doc.addPage();
                 const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
                 const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
-                
-                doc.addPage();
                 doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
 
-                // Clean up DOM Sandbox
+                // Save Document Payload
+                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}_Master_Report.pdf`);
                 document.body.removeChild(offscreenContainer);
-
-                // Build a pure binary Blob containing exact PDF bytes to trigger actual OS Download
-                const pdfBlob = doc.output('blob');
-                const cleanFileName = currentPdfTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
-
-                const blobUrl = URL.createObjectURL(pdfBlob);
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.href = blobUrl;
-                downloadAnchor.download = cleanFileName;
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                
-                // Cleanup URL memory space
-                document.body.removeChild(downloadAnchor);
-                URL.revokeObjectURL(blobUrl);
-
-                pdfModal.close();
             } catch (err) {
-                alert("Error compilation: " + err.message);
-                console.error(err);
+                alert("PDF Document Generator crashed: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
