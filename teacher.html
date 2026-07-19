@@ -226,9 +226,14 @@
                 <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
                     <div class="card-body p-4 sm:p-8">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xl">🗂️</span>
-                                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Active Student Database</h2>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xl">🗂️</span>
+                                    <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Active Student Database</h2>
+                                </div>
+                                <button id="btn-manage-class" class="btn btn-outline btn-sm btn-amber rounded-xl font-extrabold border-2 text-xs flex items-center gap-1.5 hover:bg-slate-900 hover:text-amber-400">
+                                    ⚙️ Manage Class
+                                </button>
                             </div>
                             <input type="text" id="search-bar" placeholder="🔍 Search learners by name..." class="input input-bordered input-sm w-full sm:w-80 rounded-xl" />
                         </div>
@@ -250,6 +255,48 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ================= MANAGE CLASS MANAGEMENT INTERFACE MODAL PANEL ================= -->
+            <div id="panel-manage-class" class="card bg-white shadow-xl border border-slate-200 rounded-2xl hidden space-y-6 p-4 sm:p-8">
+                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="font-extrabold text-base sm:text-xl text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                            <span>⚙️</span> Manage Class Operations Directory
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Filter cohort directories to execute fast administrative details profiling and deletions.</p>
+                    </div>
+                    <button id="btn-close-manage-class" class="btn btn-sm btn-circle btn-ghost text-slate-500 font-extrabold hover:bg-slate-100">✕</button>
+                </div>
+                
+                <div class="form-control w-full max-w-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Select Target Grade View</label>
+                    <select id="manage-class-grade-select" class="select select-bordered select-sm w-full rounded-lg font-bold">
+                        <option value="" selected disabled>Select Grade...</option>
+                        <option value="-2">PP1</option><option value="-1">PP2</option>
+                        <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                        <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                        <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                        <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="p-3.5 text-left">Full Name</th>
+                                <th class="p-3.5 text-center">Grade</th>
+                                <th class="p-3.5 text-center">Stream</th>
+                                <th class="p-3.5 text-center">Maths Family</th>
+                                <th class="p-3.5 text-center">Operations</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manage-class-list-rows" class="font-code text-xs">
+                            <tr><td colspan="5" class="text-center py-8 text-slate-400 italic">Please select a grade cohort option from the menu selector above.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -321,6 +368,7 @@
         let activeExamContextName = "";
         let localStudentsCache = [];
         let subjectsCache = [];
+        let examCountdownInterval = null;
 
         // Auth handles
         const authWall = document.getElementById('auth-wall');
@@ -359,6 +407,13 @@
         const editStudFamily = document.getElementById('edit-stud-family');
         const btnCloseEdit = document.getElementById('btn-close-edit');
         const btnSaveStudentEdit = document.getElementById('btn-save-student-edit');
+
+        // Manage Class Panel Elements Handles
+        const btnManageClass = document.getElementById('btn-manage-class');
+        const panelManageClass = document.getElementById('panel-manage-class');
+        const btnCloseManageClass = document.getElementById('btn-close-manage-class');
+        const manageClassGradeSelect = document.getElementById('manage-class-grade-select');
+        const manageClassListRows = document.getElementById('manage-class-list-rows');
 
         // Batch Form Hooks
         const btnTriggerBatch = document.getElementById('btn-trigger-batch');
@@ -435,6 +490,7 @@
             authWall.style.display = 'flex';
             portalContent.classList.add('hidden');
             portalContent.classList.remove('flex');
+            if (examCountdownInterval) clearInterval(examCountdownInterval);
         }
 
         function showPortalContent() {
@@ -521,25 +577,96 @@
             studentForm.classList.add('hidden');
         });
 
+        // Manage Class Toggle Hooks
+        btnManageClass.addEventListener('click', () => {
+            panelManageClass.classList.remove('hidden');
+            panelManageClass.scrollIntoView({ behavior: 'smooth' });
+        });
+        btnCloseManageClass.addEventListener('click', () => {
+            panelManageClass.classList.add('hidden');
+        });
+        manageClassGradeSelect.addEventListener('change', () => {
+            renderManageClassTable();
+        });
+
+        function renderManageClassTable() {
+            const selectedGrade = manageClassGradeSelect.value;
+            if(!selectedGrade) return;
+            const filtered = localStudentsCache.filter(s => String(s.grade) === String(selectedGrade));
+            if(filtered.length === 0) {
+                manageClassListRows.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 italic">No students registered in ${gradeMap[selectedGrade]}.</td></tr>`;
+                return;
+            }
+            manageClassListRows.innerHTML = filtered.map(s => `
+                <tr class="hover">
+                    <td class="font-bold text-slate-800 py-3 px-2">${s.name}</td>
+                    <td class="text-center py-3 px-2">${gradeMap[s.grade] || s.grade}</td>
+                    <td class="text-center py-3 px-2"><span class="badge font-code font-medium bg-slate-100 text-slate-700 border-none">${s.stream}</span></td>
+                    <td class="text-center py-3 px-2"><span class="badge font-bold text-xs bg-amber-100 text-amber-800 border-none">${s.maths_club_family || 'None'}</span></td>
+                    <td class="text-center py-3 px-2 space-x-1">
+                        <button onclick="initiateStudentEdit('${s.id}')" class="btn btn-ghost btn-xs text-amber-600 hover:text-amber-800 font-bold">✏️ Edit</button>
+                        <button onclick="executeStudentDelete('${s.id}')" class="btn btn-ghost btn-xs text-rose-600 hover:text-rose-800 font-bold">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.executeStudentDelete = async function(id) {
+            const targetStudent = localStudentsCache.find(s => s.id === id);
+            if (!targetStudent) return;
+            if (!confirm(`⚠️ Are you absolutely sure you want to completely remove "${targetStudent.name}" from the school directory portal database? This action is non-reversible.`)) {
+                return;
+            }
+            const { error } = await _supabase.from('students').delete().eq('id', id);
+            if (error) {
+                alert("❌ Deletion Failed: " + error.message);
+            } else {
+                localStudentsCache = localStudentsCache.filter(s => s.id !== id);
+                renderTable(localStudentsCache);
+                renderManageClassTable();
+                alert("✨ Student records permanently removed from portal database directory.");
+            }
+        };
+
         async function pullActiveCycleState() {
+            if (examCountdownInterval) clearInterval(examCountdownInterval);
+            
             const { data, error } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
             if (!error && data && data.length > 0) {
                 const session = data[0];
                 activeExamContextName = session.exam_name;
                 const deadline = new Date(session.deadline_at);
-                const now = new Date();
 
-                if (!session.is_active || now > deadline) {
-                    systemIsLocked = true;
-                    activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> Closed: ${activeExamContextName}`;
-                    activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-rose-500/30 py-2 px-4 rounded-xl flex items-center gap-2 text-rose-400 font-bold";
-                    portalLockAlert.classList.remove('hidden');
-                } else {
-                    systemIsLocked = false;
-                    activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Context: ${activeExamContextName}`;
-                    activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-4 rounded-xl flex items-center gap-2 text-white font-bold";
-                    portalLockAlert.classList.add('hidden');
-                }
+                const updateCountdown = () => {
+                    const now = new Date();
+                    const diffTime = deadline.getTime() - now.getTime();
+
+                    if (!session.is_active || diffTime <= 0) {
+                        systemIsLocked = true;
+                        activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> Closed: ${activeExamContextName}`;
+                        activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-rose-500/30 py-2 px-4 rounded-xl flex items-center gap-2 text-rose-400 font-bold";
+                        portalLockAlert.classList.remove('hidden');
+                        if (examCountdownInterval) clearInterval(examCountdownInterval);
+                    } else {
+                        systemIsLocked = false;
+                        
+                        const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
+
+                        let timeString = "";
+                        if (days > 0) timeString += `${days}d `;
+                        timeString += `${hours.toString().padStart(2, '0')}h:${minutes.toString().padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
+
+                        activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Context: ${activeExamContextName} (${timeString} left)`;
+                        activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-4 rounded-xl flex items-center gap-2 text-white font-bold";
+                        portalLockAlert.classList.add('hidden');
+                    }
+                };
+
+                updateCountdown();
+                examCountdownInterval = setInterval(updateCountdown, 1000);
             }
         }
 
@@ -548,6 +675,7 @@
             if (error) console.error("Error loading students:", error);
             localStudentsCache = data || [];
             renderTable(localStudentsCache);
+            renderManageClassTable();
         }
 
         function renderTable(students) {
@@ -583,6 +711,7 @@
                 document.getElementById('stud-stream').value = "A"; 
                 localStudentsCache.unshift(data[0]); 
                 renderTable(localStudentsCache); 
+                renderManageClassTable();
                 alert("✨ Student registered successfully!");
             } else {
                 alert("❌ Registration failed: " + error.message);
@@ -627,6 +756,7 @@
                 batchNamesArea.value = "";
                 localStudentsCache = [...data, ...localStudentsCache];
                 renderTable(localStudentsCache);
+                renderManageClassTable();
             }
 
             btnTriggerBatch.disabled = false;
@@ -686,6 +816,7 @@
                     localStudentsCache[index].maths_club_family = updatedFamily;
                 }
                 renderTable(localStudentsCache);
+                renderManageClassTable();
                 editStudentBox.classList.add('hidden');
                 alert("✨ Student profile updated successfully!");
             }
