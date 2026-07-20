@@ -872,7 +872,7 @@
                     manageTeacherList.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No staff profiles registered yet.</p>';
                 }
             } catch (err) {
-                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>';
+                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>`;
             }
         }
 
@@ -948,7 +948,7 @@
                     manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners in grade.</p>';
                 }
             } catch (err) {
-                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>';
+                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
             }
         }
 
@@ -1097,6 +1097,10 @@
             startCycleBtn.disabled = true;
             startCycleBtn.innerText = "Publishing...";
             try {
+                // First, mark all existing exam sessions as inactive
+                await _supabase.from('exam_sessions').update({ is_active: false }).neq('id', 0);
+
+                // Insert the new active exam session cycle context
                 const { error } = await _supabase.from('exam_sessions').insert([{ 
                     exam_name: constructedName, 
                     deadline_at: deadlineIso, 
@@ -1180,7 +1184,7 @@
                     `;
                 }).join('');
             } catch (err) {
-                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>';
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
             }
         });
 
@@ -1998,86 +2002,97 @@
 
                 const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
 
-                // PAGE 1 Compilation with dynamic centered watermark styling
-                const page1 = document.createElement('div');
-                page1.style.padding = '40px';
-                page1.style.color = '#000000';
-                page1.style.position = 'relative';
-                page1.style.minHeight = '650px';
-                page1.style.overflow = 'hidden';
-                page1.innerHTML = `
-                    <!-- Background Watermark Layer -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
+                const pageOneNode = document.createElement('div');
+                pageOneNode.style.padding = '35px 40px';
+                pageOneNode.style.position = 'relative';
+                pageOneNode.style.backgroundColor = '#ffffff';
+                pageOneNode.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; opacity: 0.05; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
                     <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; font-family: 'Times New Roman', serif;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 2px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif;">Determination is Nobility</p>
                             </div>
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        ${cachedPdfData.header}
-                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px;">
+                        <div>${cachedPdfData.header}</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9.5px;">
                             ${cachedPdfData.body}
                         </table>
                     </div>
                 `;
-                offscreenContainer.appendChild(page1);
+                offscreenContainer.appendChild(pageOneNode);
 
-                // Re-apply styled borders inside the canvas compile container
-                page1.querySelectorAll('th, td').forEach(cell => {
-                    cell.style.border = '1px solid #000000';
-                    cell.style.padding = '4px 5px';
+                const styleCells = (container) => {
+                    container.querySelectorAll('table').forEach(t => {
+                        t.style.width = '100%';
+                        t.style.borderCollapse = 'collapse';
+                    });
+                    container.querySelectorAll('th, td').forEach(c => {
+                        c.style.border = '1px solid #0f172a';
+                        c.style.padding = '4px 5px';
+                    });
+                    container.querySelectorAll('th').forEach(h => {
+                        h.style.backgroundColor = '#f1f5f9';
+                        h.style.color = '#0f172a';
+                        h.style.fontWeight = 'bold';
+                    });
+                };
+                styleCells(pageOneNode);
+
+                const canvasOne = await html2canvasPro(pageOneNode, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    width: 1000
                 });
-                page1.querySelectorAll('th').forEach(th => {
-                    th.style.backgroundColor = '#f1f5f9';
-                    th.style.fontWeight = 'bold';
-                });
+                const imgDataOne = canvasOne.toDataURL('image/jpeg', 0.98);
+                
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = doc.internal.pageSize.getHeight();
+                
+                doc.addImage(imgDataOne, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-                // Generate Canvas 1
-                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
-                const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
-                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
-                // PAGE 2 Compilation with background watermark styling
-                offscreenContainer.innerHTML = ""; // Clear page 1 nodes
-                const page2 = document.createElement('div');
-                page2.style.padding = '40px';
-                page2.style.color = '#000000';
-                page2.style.position = 'relative';
-                page2.style.minHeight = '650px';
-                page2.style.overflow = 'hidden';
-                page2.innerHTML = `
-                    <!-- Background Watermark Layer -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; opacity: 0.06; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
+                const pageTwoNode = document.createElement('div');
+                pageTwoNode.style.padding = '35px 40px';
+                pageTwoNode.style.position = 'relative';
+                pageTwoNode.style.backgroundColor = '#ffffff';
+                pageTwoNode.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; opacity: 0.05; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
                     <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: bold; margin: 0; font-family: 'Times New Roman';">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; font-family: 'Times New Roman', serif;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 2px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif;">Determination is Nobility</p>
                             </div>
-                            <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        ${cachedPdfData.stats}
+                        <div style="margin-top: 10px;">${cachedPdfData.stats}</div>
                     </div>
                 `;
-                offscreenContainer.appendChild(page2);
+                offscreenContainer.appendChild(pageTwoNode);
+                styleCells(pageTwoNode);
 
-                // Run Canvas 2
+                const canvasTwo = await html2canvasPro(pageTwoNode, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    width: 1000
+                });
+                const imgDataTwo = canvasTwo.toDataURL('image/jpeg', 0.98);
+
                 doc.addPage();
-                const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
-                const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
-                doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+                doc.addImage(imgDataTwo, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-                // Save Document Payload
-                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}_Master_Report.pdf`);
+                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}.pdf`);
                 document.body.removeChild(offscreenContainer);
+                pdfModal.close();
             } catch (err) {
-                alert("PDF Document Generator crashed: " + err.message);
+                alert("PDF rendering structural pipeline error: " + err.message);
+                console.error(err);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
