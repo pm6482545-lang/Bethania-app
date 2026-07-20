@@ -256,6 +256,23 @@
             const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
             if (sessions && sessions.length > 0) {
                 activeSessionName = sessions[0].exam_name;
+                
+                // Synchronize dropdown filters to reflect the database active cycle upon initial generation
+                const parts = activeSessionName.split(' ');
+                if (parts.length >= 3) {
+                    if (document.querySelector(`#select-year option[value="${parts[0]}"]`)) selectYear.value = parts[0];
+                    
+                    let parsedTerm = parts[1] + (parts[2] === "Term" || !isNaN(parts[2]) ? " " + parts[2] : "");
+                    let remainingIndex = parts.indexOf("Exam") !== -1 ? parts.indexOf("Exam") : parts.length;
+                    
+                    if (activeSessionName.includes("Term 1")) selectTerm.value = "Term 1";
+                    else if (activeSessionName.includes("Term 2")) selectTerm.value = "Term 2";
+                    else if (activeSessionName.includes("Term 3")) selectTerm.value = "Term 3";
+
+                    if (activeSessionName.includes("Opener")) selectExam.value = "Opener Exam";
+                    else if (activeSessionName.includes("Mid")) selectExam.value = "Mid-Term Exam";
+                    else if (activeSessionName.includes("End")) selectExam.value = "End-Term Exam";
+                }
             }
             labelTerm.innerText = `Active Cycle: ${activeSessionName}`;
         }
@@ -280,20 +297,22 @@
 
             // Check if fee lockouts exist for this structural scope
             try {
-                // Query using both the internal database id AND the alphanumeric login_id to be safe
+                // Check lockouts by targeting both potential variations of the key reference
                 const { data: lockRows } = await _supabase.from('fee_lockouts')
                     .select('*')
-                    .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
+                    .or(`student_id.eq."${activeStudent.login_id}",student_id.eq."${activeStudent.id}"`)
                     .eq('restricted', true);
 
                 isCurrentSessionLocked = false;
                 if (lockRows && lockRows.length > 0) {
-                    // Match structural fallback strings if any match historical selectors
+                    const normalizedActive = activeSessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const altActive1 = `${yr} ${tm} ${ex.replace('-', ' ')}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const altActive2 = `${yr} ${tm.replace(' ', '')} ${ex.replace('-Term', '')}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+
                     const lockedMatch = lockRows.some(r => {
-                        const rowYear = r.year || (r.exam_context ? r.exam_context.split(' ')[0] : '');
-                        const rowTerm = r.term || (r.exam_context && r.exam_context.includes('Term') ? r.exam_context.match(/Term \d+/)?.[0] : '');
-                        
-                        return (rowYear == yr && rowTerm == tm) || r.exam_context === activeSessionName;
+                        if (!r.exam_context) return false;
+                        const targetContext = r.exam_context.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        return targetContext === normalizedActive || targetContext === altActive1 || targetContext === altActive2;
                     });
                     if(lockedMatch) isCurrentSessionLocked = true;
                 }
@@ -349,12 +368,17 @@
             try {
                 const { data: initialLocks } = await _supabase.from('fee_lockouts')
                     .select('*')
-                    .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
+                    .or(`student_id.eq."${activeStudent.login_id}",student_id.eq."${activeStudent.id}"`)
                     .eq('restricted', true);
                 
                 if (initialLocks && initialLocks.length > 0) {
+                    const normalizedActive = activeSessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const altActive1 = `${yr} ${tm} ${ex.replace('-', ' ')}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    
                     const lockedMatch = initialLocks.some(r => {
-                        return (r.year == yr && r.term == tm) || r.exam_context === activeSessionName;
+                        if (!r.exam_context) return false;
+                        const targetContext = r.exam_context.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        return targetContext === normalizedActive || targetContext === altActive1;
                     });
                     if(lockedMatch) isCurrentSessionLocked = true;
                 }
@@ -379,12 +403,8 @@
             const tier = getGradeTier(grade);
             const allowed = CBC_SUBJECT_TIERS[tier];
 
-            // 1. Fetch Students in current grade cohort (Patched using both integer and string matches)
-            const gradeInt = parseInt(grade);
-            const gradeStr = grade.toString();
-            const { data: classmates } = await _supabase.from('students')
-                .select('*')
-                .or(`grade.eq.${gradeInt},grade.eq."${gradeStr}"`);
+            // 1. Fetch Students in current grade cohort
+            const { data: classmates } = await _supabase.from('students').select('*').eq('grade', grade);
             allStudentsInCohort = classmates || [];
 
             // 2. Fetch active subjects matching standard CBC lists
@@ -397,18 +417,8 @@
             const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
             globalPapers = dbPapers || [];
 
-            // 4. Fetch cohort marks matching normal or alternative format (Patched for absolute identifier flexibility)
-            const identifierList = [];
-            allStudentsInCohort.forEach(c => {
-                if (c.id) {
-                    identifierList.push(c.id);
-                    identifierList.push(c.id.toString());
-                    if (!isNaN(c.id)) identifierList.push(parseInt(c.id));
-                }
-                if (c.login_id) {
-                    identifierList.push(c.login_id);
-                }
-            });
+            // 4. Fetch cohort marks matching normal or alternative format
+            const classmateIds = allStudentsInCohort.map(c => c.id);
             
             // Robust match patterns to align variations between portals
             let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
@@ -417,7 +427,7 @@
             const { data: marks } = await _supabase.from('marks_entry')
                 .select('*')
                 .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
-                .in('student_id', identifierList);
+                .in('student_id', classmateIds);
             
             cohortMarks = marks || [];
 
@@ -524,10 +534,10 @@
                     let maxSum = 0;
                     let studentHasScore = false;
 
-                    // 1. Process via component papers if they exist (Patched with flexible type-matching)
+                    // 1. Process via component papers if they exist
                     if (papers.length > 0) {
                         papers.forEach(p => {
-                            const scoreObj = cohortMarks.find(m => (m.student_id == stud.id || m.student_id == stud.login_id) && m.paper_id === p.id);
+                            const scoreObj = cohortMarks.find(m => m.student_id === stud.id && m.paper_id === p.id);
                             if (scoreObj) {
                                 const val = parseFloat(scoreObj[dbSchemaCache.scoreColumn]);
                                 if (!isNaN(val)) {
@@ -539,8 +549,8 @@
                         });
                     }
 
-                    // 2. Fallback check for direct aggregate subject level marks (Patched with flexible type-matching)
-                    const directScoreObj = cohortMarks.find(m => (m.student_id == stud.id || m.student_id == stud.login_id) && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
+                    // 2. Fallback check for direct aggregate subject level marks
+                    const directScoreObj = cohortMarks.find(m => m.student_id === stud.id && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
                     if (directScoreObj) {
                         const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
                         if (!isNaN(val)) {
@@ -626,7 +636,7 @@
                     format: 'a4'
                 });
 
-                // Create isolated sandbox element to render print CSS styles cleanly
+                // Create isolated sandbox element to render pure print CSS styles cleanly
                 const offscreenContainer = document.createElement('div');
                 offscreenContainer.style.position = 'absolute';
                 offscreenContainer.style.left = '-9999px';
