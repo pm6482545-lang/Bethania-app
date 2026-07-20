@@ -4,185 +4,409 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethania Academy - Student Report Portal</title>
+    <title>Bethania Academy - CBA Teacher Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Upgraded PDF Compilation & Rendering Dependencies matching admin.html -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&family=JetBrains+Mono:wght=400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
 
-    <!-- LOGIN PANEL -->
-    <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen px-4">
-        <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
-            <div class="card-body p-6 sm:p-8 text-center space-y-4">
-                <div class="avatar bg-white p-1 rounded-full ring-4 ring-amber-400/30 mx-auto w-16 h-16 flex items-center justify-center overflow-hidden">
-                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" class="rounded-full" onerror="this.src='https://placehold.co/100x100?text=BA'"/>
+    <!-- ================= AUTHENTICATION WALL (GATED INTERFACE) ================= -->
+    <div id="auth-wall" class="flex-grow flex items-center justify-center p-4 bg-slate-900">
+        <div class="card w-full max-w-md bg-white shadow-2xl rounded-3xl border border-slate-200 overflow-hidden">
+            <div class="p-8 text-center bg-slate-50 border-b border-slate-100 flex flex-col items-center">
+                <div class="avatar mb-4">
+                    <div class="w-16 h-16 rounded-full ring ring-amber-400 ring-offset-2 overflow-hidden bg-white">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Logo" />
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
-                    <p class="text-[10px] text-slate-500 tracking-widest font-bold uppercase">Motto: "Determination is Nobility"</p>
-                </div>
-                <div class="divider my-1"></div>
-                <div class="form-control w-full text-left">
-                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Enter Unique Student Login ID</label>
-                    <input type="text" id="student-id-input" placeholder="e.g. AA1234" class="input input-bordered input-md w-full font-mono text-center text-lg uppercase tracking-widest font-bold focus:outline-none" />
-                </div>
-                <button id="login-btn" class="btn btn-neutral btn-md w-full text-white font-bold uppercase tracking-wider">🔓 Access Assessment Records</button>
+                <h2 class="text-xl font-extrabold text-slate-900 uppercase tracking-wide">Teacher Authentication</h2>
+                <p class="text-xs text-slate-500 mt-1">Please enter your CBA Teacher Access Credentials</p>
             </div>
+            <form id="auth-form" class="card-body p-8 space-y-4">
+                <div class="form-control">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Teacher Username</label>
+                    <input type="text" id="auth-username" placeholder="e.g. tr_7886" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none font-code text-sm" required />
+                </div>
+                <div class="form-control">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Access Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none font-code text-sm" required />
+                </div>
+                <div class="pt-4">
+                    <button type="submit" id="btn-login" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition">
+                        Sign In to Portal
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- STUDENT DASHBOARD -->
-    <div id="dashboard-screen" class="hidden">
-        <!-- Header -->
-        <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 border-b border-amber-500/30">
-            <div class="flex-1">
-                <div class="flex items-center gap-3">
-                    <div class="avatar bg-white p-0.5 rounded-full ring-2 ring-amber-400/50">
-                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" onerror="this.src='https://placehold.co/100x100?text=BA'"/>
+    <!-- ================= MAIN CBA PORTAL INTERFACE (HIDDEN BY DEFAULT) ================= -->
+    <div id="portal-content" class="hidden flex-col min-h-screen">
+        <header class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-8 sticky top-0 z-50 border-b-2 border-amber-500">
+            <div class="flex-1 gap-3">
+                <div class="avatar">
+                    <div class="w-10 h-10 rounded-full ring ring-amber-400 ring-offset-base-100 ring-offset-2 overflow-hidden bg-white">
+                        <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Bethania Logo" />
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-lg font-extrabold tracking-wider uppercase text-amber-400 leading-none">Bethania Academy</h1>
+                    <p class="text-[9px] sm:text-[10px] text-slate-300 font-bold tracking-widest uppercase mt-1">CBA Teacher Portal & Marks Ledger</p>
+                </div>
+            </div>
+            <div class="flex-none gap-2 sm:gap-4">
+                <span id="active-session-banner" class="text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-3 sm:px-4 rounded-xl flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> Connecting to DB...
+                </span>
+                <button id="btn-logout" class="btn btn-ghost btn-xs sm:btn-sm text-red-400 hover:text-red-500 hover:bg-slate-800 rounded-lg font-bold">
+                    Logout 🚪
+                </button>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
+
+            <div class="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
+                    <span class="text-base sm:text-lg">👤</span>
+                    <span class="text-xs sm:text-sm font-extrabold tracking-tight">Student Roster</span>
+                </button>
+                <button id="tab-marks" class="btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200">
+                    <span class="text-base sm:text-lg text-emerald-600">📝</span>
+                    <span class="text-xs sm:text-sm font-extrabold tracking-tight">Marks Entry</span>
+                </button>
+            </div>
+
+            <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
+                <span class="text-xl">⚠️</span>
+                <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
+            </div>
+
+            <div id="screen-roster" class="space-y-6">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">👤</span>
+                                    <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Register Student Profiles</h2>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">Admit learners to the school directory individually or via bulk copy-paste roster.</p>
+                            </div>
+                            <div class="join bg-slate-100 p-1 rounded-xl border border-slate-200 self-end sm:self-center">
+                                <button id="btn-mode-single" class="btn btn-ghost btn-xs sm:btn-sm rounded-lg text-xs font-bold btn-active bg-white shadow-sm">Single Admission</button>
+                                <button id="btn-mode-batch" class="btn btn-ghost btn-xs sm:btn-sm rounded-lg text-xs font-bold">📋 Batch Import</button>
+                            </div>
+                        </div>
+                        
+                        <form id="student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Student's Full Name</label>
+                                <input type="text" id="stud-name" placeholder="e.g. Peter Musau" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required />
+                            </div>
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class / Grade Level</label>
+                                <select id="stud-grade" class="select select-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required>
+                                    <option value="" disabled selected>Select Grade...</option>
+                                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Stream / Arm</label>
+                                <input type="text" id="stud-stream" value="A" class="input input-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none" required />
+                            </div>
+                            <div class="form-control w-full">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Maths Club Family</label>
+                                <select id="stud-family" class="select select-bordered w-full rounded-xl focus:border-amber-400 focus:outline-none">
+                                    <option value="" selected>None</option>
+                                    <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
+                                </select>
+                            </div>
+                            <div class="form-control md:col-span-2 mt-4">
+                                <button type="submit" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg hover:shadow-slate-300 transition duration-300 border-none">
+                                    Admit & Register Student
+                                </button>
+                            </div>
+                        </form>
+
+                        <div id="batch-form-container" class="space-y-4 hidden">
+                            <div class="alert alert-info bg-sky-50 border border-sky-200 text-xs text-sky-900 rounded-xl py-3.5 px-4 flex gap-2">
+                                <span>💡</span>
+                                <div>
+                                    <strong class="font-bold">Instructions:</strong> Copy columns or list rows of student names from your Excel file and paste them here (one name per line). The system will register them to the chosen target grade and stream automatically.
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Target Grade Level</label>
+                                    <select id="batch-grade" class="select select-bordered w-full rounded-xl">
+                                        <option value="" disabled selected>Select Grade...</option>
+                                        <option value="-2">PP1</option><option value="-1">PP2</option>
+                                        <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                        <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                        <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                        <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                    </select>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Default Stream</label>
+                                    <input type="text" id="batch-default-stream" value="A" class="input input-bordered w-full rounded-xl" />
+                                </div>
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Paste Student Roster (One Name Per Line)</label>
+                                <textarea id="batch-names" rows="6" placeholder="Jane Atieno&#10;David Kiprop&#10;Mary Wanjiku" class="textarea textarea-bordered font-code text-xs w-full rounded-xl focus:outline-none focus:border-amber-400"></textarea>
+                            </div>
+
+                            <button id="btn-trigger-batch" class="btn btn-neutral hover:bg-slate-800 text-white font-extrabold w-full rounded-xl shadow-lg border-none transition">
+                                🚀 Pull & Import Student Roster
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <h1 class="text-xs sm:text-sm font-black uppercase text-amber-400 tracking-wider">Bethania Academy</h1>
-                        <p class="text-[9px] text-slate-400 uppercase tracking-widest">Determination is Nobility</p>
-                    </div>
                 </div>
-            </div>
-            <div class="flex-none">
-                <button id="logout-btn" class="btn btn-ghost btn-xs text-amber-400 font-bold uppercase">Sign Out</button>
-            </div>
-        </div>
 
-        <main class="container mx-auto p-4 max-w-4xl space-y-6">
-            <!-- Profile Banner Card -->
-            <div class="card bg-gradient-to-r from-slate-900 to-slate-850 text-white shadow-xl border border-slate-800">
-                <div class="card-body p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <span class="badge bg-amber-400 text-slate-950 font-black text-[10px] uppercase mb-1" id="active-term-badge">Loading...</span>
-                        <h2 class="text-2xl font-black text-left" id="student-name">...</h2>
-                        <p class="text-xs text-slate-300 mt-1 font-medium text-left">Grade Level: <span id="student-grade" class="font-bold text-amber-400">...</span></p>
+                <div id="edit-student-box" class="card bg-amber-50 border-2 border-amber-300 shadow-lg p-5 rounded-2xl hidden space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-amber-200">
+                        <h3 class="font-extrabold text-sm text-slate-950 uppercase tracking-wide flex items-center gap-2">
+                            <span>✏️</span> Edit Student Profile: <span id="edit-display-name" class="text-amber-800"></span>
+                        </h3>
+                        <button id="btn-close-edit" class="btn btn-ghost btn-xs text-slate-500 font-extrabold hover:bg-amber-100">Cancel</button>
                     </div>
-                    <div class="text-right">
-                        <span class="text-[10px] block font-mono text-slate-400 uppercase">Authenticated ID</span>
-                        <span class="text-lg font-black font-mono text-white bg-slate-800 px-3 py-1 rounded-md border border-slate-700" id="student-badge-id">...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- EXAM SELECTION COMPONENT -->
-            <div class="card bg-white shadow-xl border border-slate-200">
-                <div class="card-body p-4 sm:p-6 space-y-3">
-                    <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide">🔍 Select Target Report Parameters</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Target Year</label>
-                            <select id="select-year" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
-                                <option value="2026" selected>2026</option>
-                                <option value="2025">2025</option>
-                                <option value="2027">2027</option>
+                    <input type="hidden" id="edit-student-id">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] text-slate-700">Full Name</label>
+                            <input type="text" id="edit-stud-name" class="input input-bordered input-sm w-full rounded-lg" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] text-slate-700">Grade Level</label>
+                            <select id="edit-stud-grade" class="select select-bordered select-sm w-full rounded-lg">
+                                <option value="-2">PP1</option><option value="-1">PP2</option>
+                                <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
                             </select>
                         </div>
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Target Term</label>
-                            <select id="select-term" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
-                                <option value="Term 1">Term 1</option>
-                                <option value="Term 2" selected>Term 2</option>
-                                <option value="Term 3">Term 3</option>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] text-slate-700">Stream</label>
+                            <input type="text" id="edit-stud-stream" class="input input-bordered input-sm w-full rounded-lg" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] text-slate-700">Maths Club Family</label>
+                            <select id="edit-stud-family" class="select select-bordered select-sm w-full rounded-lg">
+                                <option value="">None</option>
+                                <option value="Trunks">Trunks</option><option value="Achievers">Achievers</option><option value="Unbeatables">Unbeatables</option>
                             </select>
                         </div>
-                        <div class="form-control w-full">
-                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Exam Category</label>
-                            <select id="select-exam" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
-                                <option value="Opener Exam">Opener Exam</option>
-                                <option value="Mid-Term Exam" selected>Mid-Term Exam</option>
-                                <option value="End-Term Exam">End-Term Exam</option>
-                            </select>
+                    </div>
+                    <div class="flex justify-end pt-2">
+                        <button id="btn-save-student-edit" class="btn btn-warning btn-sm px-6 text-slate-950 font-extrabold rounded-lg">Save Updates</button>
+                    </div>
+                </div>
+
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">🗂️</span>
+                                <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">Active Student Database</h2>
+                            </div>
+                            <input type="text" id="search-bar" placeholder="🔍 Search learners by name..." class="input input-bordered input-sm w-full sm:w-80 rounded-xl" />
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                                <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-3.5 text-left">Login ID</th>
+                                        <th class="p-3.5 text-left">Full Name</th>
+                                        <th class="p-3.5 text-center">Grade</th>
+                                        <th class="p-3.5 text-center">Stream</th>
+                                        <th class="p-3.5 text-center">Maths Club Family</th>
+                                        <th class="p-3.5 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-list-rows" class="font-code text-xs">
+                                    <tr><td colspan="6" class="text-center py-8 text-slate-400 italic">Pulling records from system...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- DYNAMIC REPORT SLIPS PANEL -->
-            <div class="card bg-white shadow-xl border border-slate-200">
-                <div class="card-body p-4 sm:p-6 space-y-4">
-                    <h3 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">📄 Available Assessment Report Slips</h3>
-                    <p class="text-xs text-slate-500">Below are your authorized evaluation documents. Your grade curriculum determines the report framework available for generation.</p>
-                    
-                    <div class="divider my-1"></div>
+            <div id="screen-marks" class="space-y-6 hidden">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex items-center gap-2.5 mb-2">
+                            <span class="text-2xl">📝</span>
+                            <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Batch Enter Marks</h2>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort and subject learning area to load assessment rosters.</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class/Grade Target</label>
+                                <select id="filter-grade" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Subject Selection</label>
+                                <select id="filter-subject" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none" disabled>
+                                    <option disabled selected>Pick Grade First</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <!-- REPORT GENERATION CARD CONTAINER -->
-                    <div id="slips-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Loading State -->
-                        <div class="col-span-2 text-center py-8">
-                            <span class="loading loading-spinner loading-md text-primary"></span>
-                            <p class="text-xs text-slate-400 mt-2 font-medium">Processing records and computing ranking metrics...</p>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                                <thead class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-3.5 text-left">Student Name</th>
+                                        <th class="p-3.5 text-center">Stream</th>
+                                        <th id="paper-max-header" class="p-3.5 text-center">Raw Score Input (Max 100 Marks)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marks-entry-rows" class="text-xs">
+                                    <tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button id="save-marks-btn" class="btn btn-success text-white font-extrabold px-10 shadow-lg w-full sm:w-auto rounded-xl hover:bg-emerald-600 transition border-none" disabled>
+                                💾 Save All Marks
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+
         </main>
+
+        <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto border-t border-slate-800">
+            <p>© 2026 Bethania Academy CBA System. Powered by Supabase Backend.</p>
+        </footer>
     </div>
 
     <script>
-        // Map html2canvas-pro's global variable to the name used in your function
-        window.html2canvasPro = window.html2canvas;
-
-        // Supabase Init
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // State Elements
-        const loginScreen = document.getElementById('login-screen');
-        const dashboardScreen = document.getElementById('dashboard-screen');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const idInput = document.getElementById('student-id-input');
+        let systemIsLocked = false;
+        let activeExamContextName = "";
+        let localStudentsCache = [];
+        let subjectsCache = [];
 
-        const labelTerm = document.getElementById('active-term-badge');
-        const labelName = document.getElementById('student-name');
-        const labelGrade = document.getElementById('student-grade');
-        const labelIdBadge = document.getElementById('student-badge-id');
-        const slipsContainer = document.getElementById('slips-container');
+        // Auth handles
+        const authWall = document.getElementById('auth-wall');
+        const portalContent = document.getElementById('portal-content');
+        const authForm = document.getElementById('auth-form');
+        const authUsername = document.getElementById('auth-username');
+        const authPassword = document.getElementById('auth-password');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
 
-        const selectYear = document.getElementById('select-year');
-        const selectTerm = document.getElementById('select-term');
-        const selectExam = document.getElementById('select-exam');
+        // Portal DOM Handles
+        const tabRoster = document.getElementById('tab-roster');
+        const tabMarks = document.getElementById('tab-marks');
+        const screenRoster = document.getElementById('screen-roster');
+        const screenMarks = document.getElementById('screen-marks');
+        const activeSessionBanner = document.getElementById('active-session-banner');
+        const portalLockAlert = document.getElementById('portal-lock-alert');
 
-        let activeSessionName = "Assessment";
-        let activeStudent = null;
-        let globalSubjects = [];
-        let globalPapers = [];
-        let allStudentsInCohort = [];
-        let cohortMarks = [];
-        let isCurrentSessionLocked = false;
+        // Registration form toggle hooks
+        const btnModeSingle = document.getElementById('btn-mode-single');
+        const btnModeBatch = document.getElementById('btn-mode-batch');
+        const studentForm = document.getElementById('student-form');
+        const batchFormContainer = document.getElementById('batch-form-container');
 
-        // Schema Cache matching admin.html's architecture
-        let dbSchemaCache = {
-            examColumn: 'test_name',
-            scoreColumn: 'raw_score'
-        };
+        // Student lists
+        const studentListRows = document.getElementById('student-list-rows');
+        const searchBar = document.getElementById('search-bar');
 
-        // Official CBC Subject Tiers (Islamic and Hindu strictly removed)
+        // Student Editor Panel Handles
+        const editStudentBox = document.getElementById('edit-student-box');
+        const editStudentId = document.getElementById('edit-student-id');
+        const editDisplayName = document.getElementById('edit-display-name');
+        const editStudName = document.getElementById('edit-stud-name');
+        const editStudGrade = document.getElementById('edit-stud-grade');
+        const editStudStream = document.getElementById('edit-stud-stream');
+        const editStudFamily = document.getElementById('edit-stud-family');
+        const btnCloseEdit = document.getElementById('btn-close-edit');
+        const btnSaveStudentEdit = document.getElementById('btn-save-student-edit');
+
+        // Batch Form Hooks
+        const btnTriggerBatch = document.getElementById('btn-trigger-batch');
+        const batchGradeInput = document.getElementById('batch-grade');
+        const batchDefaultStream = document.getElementById('batch-default-stream');
+        const batchNamesArea = document.getElementById('batch-names');
+
+        // Marks Filters
+        const filterGrade = document.getElementById('filter-grade');
+        const filterSubject = document.getElementById('filter-subject');
+        const marksEntryRows = document.getElementById('marks-entry-rows');
+        const paperMaxHeader = document.getElementById('paper-max-header');
+        const saveMarksBtn = document.getElementById('save-marks-btn');
+
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
-                "Language Activities", "Mathematical Activities", "Environmental Activities",
-                "Psychomotor Activities", "Religious Education Activities",
-                "Indigenous Language Activities", "Kiswahili Language Activities"
+                "Language Activities",
+                "Mathematical Activities",
+                "Environmental Activities",
+                "Psychomotor Activities",
+                "Religious Education Activities",
+                "Indigenous Language Activities",
+                "Kiswahili Language Activities"
             ],
             upper_primary: [
-                "English", "Kiswahili", "Mathematics", "Science and Technology",
-                "Agriculture and Nutrition", "Creative Arts", "Social Studies", 
-                "Christian Religious Education (C.R.E)"
+                "English",
+                "Kiswahili",
+                "Mathematics",
+                "Science and Technology",
+                "Agriculture and Nutrition",
+                "Creative Arts",
+                "Social Studies",
+                "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
             ],
             junior_school: [
-                "English", "Kiswahili", "Mathematics", "Integrated Science",
-                "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
-                "Creative Arts and Sports", "Christian Religious Education (C.R.E)"
+                "English",
+                "Kiswahili",
+                "Mathematics",
+                "Integrated Science",
+                "Pre-Technical Studies",
+                "Social Studies",
+                "Agriculture and Nutrition",
+                "Creative Arts and Sports",
+                "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
             ]
         };
 
@@ -190,579 +414,436 @@
             const g = parseInt(grade);
             if (g <= 3) return "lower_primary";
             if (g >= 4 && g <= 6) return "upper_primary";
-            return "junior_school";
+            if (g >= 7 && g <= 9) return "junior_school";
+            return "upper_primary"; 
         }
 
-        // Schema Sniffing dynamically aligns with administrative databases
-        async function detectMarksSchema() {
-            try {
-                const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
-                if (data && data.length > 0) {
-                    const row = data[0];
-                    if ('exam_name' in row) dbSchemaCache.examColumn = 'exam_name';
-                    else if ('exam_session' in row) dbSchemaCache.examColumn = 'exam_session';
-                    else dbSchemaCache.examColumn = 'test_name';
+        const gradeMap = { '-2': 'PP1', '-1': 'PP2', '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6', '7': 'Grade 7', '8': 'Grade 8', '9': 'Grade 9' };
 
-                    if ('score' in row) dbSchemaCache.scoreColumn = 'score';
-                    else if ('marks' in row) dbSchemaCache.scoreColumn = 'marks';
-                    else dbSchemaCache.scoreColumn = 'raw_score';
-                }
-            } catch (err) {
-                console.warn("Schema sniffing failed. Defaulting to standard columns.", err);
-            }
-        }
-
-        // Point system explicitly tied to the exact 8 sub-tiers
-        function convertScoreToPoints(score, max) {
-            const pct = (score / max) * 100;
-            if (pct >= 90) return 8; 
-            if (pct >= 75) return 7; 
-            if (pct >= 58) return 6; 
-            if (pct >= 40) return 5; 
-            if (pct >= 30) return 4; 
-            if (pct >= 20) return 3; 
-            if (pct >= 10) return 2; 
-            return 1;                
-        }
-
-        // Exact sub-tier mappings executed for individual points and global averages
-        function getCompetencyLevel(val, type) {
-            let pct = val;
-            
-            if (type === 'points') {
-                if (val >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1" };
-                if (val >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2" };
-                if (val >= 5.5) return { text: "ME1", label: "Meeting Expectations 1" };
-                if (val >= 4.5) return { text: "ME2", label: "Meeting Expectations 2" };
-                if (val >= 3.5) return { text: "AE1", label: "Approaching Expectations 1" };
-                if (val >= 2.5) return { text: "AE2", label: "Approaching Expectations 2" };
-                if (val >= 1.5) return { text: "BE1", label: "Below Expectations 1" };
-                return { text: "BE2", label: "Below Expectations 2" };
+        // ------------------ AUTHENTICATION ENGINE ------------------
+        
+        async function checkActiveSession() {
+            const activeTeacher = sessionStorage.getItem('activeTeacher');
+            if (activeTeacher) {
+                showPortalContent();
             } else {
-                if (pct >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
-                if (pct >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
-                if (pct >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
-                if (pct >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
-                if (pct >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
-                if (pct >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
-                if (pct >= 10) return { text: "BE1", label: "Below Expectations 1" };
-                return { text: "BE2", label: "Below Expectations 2" };
+                showAuthWall();
             }
         }
 
-        // Fetch Global Session Context
-        async function fetchSessionContext() {
-            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
-            if (sessions && sessions.length > 0) {
-                activeSessionName = sessions[0].exam_name;
-                
-                if (activeSessionName.includes("Term 1")) selectTerm.value = "Term 1";
-                else if (activeSessionName.includes("Term 2")) selectTerm.value = "Term 2";
-                else if (activeSessionName.includes("Term 3")) selectTerm.value = "Term 3";
-
-                if (activeSessionName.includes("Opener")) selectExam.value = "Opener Exam";
-                else if (activeSessionName.includes("Mid")) selectExam.value = "Mid-Term Exam";
-                else if (activeSessionName.includes("End")) selectExam.value = "End-Term Exam";
-            }
-            labelTerm.innerText = `Active Cycle: ${activeSessionName}`;
+        function showAuthWall() {
+            authWall.style.display = 'flex';
+            portalContent.classList.add('hidden');
+            portalContent.classList.remove('flex');
         }
 
-        // Dropdown Parameter Change Handler
-        async function handleParameterSync() {
-            if(!activeStudent) return;
-            
-            slipsContainer.innerHTML = `
-                <div class="col-span-2 text-center py-8">
-                    <span class="loading loading-spinner loading-md text-primary"></span>
-                    <p class="text-xs text-slate-400 mt-2 font-medium">Re-compiling historical parameters and data architectures...</p>
-                </div>
-            `;
-
-            const yr = selectYear.value;
-            const tm = selectTerm.value;
-            const ex = selectExam.value;
-            
-            activeSessionName = `${yr} ${tm} ${ex}`;
-
-            try {
-                const { data: lockRows } = await _supabase.from('fee_lockouts')
-                    .select('*')
-                    .or(`student_id.eq."${activeStudent.login_id}",student_id.eq."${activeStudent.id}"`)
-                    .eq('restricted', true);
-
-                isCurrentSessionLocked = false;
-                if (lockRows && lockRows.length > 0) {
-                    const normalizedActive = activeSessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const altActive1 = `${yr} ${tm} ${ex.replace('-', ' ')}`.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                    const lockedMatch = lockRows.some(r => {
-                        if (!r.exam_context) return false;
-                        const targetContext = r.exam_context.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        return targetContext === normalizedActive || targetContext === altActive1;
-                    });
-                    if(lockedMatch) isCurrentSessionLocked = true;
-                }
-            } catch(e) {
-                console.warn("Restriction verification architecture fault:", e);
-            }
-
-            await loadCohortPerformances();
+        function showPortalContent() {
+            authWall.style.display = 'none';
+            portalContent.classList.remove('hidden');
+            portalContent.classList.add('flex');
+            initializeSystem();
         }
-
-        selectYear.addEventListener('change', handleParameterSync);
-        selectTerm.addEventListener('change', handleParameterSync);
-        selectExam.addEventListener('change', handleParameterSync);
 
         // Login Handler
-        loginBtn.addEventListener('click', async () => {
-            const enteredId = idInput.value.trim().toUpperCase();
-            if(!enteredId) return alert("Please specify your Student Login ID!");
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usernameInput = authUsername.value.trim();
+            const passwordInput = authPassword.value.trim();
 
-            loginBtn.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Authenticating...`;
-            loginBtn.disabled = true;
+            btnLogin.disabled = true;
+            btnLogin.innerText = "Verifying Access...";
 
-            await detectMarksSchema();
+            // Query public.teachers for credentials matching username and password
+            const { data, error } = await _supabase
+                .from('teachers')
+                .select('id, name, username')
+                .eq('username', usernameInput)
+                .eq('password', passwordInput)
+                .limit(1);
 
-            const { data: students, error } = await _supabase.from('students').select('*').eq('login_id', enteredId).limit(1);
-            
-            if (error || !students || students.length === 0) {
-                alert("Unauthorized or Invalid Student ID. Please contact your class teacher!");
-                loginBtn.innerHTML = `🔓 Access Assessment Records`;
-                loginBtn.disabled = false;
-                return;
-            }
-
-            activeStudent = students[0];
-            loginScreen.classList.add('hidden');
-            dashboardScreen.classList.remove('hidden');
-
-            labelName.innerText = activeStudent.name;
-            labelGrade.innerText = activeStudent.grade <= 0 ? (activeStudent.grade === -2 ? "PP1" : "PP2") : `Grade ${activeStudent.grade}`;
-            labelIdBadge.innerText = activeStudent.login_id;
-
-            await fetchSessionContext();
-            
-            const yr = selectYear.value;
-            const tm = selectTerm.value;
-            const ex = selectExam.value;
-            activeSessionName = `${yr} ${tm} ${ex}`;
-
-            try {
-                const { data: initialLocks } = await _supabase.from('fee_lockouts')
-                    .select('*')
-                    .or(`student_id.eq."${activeStudent.login_id}",student_id.eq."${activeStudent.id}"`)
-                    .eq('restricted', true);
-                
-                if (initialLocks && initialLocks.length > 0) {
-                    const normalizedActive = activeSessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const lockedMatch = initialLocks.some(r => {
-                        if (!r.exam_context) return false;
-                        return r.exam_context.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedActive;
-                    });
-                    if(lockedMatch) isCurrentSessionLocked = true;
-                }
-            } catch(lErr) {}
-
-            await loadCohortPerformances();
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            activeStudent = null;
-            idInput.value = "";
-            isCurrentSessionLocked = false;
-            loginScreen.classList.remove('hidden');
-            dashboardScreen.classList.add('hidden');
-            loginBtn.innerHTML = `🔓 Access Assessment Records`;
-            loginBtn.disabled = false;
-        });
-
-        // Pull Cohort Data dynamically
-        async function loadCohortPerformances() {
-            const grade = activeStudent.grade;
-            const tier = getGradeTier(grade);
-            const allowed = CBC_SUBJECT_TIERS[tier];
-
-            const { data: classmates } = await _supabase.from('students').select('*').eq('grade', grade);
-            allStudentsInCohort = classmates || [];
-
-            const { data: dbSubjects } = await _supabase.from('subjects').select('*');
-            const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
-            globalSubjects = validSubjects;
-            const subjectIds = validSubjects.map(s => s.id);
-
-            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
-            globalPapers = dbPapers || [];
-
-            const classmateIdentifiers = [
-                ...allStudentsInCohort.map(c => c.id), 
-                ...allStudentsInCohort.map(c => String(c.id)),
-                ...allStudentsInCohort.map(c => c.login_id)
-            ];
-            
-            let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
-            let altSessionName2 = activeSessionName.replace("Mid-Term Exam", "Mid Term 2");
-
-            const { data: marks } = await _supabase.from('marks_entry')
-                .select('*')
-                .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
-                .in('student_id', classmateIdentifiers);
-            
-            cohortMarks = marks || [];
-
-            buildAvailableSlips(validSubjects, tier);
-        }
-
-        // Calculate rankings and display options
-        function buildAvailableSlips(subjects, tier) {
-            const isJuniorSchool = (tier === "junior_school");
-
-            const markRankings = calculateRankings(subjects, false);
-            const myMarkRecord = markRankings.find(r => r.id === activeStudent.id);
-
-            let html = "";
-
-            if (!myMarkRecord || myMarkRecord.totals === 0) {
-                slipsContainer.innerHTML = `
-                    <div class="col-span-2 text-center py-8 bg-slate-100 rounded-xl border border-dashed border-slate-300">
-                        <p class="text-xs text-slate-500 font-bold">⚠️ No evaluation data architecture records found matching "${activeSessionName}".</p>
-                        <p class="text-[11px] text-slate-400 mt-1">Please select an alternate target year, term, or schedule from the filters above.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            if (isJuniorSchool) {
-                const pointRankings = calculateRankings(subjects, true);
-                const myPointRecord = pointRankings.find(r => r.id === activeStudent.id);
-
-                html += `
-                    <div class="border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col justify-between h-full">
-                        <div>
-                            <span class="badge badge-neutral text-[10px] font-bold uppercase mb-2">Slip 1 of 2</span>
-                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Performance Summary Slip</h4>
-                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Contains details of raw marks scored per subject paper, accumulated percentage scores, and rank based on raw marks.</p>
-                            <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
-                                <div>Average Score: <strong class="text-slate-900">${myMarkRecord.average.toFixed(1)}%</strong></div>
-                                <div>Class Rank: <strong class="text-slate-900">#${myMarkRecord.position} of ${markRankings.length}</strong></div>
-                            </div>
-                        </div>
-                        ${isCurrentSessionLocked ? 
-                            `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
-                            `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📄 Download Raw Marks Slip</button>`
-                        }
-                    </div>
-                `;
-
-                html += `
-                    <div class="border border-amber-200 rounded-xl p-5 bg-amber-50/50 flex flex-col justify-between h-full">
-                        <div>
-                            <span class="badge badge-warning text-slate-950 text-[10px] font-black uppercase mb-2">Slip 2 of 2</span>
-                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Competency Points Slip</h4>
-                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Features converted points on the CBC 8-Point scale, total points accumulated, overall points average, and rating.</p>
-                            <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
-                                <div>Mean Points: <strong class="text-slate-900">${myPointRecord.average.toFixed(1)} Pts</strong></div>
-                                <div>Competency Rank: <strong class="text-slate-900">#${myPointRecord.position} of ${pointRankings.length}</strong></div>
-                            </div>
-                        </div>
-                        ${isCurrentSessionLocked ? 
-                            `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
-                            `<button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📄 Download Competency Points Slip</button>`
-                        }
-                    </div>
-                `;
+            if (error) {
+                alert("❌ Connection Error: " + error.message);
+            } else if (data && data.length > 0) {
+                // Success - Save Session
+                sessionStorage.setItem('activeTeacher', JSON.stringify(data[0]));
+                authForm.reset();
+                showPortalContent();
             } else {
-                html += `
-                    <div class="col-span-2 border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <span class="badge badge-neutral text-[10px] font-bold uppercase">Standard Issue Slip</span>
-                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Primary School Evaluation Slip</h4>
-                            <p class="text-xs text-slate-500 max-w-lg">Displays standard raw scores, totals, subject performance percentages, average scores, ratings, and positions.</p>
-                        </div>
-                        <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                            <div class="bg-white px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-mono text-center min-w-[140px]">
-                                <span class="block text-[10px] text-slate-400">Position</span>
-                                <strong class="text-slate-900 text-base">#${myMarkRecord.position}</strong> of ${markRankings.length}
-                            </div>
-                            ${isCurrentSessionLocked ? 
-                                `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200 w-full"><p>🔒 Access Restricted: Outstanding balances active.</p></div>` :
-                                `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📄 Download Performance Slip</button>`
-                            }
-                        </div>
-                    </div>
-                `;
+                alert("⛔ Access Denied: Invalid Teacher Username or Password.");
+            }
+            btnLogin.disabled = false;
+            btnLogin.innerText = "Sign In to Portal";
+        });
+
+        // Logout Handler
+        btnLogout.addEventListener('click', () => {
+            sessionStorage.removeItem('activeTeacher');
+            showAuthWall();
+        });
+
+        // Initialize App Operations
+        async function initializeSystem() {
+            await pullActiveCycleState();
+            await loadStudentRoster();
+            await fetchSubjects();
+        }
+
+        // ------------------ END AUTHENTICATION ENGINE ------------------
+
+        // Visible buttons navigation toggle logic
+        tabRoster.addEventListener('click', () => { 
+            tabRoster.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
+            tabMarks.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
+            screenRoster.classList.remove('hidden'); 
+            screenMarks.classList.add('hidden'); 
+        });
+
+        tabMarks.addEventListener('click', () => { 
+            tabMarks.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
+            tabRoster.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
+            screenMarks.classList.remove('hidden'); 
+            screenRoster.classList.add('hidden'); 
+            fetchSubjects(); 
+        });
+
+        // Toggle Single vs Batch Admissions
+        btnModeSingle.addEventListener('click', () => {
+            btnModeSingle.classList.add('btn-active', 'bg-white', 'shadow-sm');
+            btnModeBatch.classList.remove('btn-active', 'bg-white', 'shadow-sm');
+            studentForm.classList.remove('hidden');
+            batchFormContainer.classList.add('hidden');
+        });
+
+        btnModeBatch.addEventListener('click', () => {
+            btnModeBatch.classList.add('btn-active', 'bg-white', 'shadow-sm');
+            btnModeSingle.classList.remove('btn-active', 'bg-white', 'shadow-sm');
+            batchFormContainer.classList.remove('hidden');
+            studentForm.classList.add('hidden');
+        });
+
+        async function pullActiveCycleState() {
+            const { data, error } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
+            if (!error && data && data.length > 0) {
+                const session = data[0];
+                activeExamContextName = session.exam_name;
+                const deadline = new Date(session.deadline_at);
+                const now = new Date();
+
+                if (!session.is_active || now > deadline) {
+                    systemIsLocked = true;
+                    activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> Closed: ${activeExamContextName}`;
+                    activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-rose-500/30 py-2 px-4 rounded-xl flex items-center gap-2 text-rose-400 font-bold";
+                    portalLockAlert.classList.remove('hidden');
+                } else {
+                    systemIsLocked = false;
+                    activeSessionBanner.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Context: ${activeExamContextName}`;
+                    activeSessionBanner.className = "text-[10px] sm:text-xs font-code bg-slate-800 border border-slate-700 py-2 px-4 rounded-xl flex items-center gap-2 text-white font-bold";
+                    portalLockAlert.classList.add('hidden');
+                }
+            }
+        }
+
+        async function loadStudentRoster() {
+            const { data, error } = await _supabase.from('students').select('*').order('created_at', { ascending: false });
+            if (error) console.error("Error loading students:", error);
+            localStudentsCache = data || [];
+            renderTable(localStudentsCache);
+        }
+
+        function renderTable(students) {
+            if (!students || students.length === 0) { 
+                studentListRows.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 italic">No students matched.</td></tr>`; 
+                return; 
+            }
+            studentListRows.innerHTML = students.map(s => `
+                <tr class="hover">
+                    <td class="font-code text-xs font-bold text-slate-500 py-3.5 px-3">${s.login_id || s.id.substring(0, 8).toUpperCase()}</td>
+                    <td class="font-bold text-slate-800 py-3.5 px-3">${s.name}</td>
+                    <td class="text-center py-3.5 px-3">${gradeMap[s.grade] || s.grade}</td>
+                    <td class="text-center py-3.5 px-3"><span class="badge font-code font-medium bg-slate-100 text-slate-700 border-none">${s.stream}</span></td>
+                    <td class="text-center py-3.5 px-3"><span class="badge font-bold text-xs bg-amber-100 text-amber-800 border-none">${s.maths_club_family || 'None'}</span></td>
+                    <td class="text-center py-3.5 px-3">
+                        <button onclick="initiateStudentEdit('${s.id}')" class="btn btn-ghost btn-xs text-amber-600 hover:text-amber-800 font-bold">✏️ Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Single Form Submission Hook
+        studentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { data, error } = await _supabase.from('students').insert([{
+                name: document.getElementById('stud-name').value.trim(),
+                grade: parseInt(document.getElementById('stud-grade').value),
+                stream: document.getElementById('stud-stream').value.trim(),
+                maths_club_family: document.getElementById('stud-family').value || null
+            }]).select();
+            if (!error && data) { 
+                studentForm.reset(); 
+                document.getElementById('stud-stream').value = "A"; 
+                localStudentsCache.unshift(data[0]); 
+                renderTable(localStudentsCache); 
+                alert("✨ Student registered successfully!");
+            } else {
+                alert("❌ Registration failed: " + error.message);
+            }
+        });
+
+        // Trigger and parse Batch list
+        btnTriggerBatch.addEventListener('click', async () => {
+            const selectedGrade = batchGradeInput.value;
+            if(!selectedGrade) return alert("Please select a target Grade level for this batch roster!");
+
+            const rawContent = batchNamesArea.value.trim();
+            if(!rawContent) return alert("Please copy and paste student names into the text area first!");
+
+            const lines = rawContent.split('\n');
+            const insertPayload = [];
+
+            for(let line of lines) {
+                const nameParsed = line.trim();
+                if(!nameParsed) continue; 
+
+                insertPayload.push({
+                    name: nameParsed,
+                    grade: parseInt(selectedGrade),
+                    stream: batchDefaultStream.value.trim() || 'A',
+                    maths_club_family: null
+                });
             }
 
-            slipsContainer.innerHTML = html;
-        }
+            if(insertPayload.length === 0) return alert("No valid student profiles parsed.");
 
-        // Calculation Engine 
-        function calculateRankings(subjects, convertToPoints) {
-            const list = allStudentsInCohort.map(stud => {
-                let totals = 0;
-                let count = 0;
-                let subjectBreakdown = {};
+            btnTriggerBatch.disabled = true;
+            btnTriggerBatch.innerText = `⏳ Registering ${insertPayload.length} students...`;
 
-                subjects.forEach(sub => {
-                    const papers = globalPapers.filter(p => p.subject_id === sub.id);
-                    let rawSum = 0;
-                    let maxSum = 0;
-                    let studentHasScore = false;
+            const { data, error } = await _supabase.from('students').insert(insertPayload).select();
 
-                    if (papers.length > 0) {
-                        papers.forEach(p => {
-                            const scoreObj = cohortMarks.find(m => 
-                                (String(m.student_id) === String(stud.id) || String(m.student_id) === String(stud.login_id)) && 
-                                m.paper_id === p.id
-                            );
-                            if (scoreObj) {
-                                const val = parseFloat(scoreObj[dbSchemaCache.scoreColumn]);
-                                if (!isNaN(val)) {
-                                    rawSum += val;
-                                    studentHasScore = true;
-                                }
-                            }
-                            maxSum += parseFloat(p.max_marks || 100);
-                        });
-                    }
+            if(error) {
+                console.error("Batch insertion error: ", error);
+                alert("Failed to perform batch registration: " + error.message);
+            } else {
+                alert(`🎉 Successfully added ${data.length} student profiles into your DB!`);
+                batchNamesArea.value = "";
+                localStudentsCache = [...data, ...localStudentsCache];
+                renderTable(localStudentsCache);
+            }
 
-                    const directScoreObj = cohortMarks.find(m => 
-                        (String(m.student_id) === String(stud.id) || String(m.student_id) === String(stud.login_id)) && 
-                        m.subject_id === sub.id && 
-                        (!m.paper_id || m.paper_id === null)
-                    );
-                    
-                    if (directScoreObj) {
-                        const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
-                        if (!isNaN(val)) {
-                            rawSum = val;
-                            maxSum = 100;
-                            studentHasScore = true;
-                        }
-                    }
+            btnTriggerBatch.disabled = false;
+            btnTriggerBatch.innerText = "🚀 Pull & Import Student Roster";
+        });
 
-                    if (studentHasScore) {
-                        if (convertToPoints) {
-                            const pts = convertScoreToPoints(rawSum, maxSum);
-                            totals += pts;
-                            subjectBreakdown[sub.subject_name] = { score: pts, max: 8, label: `${pts} Pts` };
-                        } else {
-                            const pct = (rawSum / maxSum) * 100;
-                            totals += pct;
-                            subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${pct.toFixed(1)}%` };
-                        }
-                        count++;
-                    } else {
-                        subjectBreakdown[sub.subject_name] = { score: 0, max: 0, label: "-" };
-                    }
-                });
+        // Initialize Student inline editor panel
+        window.initiateStudentEdit = function(id) {
+            const student = localStudentsCache.find(s => s.id === id);
+            if(!student) return;
 
-                const average = count > 0 ? (totals / count) : 0;
-                return {
-                    id: stud.id,
-                    name: stud.name,
-                    subjectBreakdown,
-                    totals: parseFloat(totals.toFixed(4)), 
-                    average,
-                    rating: getCompetencyLevel(average, convertToPoints ? 'points' : 'marks')
-                };
-            });
+            editStudentId.value = student.id;
+            editDisplayName.innerText = student.name;
+            editStudName.value = student.name;
+            editStudGrade.value = student.grade;
+            editStudStream.value = student.stream || 'A';
+            editStudFamily.value = student.maths_club_family || "";
 
-            list.sort((a, b) => b.totals - a.totals);
-            
-            let runningRank = 1;
-            list.forEach((entry, idx) => {
-                if (idx > 0 && list[idx].totals < list[idx - 1].totals) {
-                    runningRank = idx + 1;
+            editStudentBox.classList.remove('hidden');
+            editStudentBox.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        // Close editor panel
+        btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
+
+        // Save inline adjustments to DB
+        btnSaveStudentEdit.addEventListener('click', async () => {
+            const id = editStudentId.value;
+            const updatedName = editStudName.value.trim();
+            const updatedGrade = parseInt(editStudGrade.value);
+            const updatedStream = editStudStream.value.trim();
+            const updatedFamily = editStudFamily.value || null;
+
+            if(!updatedName) return alert("Student name field cannot be empty.");
+
+            btnSaveStudentEdit.disabled = true;
+            btnSaveStudentEdit.innerText = "Saving Changes...";
+
+            const { error } = await _supabase.from('students')
+                .update({
+                    name: updatedName,
+                    grade: updatedGrade,
+                    stream: updatedStream,
+                    maths_club_family: updatedFamily
+                })
+                .eq('id', id);
+
+            if (error) {
+                console.error("Error updating profile:", error);
+                alert("Update failed: " + error.message);
+            } else {
+                const index = localStudentsCache.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    localStudentsCache[index].name = updatedName;
+                    localStudentsCache[index].grade = updatedGrade;
+                    localStudentsCache[index].stream = updatedStream;
+                    localStudentsCache[index].maths_club_family = updatedFamily;
                 }
-                entry.position = runningRank;
-            });
+                renderTable(localStudentsCache);
+                editStudentBox.classList.add('hidden');
+                alert("✨ Student profile updated successfully!");
+            }
+            btnSaveStudentEdit.disabled = false;
+            btnSaveStudentEdit.innerText = "Save Updates";
+        });
 
-            return list;
+        async function fetchSubjects() {
+            const { data: subjectData, error: subjectError } = await _supabase.from('subjects').select('*').order('subject_name');
+            if (subjectError) console.error("Error fetching subjects:", subjectError);
+            
+            if(activeExamContextName && activeExamContextName.toLowerCase().includes('maths contest')) {
+                subjectsCache = (subjectData || []).filter(s => s.subject_name.toLowerCase().includes('math'));
+            } else {
+                subjectsCache = subjectData || [];
+            }
+            filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
 
-        // Portrait PDF Compiler
-        async function generatePDFSlip(type) {
-            const grade = activeStudent.grade;
-            const tier = getGradeTier(grade);
-            const allowed = CBC_SUBJECT_TIERS[tier];
-            const isJuniorPoints = (type === 'points');
+        filterGrade.addEventListener('change', () => {
+            const selectedGrade = filterGrade.value;
+            const tier = getGradeTier(selectedGrade);
+            const allowedSubjects = CBC_SUBJECT_TIERS[tier];
 
-            const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+            const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
 
-            try {
-                const staticSubjects = allowed.map((subjectName, index) => {
-                    const foundSubject = globalSubjects.find(s => s.subject_name.trim() === subjectName.trim());
+            if (filteredSubjects.length === 0) {
+                filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No matches for this grade tier</option>';
+                filterSubject.disabled = true;
+            } else {
+                filterSubject.innerHTML = '<option value="" disabled selected>Select Subject Learning Area...</option>' + 
+                    filteredSubjects.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                filterSubject.disabled = false; 
+            }
+            marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
+        });
+
+        // Triggered when Subject selection changes -> Loads rosters automatically now
+        filterSubject.addEventListener('change', async () => {
+            const subId = filterSubject.value;
+            if(!subId) {
+                marksEntryRows.innerHTML = '';
+                return;
+            }
+
+            const maxMarks = "100";
+            paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
+
+            const selectedGrade = parseInt(filterGrade.value);
+            const filteredStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+            
+            if (filteredStudents.length === 0) {
+                marksEntryRows.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-amber-600 font-bold bg-amber-50 rounded-xl">⚠️ No registered learners found in ${gradeMap[filterGrade.value]}.</td></tr>`;
+                saveMarksBtn.disabled = true;
+                return;
+            }
+
+            // Fetch existing marks where paper_id is null (direct subject entries)
+            const studentIds = filteredStudents.map(s => s.id);
+            
+            const { data: savedMarks, error } = await _supabase
+                .from('marks_entry')
+                .select('student_id, raw_score')
+                .eq('test_name', activeExamContextName)
+                .in('student_id', studentIds)
+                .eq('subject_id', subId) 
+                .is('paper_id', null);
+
+            if (error) console.error("Error loading existing marks:", error);
+
+            const marksMap = {};
+            if (savedMarks) {
+                savedMarks.forEach(m => {
+                    marksMap[m.student_id] = m.raw_score;
+                });
+            }
+
+            // Build input scores roster dynamically
+            marksEntryRows.innerHTML = filteredStudents.map(s => {
+                const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
+                return `
+                    <tr class="hover">
+                        <td class="font-bold text-slate-800 py-3.5 px-3 text-left">${s.name}</td>
+                        <td class="text-center py-3.5 px-3"><span class="badge bg-slate-100 text-slate-700 font-code font-bold border-none">${s.stream}</span></td>
+                        <td class="py-2.5 px-3">
+                            <input type="number" step="0.01" max="${maxMarks}" min="0" data-sid="${s.id}" 
+                                class="input input-bordered input-sm w-full max-w-[150px] mx-auto score-field font-code text-center focus:border-amber-400 focus:outline-none" 
+                                placeholder="0-${maxMarks}" 
+                                value="${existingScore}" 
+                                ${systemIsLocked ? 'disabled' : ''}/>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            saveMarksBtn.disabled = systemIsLocked;
+        });
+        
+        // Save All Marks Submit Event
+        saveMarksBtn.addEventListener('click', async () => {
+            if (systemIsLocked) {
+                return alert("⚠️ System is currently Closed. Data submission rejected.");
+            }
+            
+            if (!activeExamContextName) {
+                return alert("⚠️ Error: No active exam session context found. Please refresh the page and try again.");
+            }
+
+            const selectedSubjectId = filterSubject.value;
+            if (!selectedSubjectId) {
+                return alert("⚠️ Error: Please select a subject before saving.");
+            }
+            
+            const entries = Array.from(document.querySelectorAll('.score-field'))
+                .filter(input => input.value.trim() !== "") 
+                .map(input => {
                     return {
-                        id: foundSubject ? foundSubject.id : index + 999,
-                        subject_name: subjectName
+                        student_id: input.getAttribute('data-sid'),
+                        subject_id: selectedSubjectId, 
+                        test_name: activeExamContextName,
+                        raw_score: parseFloat(input.value) || 0.00,
+                        paper_id: null 
                     };
                 });
 
-                const rankings = calculateRankings(staticSubjects, isJuniorPoints);
-                const me = rankings.find(r => r.id === activeStudent.id);
-
-                if (!me) {
-                    alert("Could not locate matching student record in current memory session.");
-                    return;
-                }
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: 'a4'
-                });
-
-                const offscreenContainer = document.createElement('div');
-                offscreenContainer.style.position = 'absolute';
-                offscreenContainer.style.left = '-9999px';
-                offscreenContainer.style.width = '720px'; 
-                offscreenContainer.style.backgroundColor = '#ffffff';
-                document.body.appendChild(offscreenContainer);
-
-                const page = document.createElement('div');
-                page.style.padding = '40px 35px';
-                page.style.color = '#000000';
-                page.style.position = 'relative';
-                page.style.minHeight = '980px';
-                page.style.fontFamily = "system-ui, -apple-system, sans-serif";
-                page.style.boxSizing = 'border-box';
-
-                page.innerHTML = `
-                    <div style="border: 4px double #0f172a; padding: 25px; border-radius: 6px; min-height: 900px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative;">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 340px; height: 340px; opacity: 0.05; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                        
-                        <div style="position: relative; z-index: 1;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 15px; margin-bottom: 20px;">
-                                <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                                <div style="text-align: center; flex: 1; padding: 0 10px;">
-                                    <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Times New Roman', serif;">BETHANIA ACADEMY</h1>
-                                    <p style="font-size: 10px; color: #f59e0b; margin: 3px 0 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;">Motto: "Determination is Nobility"</p>
-                                    <p style="font-size: 9px; color: #475569; margin: 4px 0 0; font-weight: 600;">
-                                        P.O. BOX 96066 - 80100 MOMBASA KENYA &nbsp;|&nbsp; Tel: +254 711 638 425 / +254 728 870 061
-                                    </p>
-                                    <p style="font-size: 9px; color: #1e40af; margin: 2px 0 0; font-weight: bold; font-family: monospace;">
-                                        fpfkbethacademy@gmail.com
-                                    </p>
-                                </div>
-                                <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            </div>
-
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 22px;">
-                                <tr>
-                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 18%;">LEARNER NAME:</td>
-                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-transform: uppercase; text-align: left; font-size: 12px; border-bottom: 1px solid #e2e8f0;">${me.name}</td>
-                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 15%; text-align: right;">GRADE:</td>
-                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; width: 18%; border-bottom: 1px solid #e2e8f0;">${grade <= 0 ? (grade === -2 ? "PP1" : "PP2") : 'Grade ' + grade}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold;">STUDENT ID:</td>
-                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; font-family: monospace; text-align: left; border-bottom: 1px solid #e2e8f0;">${activeStudent.login_id}</td>
-                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; text-align: right;">CURRICULUM:</td>
-                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">CBC Framework</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold;">ACADEMIC CYCLE:</td>
-                                    <td style="padding: 5px 0; font-weight: 800; color: #1e40af; text-align: left; border-bottom: 1px solid #e2e8f0;">${activeSessionName}</td>
-                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; text-align: right;">REPORT TYPE:</td>
-                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">${isJuniorPoints ? 'Competency Slip' : 'Academic Marks'}</td>
-                                </tr>
-                            </table>
-
-                            <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; color: #0f172a; border-left: 3px solid #f59e0b; padding-left: 8px; text-align: left;">
-                                ${isJuniorPoints ? 'Competency Point Evaluation (8-Point scale)' : 'Raw Assessment Performance Records'}
-                            </h3>
-
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
-                                <thead>
-                                    <tr style="background-color: #0f172a; color: #ffffff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">
-                                        <th style="padding: 7px 10px; text-align: left; border: 1px solid #0f172a;">Learning Area / Component</th>
-                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #0f172a; width: 140px;">Score / Scale Output</th>
-                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #0f172a; width: 120px;">Evaluation Rating</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${staticSubjects.map(sub => {
-                                        const record = me.subjectBreakdown[sub.subject_name];
-                                        let compText = "-";
-                                        if(record && record.label !== "-") {
-                                            const ptsVal = isJuniorPoints ? record.score : (record.score / record.max) * 100;
-                                            compText = getCompetencyLevel(ptsVal, isJuniorPoints ? 'points' : 'marks').text;
-                                        }
-                                        return `
-                                            <tr>
-                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: bold; color: #334155; text-align: left;">${sub.subject_name}</td>
-                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; font-family: monospace; font-weight: bold; color: #0f172a;">${record ? record.label : '-'}</td>
-                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; color: #1e293b;">${compText}</td>
-                                            </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div>
-                            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                                <div style="text-align: left;">
-                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cumulative Total</span>
-                                    <strong style="font-size: 15px; color: #0f172a;">${isJuniorPoints ? me.totals.toFixed(0) : me.totals.toFixed(1)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
-                                </div>
-                                <div style="text-align: center;">
-                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Calculated Mean</span>
-                                    <strong style="font-size: 15px; color: #1e40af;">${me.average.toFixed(1)}${isJuniorPoints ? ' Pts' : '%'}</strong>
-                                </div>
-                                <div style="text-align: center;">
-                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Position</span>
-                                    <strong style="font-size: 15px; color: #0f172a;">Rank #${me.position} of ${rankings.length}</strong>
-                                </div>
-                                <div style="text-align: right;">
-                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Evaluation Rating</span>
-                                    <span style="display: inline-block; margin-top: 3px; padding: 3px 6px; font-weight: 800; border-radius: 4px; font-size: 9px; background-color: #e0f2fe; color: #0369a1; text-transform: uppercase;">
-                                        ${me.rating.text} - ${me.rating.label}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; justify-content: space-between; font-size: 9px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
-                                <div style="text-align: center; width: 160px;">
-                                    <div style="height: 35px;"></div>
-                                    <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">Class Teacher Signature</div>
-                                </div>
-                                <div style="text-align: center; width: 160px;">
-                                    <div style="height: 35px; line-height: 35px; color: #cbd5e1; font-style: italic; font-weight: bold; font-size: 8px; letter-spacing: 1px;">OFFICIAL SEAL</div>
-                                    <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">School Stamp</div>
-                                </div>
-                                <div style="text-align: center; width: 160px;">
-                                    <div style="height: 35px;"></div>
-                                    <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">Headteacher Signature</div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                `;
-
-                offscreenContainer.appendChild(page);
-
-                const canvas = await html2canvasPro(page, {
-                    scale: 2, 
-                    useCORS: true,
-                    logging: false,
-                    letterRendering: true
-                });
-
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                doc.addImage(imgData, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-                document.body.removeChild(offscreenContainer);
-
-                const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
-                doc.save(filename);
-
-            } catch (criticalErr) {
-                console.error("Compilation process exception caught:", criticalErr);
-                alert("An error occurred while compiling your report PDF. Check browser console logs.");
+            if (entries.length === 0) {
+                return alert("⚠️ No scores entered! Please record at least one grade.");
             }
-        }
+
+            saveMarksBtn.disabled = true;
+            saveMarksBtn.innerText = "⏳ Capturing Grades...";
+
+            const { data, error } = await _supabase
+                .from('marks_entry')
+                .upsert(entries, { onConflict: 'student_id,test_name,paper_id' }) 
+                .select();
+            
+            if (error) {
+                alert("❌ Database Error: " + error.message);
+                console.error("Upsert Error Details:", error);
+            } else if (!data || data.length === 0) {
+                alert("⚠️ Warning: Marks were submitted but database rejected the write.");
+            } else {
+                alert(`✨ Success! ${data.length} marks successfully captured & saved inside the database!`); 
+            }
+            
+            saveMarksBtn.disabled = false;
+            saveMarksBtn.innerText = "💾 Save All Marks";
+        });
+            
+        searchBar.addEventListener('input', (e) => {
+            renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
+        });
+
+        // Safe load verification
+        window.addEventListener('DOMContentLoaded', async () => {
+            await checkActiveSession();
+        });
     </script>
 </body>
 </html>
