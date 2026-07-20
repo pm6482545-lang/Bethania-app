@@ -97,8 +97,8 @@
                         <div class="form-control w-full">
                             <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Exam Category</label>
                             <select id="select-exam" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
-                                <option value="Opener Exam" selected>Opener Exam</option>
-                                <option value="Mid-Term Exam">Mid-Term Exam</option>
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid-Term Exam" selected>Mid-Term Exam</option>
                                 <option value="End-Term Exam">End-Term Exam</option>
                             </select>
                         </div>
@@ -390,11 +390,15 @@
             const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
             globalPapers = dbPapers || [];
 
-            // 4. Fetch cohort marks
+            // 4. Fetch cohort marks matching normal or alternative format (e.g., "Mid Term 2")
             const classmateIds = allStudentsInCohort.map(c => c.id);
+            
+            // Fallback parsing strategy to seamlessly pull metrics whether named 'Mid-Term Exam' or 'Mid Term 2'
+            let alternativeSessionName = activeSessionName.replace("Mid-Term Exam", "Mid Term 2");
+
             const { data: marks } = await _supabase.from('marks_entry')
                 .select('*')
-                .eq(dbSchemaCache.examColumn, activeSessionName)
+                .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${alternativeSessionName}"`)
                 .in('student_id', classmateIds);
             
             cohortMarks = marks || [];
@@ -489,7 +493,7 @@
             slipsContainer.innerHTML = html;
         }
 
-        // Calculation Engine with Dynamic Column Fallbacks
+        // Calculation Engine with Dynamic Column Fallbacks and standard Competition Rank for ties
         function calculateRankings(subjects, convertToPoints) {
             const list = allStudentsInCohort.map(stud => {
                 let totals = 0;
@@ -555,10 +559,16 @@
                 };
             });
 
-            // Sort and append rank positions
+            // Sort by totals descending
             list.sort((a, b) => b.totals - a.totals);
+            
+            // Standard Joint/Competition Tie-breaking Logic (1, 1, 3...)
+            let runningRank = 1;
             list.forEach((entry, idx) => {
-                entry.position = idx + 1;
+                if (idx > 0 && list[idx].totals < list[idx - 1].totals) {
+                    runningRank = idx + 1;
+                }
+                entry.position = runningRank;
             });
 
             return list;
