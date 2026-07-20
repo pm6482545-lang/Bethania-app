@@ -212,7 +212,7 @@
             }
         }
 
-        // Modified Point system explicitly tied to the exact 8 sub-tiers
+        // Point system explicitly tied to the exact 8 sub-tiers
         function convertScoreToPoints(score, max) {
             const pct = (score / max) * 100;
             if (pct >= 90) return 8; 
@@ -393,7 +393,6 @@
             const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
             globalPapers = dbPapers || [];
 
-            // Composite layout mapping alphanumeric login codes alongside auto-increment variants
             const classmateIdentifiers = [
                 ...allStudentsInCohort.map(c => c.id), 
                 ...allStudentsInCohort.map(c => String(c.id)),
@@ -447,9 +446,9 @@
                                 <div>Class Rank: <strong class="text-slate-900">#${myMarkRecord.position} of ${markRankings.length}</strong></div>
                             </div>
                         </div>
-                        \${isCurrentSessionLocked ? 
-                            \`<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>\` :
-                            \`<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📄 Download Raw Marks Slip</button>\`
+                        ${isCurrentSessionLocked ? 
+                            `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
+                            `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📄 Download Raw Marks Slip</button>`
                         }
                     </div>
                 `;
@@ -465,9 +464,9 @@
                                 <div>Competency Rank: <strong class="text-slate-900">#${myPointRecord.position} of ${pointRankings.length}</strong></div>
                             </div>
                         </div>
-                        \${isCurrentSessionLocked ? 
-                            \`<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>\` :
-                            \`<button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📄 Download Competency Points Slip</button>\`
+                        ${isCurrentSessionLocked ? 
+                            `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
+                            `<button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📄 Download Competency Points Slip</button>`
                         }
                     </div>
                 `;
@@ -482,11 +481,11 @@
                         <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                             <div class="bg-white px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-mono text-center min-w-[140px]">
                                 <span class="block text-[10px] text-slate-400">Position</span>
-                                <strong class="text-slate-900 text-base">#\${myMarkRecord.position}</strong> of \${markRankings.length}
+                                <strong class="text-slate-900 text-base">#${myMarkRecord.position}</strong> of ${markRankings.length}
                             </div>
-                            \${isCurrentSessionLocked ? 
-                                \`<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200 w-full"><p>🔒 Access Restricted: Outstanding balances active.</p></div>\` :
-                                \`<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📄 Download Performance Slip</button>\`
+                            ${isCurrentSessionLocked ? 
+                                `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200 w-full"><p>🔒 Access Restricted: Outstanding balances active.</p></div>` :
+                                `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📄 Download Performance Slip</button>`
                             }
                         </div>
                     </div>
@@ -496,7 +495,7 @@
             slipsContainer.innerHTML = html;
         }
 
-        // Calculation Engine upgraded to safely evaluate both string matching and ID variants
+        // Calculation Engine 
         function calculateRankings(subjects, convertToPoints) {
             const list = allStudentsInCohort.map(stud => {
                 let totals = 0;
@@ -581,7 +580,7 @@
             return list;
         }
 
-        // Advanced Portrait PDF Compiler matching Admin layout perfectly
+        // Portrait PDF Compiler
         async function generatePDFSlip(type) {
             const grade = activeStudent.grade;
             const tier = getGradeTier(grade);
