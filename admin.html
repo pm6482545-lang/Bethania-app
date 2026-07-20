@@ -88,7 +88,7 @@
                 <h3 class="font-bold text-sm uppercase tracking-tight mb-2">Adjust Student Score</h3>
                 <p id="admin-marks-modal-desc" class="text-xs text-slate-500 mb-4"></p>
                 <div class="form-control w-full mb-4">
-                    <label class="label-text font-bold text-xs text-slate-600 mb-1">Keyed Score Value</label>
+                    <label class="label-text font-bold text-xs text-slate-600 mb-1.5">Keyed Score Value</label>
                     <input type="number" id="admin-modal-score-input" min="0" max="100" class="input input-bordered input-sm focus:outline-none" placeholder="e.g. 84" />
                 </div>
                 <div class="modal-action gap-2 mt-0">
@@ -1999,40 +1999,37 @@
         // Direct Download as .pdf File Trigger
         executePdfDownloadBtn.addEventListener('click', async () => {
             executePdfDownloadBtn.disabled = true;
-            executePdfDownloadBtn.innerText = "Compiling PDF File...";
+            executePdfDownloadBtn.innerText = "Generating PDF Document...";
 
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'px',
-                    format: 'a4'
+                    orientation: "landscape",
+                    unit: "mm",
+                    format: "a4"
                 });
 
                 const pages = pdfRenderCanvas.querySelectorAll('.pdf-page');
-                
+
                 for (let i = 0; i < pages.length; i++) {
                     if (i > 0) doc.addPage();
                     
                     const canvas = await html2canvas(pages[i], {
                         scale: 2,
                         useCORS: true,
-                        allowTaint: true,
-                        backgroundColor: '#ffffff'
+                        allowTaint: false,
+                        backgroundColor: "#ffffff",
+                        logging: false
                     });
-                    
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                    const docWidth = doc.internal.pageSize.getWidth();
-                    const docHeight = doc.internal.pageSize.getHeight();
-                    
-                    doc.addImage(imgData, 'JPEG', 0, 0, docWidth, docHeight, undefined, 'FAST');
+
+                    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+                    doc.addImage(imgData, "JPEG", 10, 10, 277, 190);
                 }
 
-                doc.save(`${currentPdfTitle || 'Document'}.pdf`);
-                alert("PDF generated and downloaded successfully!");
+                doc.save(`${currentPdfTitle || 'Bethania_Academy_Report'}.pdf`);
                 pdfModal.close();
             } catch (err) {
-                alert("PDF compilation engine crashed: " + err.message);
+                alert("PDF Generation Engine Failure: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
