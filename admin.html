@@ -872,7 +872,7 @@
                     manageTeacherList.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No staff profiles registered yet.</p>';
                 }
             } catch (err) {
-                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>';
+                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>`;
             }
         }
 
@@ -1097,37 +1097,18 @@
             startCycleBtn.disabled = true;
             startCycleBtn.innerText = "Publishing...";
             try {
-                // Check if context configuration already exists to prevent duplicate rows and allow clean deadline extension/restart
-                const { data: existingSessions, error: checkErr } = await _supabase
-                    .from('exam_sessions')
-                    .select('*')
-                    .eq('exam_name', constructedName);
+                // First, mark all existing exam sessions as inactive
+                await _supabase.from('exam_sessions').update({ is_active: false }).neq('id', 0);
 
-                if (checkErr) throw checkErr;
-
-                let syncError;
-                if (existingSessions && existingSessions.length > 0) {
-                    // Update and restart context
-                    const { error: updateErr } = await _supabase
-                        .from('exam_sessions')
-                        .update({ deadline_at: deadlineIso, is_active: true })
-                        .eq('exam_name', constructedName);
-                    syncError = updateErr;
-                } else {
-                    // Insert brand new configuration
-                    const { error: insertErr } = await _supabase
-                        .from('exam_sessions')
-                        .insert([{ 
-                            exam_name: constructedName, 
-                            deadline_at: deadlineIso, 
-                            is_active: true 
-                        }]);
-                    syncError = insertErr;
-                }
-
-                if (syncError) throw syncError;
+                // Insert the new active exam session cycle context
+                const { error } = await _supabase.from('exam_sessions').insert([{ 
+                    exam_name: constructedName, 
+                    deadline_at: deadlineIso, 
+                    is_active: true 
+                }]);
+                if (error) throw error;
                 
-                alert(`Assessment Context "${constructedName}" Deployed/Updated Successfully!`);
+                alert(`Assessment Context "${constructedName}" Deployed!`);
                 currentActiveExamName = constructedName;
                 dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
                 detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
@@ -2019,88 +2000,98 @@
                 offscreenContainer.style.backgroundColor = '#ffffff';
                 document.body.appendChild(offscreenContainer);
 
-                // Page 1 Elements Initialization
-                const page1 = document.createElement('div');
-                page1.style.width = '1000px';
-                page1.style.padding = '40px';
-                page1.style.backgroundColor = '#ffffff';
-                page1.style.position = 'relative';
-                page1.innerHTML = `
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; opacity: 0.05; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain;"></div>
+                const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+
+                const pageOneNode = document.createElement('div');
+                pageOneNode.style.padding = '35px 40px';
+                pageOneNode.style.position = 'relative';
+                pageOneNode.style.backgroundColor = '#ffffff';
+                pageOneNode.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; opacity: 0.05; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
                     <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; font-family: 'Times New Roman', serif;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 2px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif;">Determination is Nobility</p>
                             </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        <div style="margin-top: 20px;">${cachedPdfData.header}</div>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10px;">
+                        <div>${cachedPdfData.header}</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9.5px;">
                             ${cachedPdfData.body}
                         </table>
                     </div>
                 `;
+                offscreenContainer.appendChild(pageOneNode);
+
+                const styleCells = (container) => {
+                    container.querySelectorAll('table').forEach(t => {
+                        t.style.width = '100%';
+                        t.style.borderCollapse = 'collapse';
+                    });
+                    container.querySelectorAll('th, td').forEach(c => {
+                        c.style.border = '1px solid #0f172a';
+                        c.style.padding = '4px 5px';
+                    });
+                    container.querySelectorAll('th').forEach(h => {
+                        h.style.backgroundColor = '#f1f5f9';
+                        h.style.color = '#0f172a';
+                        h.style.fontWeight = 'bold';
+                    });
+                };
+                styleCells(pageOneNode);
+
+                const canvasOne = await html2canvasPro(pageOneNode, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    width: 1000
+                });
+                const imgDataOne = canvasOne.toDataURL('image/jpeg', 0.98);
                 
-                page1.querySelectorAll('table').forEach(t => {
-                    t.style.width = '100%';
-                    t.style.borderCollapse = 'collapse';
-                });
-                page1.querySelectorAll('th, td').forEach(c => {
-                    c.style.border = '1px solid #1e293b';
-                    c.style.padding = '5px';
-                });
-                page1.querySelectorAll('th').forEach(h => {
-                    h.style.backgroundColor = '#f1f5f9';
-                    h.style.color = '#0f172a';
-                });
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = doc.internal.pageSize.getHeight();
+                
+                doc.addImage(imgDataOne, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-                offscreenContainer.appendChild(page1);
-                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
-                const imgData1 = canvas1.toDataURL('image/jpeg', 0.95);
-                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
-                // Page 2 Elements Initialization
-                const page2 = document.createElement('div');
-                page2.style.width = '1000px';
-                page2.style.padding = '40px';
-                page2.style.backgroundColor = '#ffffff';
-                page2.style.position = 'relative';
-                page2.innerHTML = `
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; opacity: 0.05; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain;"></div>
+                const pageTwoNode = document.createElement('div');
+                pageTwoNode.style.padding = '35px 40px';
+                pageTwoNode.style.position = 'relative';
+                pageTwoNode.style.backgroundColor = '#ffffff';
+                pageTwoNode.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; opacity: 0.05; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
                     <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; font-family: 'Times New Roman', serif;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 2px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif;">Determination is Nobility</p>
                             </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
+                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
                         </div>
-                        <div style="margin-top: 20px;">${cachedPdfData.stats}</div>
+                        <div style="margin-top: 10px;">${cachedPdfData.stats}</div>
                     </div>
                 `;
-                
-                page2.querySelectorAll('table').forEach(t => {
-                    t.style.width = '100%';
-                    t.style.borderCollapse = 'collapse';
-                });
-                page2.querySelectorAll('th, td').forEach(c => {
-                    c.style.border = '1px solid #1e293b';
-                    c.style.padding = '5px';
-                });
+                offscreenContainer.appendChild(pageTwoNode);
+                styleCells(pageTwoNode);
 
-                offscreenContainer.appendChild(page2);
+                const canvasTwo = await html2canvasPro(pageTwoNode, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    width: 1000
+                });
+                const imgDataTwo = canvasTwo.toDataURL('image/jpeg', 0.98);
+
                 doc.addPage();
-                const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
-                const imgData2 = canvas2.toDataURL('image/jpeg', 0.95);
-                doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+                doc.addImage(imgDataTwo, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-                doc.save(`${currentPdfTitle}.pdf`);
+                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}.pdf`);
                 document.body.removeChild(offscreenContainer);
+                pdfModal.close();
             } catch (err) {
-                alert("PDF export error: " + err.message);
+                alert("PDF rendering structural pipeline error: " + err.message);
                 console.error(err);
             } finally {
                 executePdfDownloadBtn.disabled = false;
