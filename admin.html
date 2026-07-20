@@ -7,7 +7,7 @@
     <title>Bethania Academy - Executive Admin Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Standard PDF Compilation & Rendering Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
@@ -834,7 +834,6 @@
 
                 const { data: sessions, error: sessionErr } = await _supabase.from('exam_sessions')
                     .select('*')
-                    .eq('is_active', true)
                     .order('created_at', { ascending: false })
                     .limit(1);
                 if (sessionErr) throw sessionErr;
@@ -843,10 +842,6 @@
                     currentActiveExamName = sessions[0].exam_name;
                     dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
                     detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
-                } else {
-                    currentActiveExamName = "";
-                    dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-warning"></span> No Active Exam`;
-                    detectedActiveLabel.innerText = "No Deployed Exam Series Found";
                 }
             } catch (err) {
                 console.error("Initialization failed:", err);
@@ -1102,43 +1097,42 @@
             startCycleBtn.disabled = true;
             startCycleBtn.innerText = "Publishing...";
             try {
-                // Step 1: Deactivate any currently active sessions to maintain single active constraint
-                const { error: deactivateErr } = await _supabase.from('exam_sessions')
-                    .update({ is_active: false })
-                    .eq('is_active', true);
-                if (deactivateErr) throw deactivateErr;
-
-                // Step 2: Check if this evaluation series already exists to allow restarting it safely
-                const { data: existingSession, error: checkErr } = await _supabase.from('exam_sessions')
+                // Check if context configuration already exists to prevent duplicate rows and allow clean deadline extension/restart
+                const { data: existingSessions, error: checkErr } = await _supabase
+                    .from('exam_sessions')
                     .select('*')
-                    .eq('exam_name', constructedName)
-                    .limit(1);
+                    .eq('exam_name', constructedName);
+
                 if (checkErr) throw checkErr;
 
-                let responseError;
-                if (existingSession && existingSession.length > 0) {
-                    // Update/Restart the found configuration row
-                    const { error: updateErr } = await _supabase.from('exam_sessions')
+                let syncError;
+                if (existingSessions && existingSessions.length > 0) {
+                    // Update and restart context
+                    const { error: updateErr } = await _supabase
+                        .from('exam_sessions')
                         .update({ deadline_at: deadlineIso, is_active: true })
-                        .eq('id', existingSession[0].id);
-                    responseError = updateErr;
+                        .eq('exam_name', constructedName);
+                    syncError = updateErr;
                 } else {
-                    // Create a completely brand new index row
-                    const { error: insertErr } = await _supabase.from('exam_sessions').insert([{ 
-                        exam_name: constructedName, 
-                        deadline_at: deadlineIso, 
-                        is_active: true 
-                    }]);
-                    responseError = insertErr;
+                    // Insert brand new configuration
+                    const { error: insertErr } = await _supabase
+                        .from('exam_sessions')
+                        .insert([{ 
+                            exam_name: constructedName, 
+                            deadline_at: deadlineIso, 
+                            is_active: true 
+                        }]);
+                    syncError = insertErr;
                 }
-                if (responseError) throw responseError;
+
+                if (syncError) throw syncError;
                 
-                alert(`Assessment Context "${constructedName}" Deployed successfully!`);
+                alert(`Assessment Context "${constructedName}" Deployed/Updated Successfully!`);
                 currentActiveExamName = constructedName;
                 dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
                 detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
             } catch (err) {
-                alert("Error running cycle setup: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 startCycleBtn.disabled = false;
                 startCycleBtn.innerText = "⚡ Publish Active Exam Context";
@@ -1166,7 +1160,6 @@
         });
 
         checkUploadsBtn.addEventListener('click', async () => {
-            if (!currentActiveExamName) return alert("No active exam deployment cycle is running!");
             const grade = parseInt(trackerGrade.value);
             const subId = trackerSubject.value;
             if (!grade || !subId) return alert("Select grade and subject components first!");
@@ -1223,7 +1216,6 @@
         };
 
         document.getElementById('admin-modal-save-btn').addEventListener('click', async () => {
-            if (!currentActiveExamName) return alert("An active target assessment window is mandatory!");
             const scoreVal = document.getElementById('admin-modal-score-input').value.trim();
             if (!scoreVal || isNaN(scoreVal)) return alert("Please enter a valid numeric mark score!");
 
@@ -1530,7 +1522,6 @@
         let printablePointsReportHtml = "";
 
         compileReportsBtn.addEventListener('click', async () => {
-            if (!currentActiveExamName) return alert("Please deploy an assessment cycle context first before parsing analytical broadsheets!");
             const grade = parseInt(reportGrade.value);
             if (isNaN(grade)) return alert("Please select a target class cohort!");
 
@@ -2026,85 +2017,91 @@
                 offscreenContainer.style.left = '-9999px';
                 offscreenContainer.style.width = '1000px'; 
                 offscreenContainer.style.backgroundColor = '#ffffff';
+                document.body.appendChild(offscreenContainer);
 
-                const p1Node = document.createElement('div');
-                p1Node.style.padding = '35px';
-                p1Node.style.position = 'relative';
-                p1Node.style.width = '1000px';
-                p1Node.style.boxSizing = 'border-box';
-                p1Node.innerHTML = `
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; opacity: 0.05; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                // Page 1 Elements Initialization
+                const page1 = document.createElement('div');
+                page1.style.width = '1000px';
+                page1.style.padding = '40px';
+                page1.style.backgroundColor = '#ffffff';
+                page1.style.position = 'relative';
+                page1.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; opacity: 0.05; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain;"></div>
                     <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
                             <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; color: #000;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; color: #000;">DETERMINATION IS NOBILITY</p>
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
                             </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
                         </div>
-                        <div style="margin-top: 15px;">${cachedPdfData.header}</div>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px; color: #000;">
+                        <div style="margin-top: 20px;">${cachedPdfData.header}</div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10px;">
                             ${cachedPdfData.body}
                         </table>
                     </div>
                 `;
-
-                const p2Node = document.createElement('div');
-                p2Node.style.padding = '35px';
-                p2Node.style.position = 'relative';
-                p2Node.style.width = '1000px';
-                p2Node.style.boxSizing = 'border-box';
-                p2Node.innerHTML = `
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; opacity: 0.05; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; color: #000;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; color: #000;">DETERMINATION IS NOBILITY</p>
-                            </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div style="margin-top: 15px;">${cachedPdfData.stats}</div>
-                    </div>
-                `;
-
-                // Quick operational parsing macro loop logic
-                [p1Node, p2Node].forEach(node => {
-                    node.querySelectorAll('table').forEach(t => {
-                        t.style.width = '100%';
-                        t.style.borderCollapse = 'collapse';
-                        t.style.fontSize = '9px';
-                        t.style.marginTop = '10px';
-                    });
-                    node.querySelectorAll('th, td').forEach(c => {
-                        c.style.border = '1px solid #000000';
-                        c.style.padding = '3px 4px';
-                        c.style.color = '#000000';
-                    });
-                    node.querySelectorAll('th').forEach(h => {
-                        h.style.backgroundColor = '#eaeff5';
-                        h.style.fontWeight = 'bold';
-                    });
-                    offscreenContainer.appendChild(node);
+                
+                page1.querySelectorAll('table').forEach(t => {
+                    t.style.width = '100%';
+                    t.style.borderCollapse = 'collapse';
+                });
+                page1.querySelectorAll('th, td').forEach(c => {
+                    c.style.border = '1px solid #1e293b';
+                    c.style.padding = '5px';
+                });
+                page1.querySelectorAll('th').forEach(h => {
+                    h.style.backgroundColor = '#f1f5f9';
+                    h.style.color = '#0f172a';
                 });
 
-                document.body.appendChild(offscreenContainer);
+                offscreenContainer.appendChild(page1);
+                const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true });
+                const imgData1 = canvas1.toDataURL('image/jpeg', 0.95);
+                doc.addImage(imgData1, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
 
-                const canvas1 = await html2canvas(p1Node, { scale: 2, useCORS: true, logging: false });
-                doc.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+                // Page 2 Elements Initialization
+                const page2 = document.createElement('div');
+                page2.style.width = '1000px';
+                page2.style.padding = '40px';
+                page2.style.backgroundColor = '#ffffff';
+                page2.style.position = 'relative';
+                page2.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; opacity: 0.05; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain;"></div>
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px;">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
+                            <div style="text-align: center; flex: 1;">
+                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
+                                <p style="font-size: 11px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
+                            </div>
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%;" />
+                        </div>
+                        <div style="margin-top: 20px;">${cachedPdfData.stats}</div>
+                    </div>
+                `;
+                
+                page2.querySelectorAll('table').forEach(t => {
+                    t.style.width = '100%';
+                    t.style.borderCollapse = 'collapse';
+                });
+                page2.querySelectorAll('th, td').forEach(c => {
+                    c.style.border = '1px solid #1e293b';
+                    c.style.padding = '5px';
+                });
 
+                offscreenContainer.appendChild(page2);
                 doc.addPage();
+                const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true });
+                const imgData2 = canvas2.toDataURL('image/jpeg', 0.95);
+                doc.addImage(imgData2, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
 
-                const canvas2 = await html2canvas(p2Node, { scale: 2, useCORS: true, logging: false });
-                doc.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
+                doc.save(`${currentPdfTitle}.pdf`);
                 document.body.removeChild(offscreenContainer);
-                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}_Ledger.pdf`);
-                pdfModal.close();
             } catch (err) {
-                alert("PDF Stream compiler broke down structural layout parameters: " + err.message);
+                alert("PDF export error: " + err.message);
+                console.error(err);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
