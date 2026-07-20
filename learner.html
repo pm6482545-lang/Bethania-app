@@ -227,9 +227,6 @@
 
         // Exact sub-tier mappings executed for individual points and global averages
         function getCompetencyLevel(val, type) {
-            let pct = val;
-            
-            // If checking points system directly, scale it back up to matching percentages for accurate sub-tier ranking
             if (type === 'points') {
                 if (val >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1" };
                 if (val >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2" };
@@ -240,13 +237,13 @@
                 if (val >= 1.5) return { text: "BE1", label: "Below Expectations 1" };
                 return { text: "BE2", label: "Below Expectations 2" };
             } else {
-                if (pct >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
-                if (pct >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
-                if (pct >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
-                if (pct >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
-                if (pct >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
-                if (pct >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
-                if (pct >= 10) return { text: "BE1", label: "Below Expectations 1" };
+                if (val >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
+                if (val >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
+                if (val >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
+                if (val >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
+                if (val >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
+                if (val >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
+                if (val >= 10) return { text: "BE1", label: "Below Expectations 1" };
                 return { text: "BE2", label: "Below Expectations 2" };
             }
         }
@@ -275,12 +272,9 @@
             const tm = selectTerm.value;
             const ex = selectExam.value;
             
-            // Construct runtime targeting string matching database naming architecture
             activeSessionName = `${yr} ${tm} ${ex}`;
 
-            // Check if fee lockouts exist for this structural scope
             try {
-                // Query using both the internal database id AND the alphanumeric login_id to be safe
                 const { data: lockRows } = await _supabase.from('fee_lockouts')
                     .select('*')
                     .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
@@ -288,11 +282,9 @@
 
                 isCurrentSessionLocked = false;
                 if (lockRows && lockRows.length > 0) {
-                    // Match structural fallback strings if any match historical selectors
                     const lockedMatch = lockRows.some(r => {
                         const rowYear = r.year || (r.exam_context ? r.exam_context.split(' ')[0] : '');
                         const rowTerm = r.term || (r.exam_context && r.exam_context.includes('Term') ? r.exam_context.match(/Term \d+/)?.[0] : '');
-                        
                         return (rowYear == yr && rowTerm == tm) || r.exam_context === activeSessionName;
                     });
                     if(lockedMatch) isCurrentSessionLocked = true;
@@ -304,7 +296,6 @@
             await loadCohortPerformances();
         }
 
-        // Attach listeners to filter updates
         selectYear.addEventListener('change', handleParameterSync);
         selectTerm.addEventListener('change', handleParameterSync);
         selectExam.addEventListener('change', handleParameterSync);
@@ -332,20 +323,17 @@
             loginScreen.classList.add('hidden');
             dashboardScreen.classList.remove('hidden');
 
-            // Set student profile details
             labelName.innerText = activeStudent.name;
             labelGrade.innerText = activeStudent.grade <= 0 ? (activeStudent.grade === -2 ? "PP1" : "PP2") : `Grade ${activeStudent.grade}`;
             labelIdBadge.innerText = activeStudent.login_id;
 
             await fetchSessionContext();
             
-            // Sync parameters with whatever is default inside UI selectors
             const yr = selectYear.value;
             const tm = selectTerm.value;
             const ex = selectExam.value;
             activeSessionName = `${yr} ${tm} ${ex}`;
 
-            // Verify initial restrictions layout block
             try {
                 const { data: initialLocks } = await _supabase.from('fee_lockouts')
                     .select('*')
@@ -379,56 +367,28 @@
             const tier = getGradeTier(grade);
             const allowed = CBC_SUBJECT_TIERS[tier];
 
-            // 1. Fetch Students in current grade cohort (Supports string or numerical variation setups seamlessly)
-            const { data: classmates } = await _supabase.from('students')
-                .select('*')
-                .or(`grade.eq.${grade},grade.eq."${grade}"`);
-            
+            const { data: classmates } = await _supabase.from('students').select('*').eq('grade', grade);
             allStudentsInCohort = classmates || [];
-            
-            // Backup fallback: Make sure the logged-in student is ALWAYS included in the data array
-            if (!allStudentsInCohort.some(c => c.id === activeStudent.id)) {
-                allStudentsInCohort.push(activeStudent);
-            }
 
-            // 2. Fetch all system active subjects
             const { data: dbSubjects } = await _supabase.from('subjects').select('*');
+            const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+            globalSubjects = validSubjects;
+            const subjectIds = validSubjects.map(s => s.id);
 
-            // 3. Fetch cohort marks matching variations of session string names
+            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
+            globalPapers = dbPapers || [];
+
             const classmateIds = allStudentsInCohort.map(c => c.id);
+            
             let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
             let altSessionName2 = activeSessionName.replace("Mid-Term Exam", "Mid Term 2");
 
-            // Main query using the collected list of cohort IDs
-            let { data: marks } = await _supabase.from('marks_entry')
+            const { data: marks } = await _supabase.from('marks_entry')
                 .select('*')
                 .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
                 .in('student_id', classmateIds);
             
-            // Direct Fallback Query: If cohort extraction returns empty, query strictly via the logged-in student's identifier matching criteria
-            if (!marks || marks.length === 0) {
-                const backupQuery = await _supabase.from('marks_entry')
-                    .select('*')
-                    .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
-                    .eq('student_id', activeStudent.id);
-                marks = backupQuery.data;
-            }
-
             cohortMarks = marks || [];
-
-            // Extract IDs of subjects that actually contain recorded evaluation entries for this cohort
-            const dynamicSubjectIds = [...new Set(cohortMarks.map(m => m.subject_id).filter(Boolean))];
-
-            // Filter logic: Blend strict framework with dynamic actual entries to avoid broken structural rendering matches
-            const validSubjects = (dbSubjects || []).filter(s => 
-                allowed.includes(s.subject_name.trim()) || dynamicSubjectIds.includes(s.id)
-            );
-            globalSubjects = validSubjects;
-            const subjectIds = validSubjects.map(s => s.id);
-
-            // 4. Fetch component papers
-            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
-            globalPapers = dbPapers || [];
 
             buildAvailableSlips(validSubjects, tier);
         }
@@ -443,7 +403,6 @@
 
             let html = "";
 
-            // Handle lack of data records gracefully
             if (!myMarkRecord || myMarkRecord.totals === 0) {
                 slipsContainer.innerHTML = `
                     <div class="col-span-2 text-center py-8 bg-slate-100 rounded-xl border border-dashed border-slate-300">
@@ -455,7 +414,7 @@
             }
 
             if (isJuniorSchool) {
-                // Junior School: Point conversion logic
+                // Junior School: Point conversion logic rendering TWO cards[span_2](start_span)[span_2](end_span)
                 const pointRankings = calculateRankings(subjects, true);
                 const myPointRecord = pointRankings.find(r => r.id === activeStudent.id);
 
@@ -495,7 +454,7 @@
                     </div>
                 `;
             } else {
-                // Primary School: Single Option
+                // Primary School and Below: Single Option rendering ONE card[span_3](start_span)[span_3](end_span)
                 html += `
                     <div class="col-span-2 border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div class="space-y-1">
@@ -533,7 +492,6 @@
                     let maxSum = 0;
                     let studentHasScore = false;
 
-                    // 1. Process via component papers if they exist
                     if (papers.length > 0) {
                         papers.forEach(p => {
                             const scoreObj = cohortMarks.find(m => m.student_id === stud.id && m.paper_id === p.id);
@@ -548,7 +506,6 @@
                         });
                     }
 
-                    // 2. Fallback check for direct aggregate subject level marks
                     const directScoreObj = cohortMarks.find(m => m.student_id === stud.id && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
                     if (directScoreObj) {
                         const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
@@ -580,16 +537,14 @@
                     id: stud.id,
                     name: stud.name,
                     subjectBreakdown,
-                    totals: parseFloat(totals.toFixed(4)), // Floating variance protection during tie evaluation
+                    totals: parseFloat(totals.toFixed(4)), 
                     average,
                     rating: getCompetencyLevel(average, convertToPoints ? 'points' : 'marks')
                 };
             });
 
-            // Sort by totals descending
             list.sort((a, b) => b.totals - a.totals);
             
-            // Standard Joint/Competition Tie-breaking Logic (1, 1, 3...)
             let runningRank = 1;
             list.forEach((entry, idx) => {
                 if (idx > 0 && list[idx].totals < list[idx - 1].totals) {
@@ -611,8 +566,7 @@
             const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
 
             try {
-                // Dynamically build static subjects based on verified database fields to maintain structural conformity
-                const staticSubjects = globalSubjects.length > 0 ? globalSubjects : allowed.map((subjectName, index) => {
+                const staticSubjects = allowed.map((subjectName, index) => {
                     const foundSubject = globalSubjects.find(s => s.subject_name.trim() === subjectName.trim());
                     return {
                         id: foundSubject ? foundSubject.id : index + 999,
@@ -628,7 +582,6 @@
                     return;
                 }
 
-                // Initialize portrait jsPDF matching Admin's structural options
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({
                     orientation: 'portrait',
@@ -636,11 +589,10 @@
                     format: 'a4'
                 });
 
-                // Create isolated sandbox element to render pure print CSS styles cleanly
                 const offscreenContainer = document.createElement('div');
                 offscreenContainer.style.position = 'absolute';
                 offscreenContainer.style.left = '-9999px';
-                offscreenContainer.style.width = '720px'; // Set standard safe A4 layout width
+                offscreenContainer.style.width = '720px'; 
                 offscreenContainer.style.backgroundColor = '#ffffff';
                 document.body.appendChild(offscreenContainer);
 
@@ -653,20 +605,16 @@
                 page.style.boxSizing = 'border-box';
 
                 page.innerHTML = `
-                    <!-- Premium Double Border -->
                     <div style="border: 4px double #0f172a; padding: 25px; border-radius: 6px; min-height: 900px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative;">
                         
-                        <!-- Background Watermark Layer -->
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 340px; height: 340px; opacity: 0.05; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
                         
                         <div style="position: relative; z-index: 1;">
-                            <!-- School Executive Header with Dual Logos -->
                             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 15px; margin-bottom: 20px;">
                                 <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                                 <div style="text-align: center; flex: 1; padding: 0 10px;">
                                     <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Times New Roman', serif;">BETHANIA ACADEMY</h1>
                                     <p style="font-size: 10px; color: #f59e0b; margin: 3px 0 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;">Motto: "Determination is Nobility"</p>
-                                    <!-- Official Contact Details Block -->
                                     <p style="font-size: 9px; color: #475569; margin: 4px 0 0; font-weight: 600;">
                                         P.O. BOX 96066 - 80100 MOMBASA KENYA &nbsp;|&nbsp; Tel: +254 711 638 425 / +254 728 870 061
                                     </p>
@@ -677,7 +625,6 @@
                                 <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
                             </div>
 
-                            <!-- Bio Information Matrix -->
                             <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 22px;">
                                 <tr>
                                     <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 18%;">LEARNER NAME:</td>
@@ -703,7 +650,6 @@
                                 ${isJuniorPoints ? 'Competency Point Evaluation (8-Point scale)' : 'Raw Assessment Performance Records'}
                             </h3>
 
-                            <!-- Subject Performance Table -->
                             <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
                                 <thead>
                                     <tr style="background-color: #0f172a; color: #ffffff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">
@@ -732,9 +678,7 @@
                             </table>
                         </div>
 
-                        <!-- Footer Block containing Scores & Official Stamp Area -->
                         <div>
-                            <!-- Overall Metrics Row -->
                             <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                                 <div style="text-align: left;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cumulative Total</span>
@@ -756,7 +700,6 @@
                                 </div>
                             </div>
 
-                            <!-- Footer & Official Stamp Area -->
                             <div style="display: flex; justify-content: space-between; font-size: 9px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
                                 <div style="text-align: center; width: 160px;">
                                     <div style="height: 35px;"></div>
@@ -778,8 +721,8 @@
 
                 offscreenContainer.appendChild(page);
 
-                // Fixed download trigger: executing via correct html2canvasPro asset package
-                const canvas = await html2canvasPro(page, {
+                // Executing via correct html2canvasPro asset package wrapper
+                const canvas = await window.html2canvasPro(page, {
                     scale: 2, 
                     useCORS: true,
                     logging: false,
@@ -787,14 +730,10 @@
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                
-                // Add rendered canvas representation to PDF
                 doc.addImage(imgData, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
 
-                // Clean up background DOM sandbox instantly
                 document.body.removeChild(offscreenContainer);
 
-                // Export File
                 const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
                 doc.save(filename);
 
