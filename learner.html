@@ -129,7 +129,7 @@
 
     <script>
         // Map html2canvas-pro's global variable to the name used in your function
-window.html2canvasPro = window.html2canvas;
+        window.html2canvasPro = window.html2canvas;
 
         // Supabase Init
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
@@ -379,21 +379,16 @@ window.html2canvasPro = window.html2canvas;
             const tier = getGradeTier(grade);
             const allowed = CBC_SUBJECT_TIERS[tier];
 
-            // 1. Fetch Students in current grade cohort
-            const { data: classmates } = await _supabase.from('students').select('*').eq('grade', grade);
+            // 1. Fetch Students in current grade cohort (Supports string or numerical variation setups seamlessly)
+            const { data: classmates } = await _supabase.from('students')
+                .select('*')
+                .or(`grade.eq.${grade},grade.eq."${grade}"`);
             allStudentsInCohort = classmates || [];
 
-            // 2. Fetch active subjects matching standard CBC lists
+            // 2. Fetch all system active subjects
             const { data: dbSubjects } = await _supabase.from('subjects').select('*');
-            const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
-            globalSubjects = validSubjects;
-            const subjectIds = validSubjects.map(s => s.id);
 
-            // 3. Fetch component papers
-            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
-            globalPapers = dbPapers || [];
-
-            // 4. Fetch cohort marks matching normal or alternative format
+            // 3. Fetch cohort marks matching normal or alternative format
             const classmateIds = allStudentsInCohort.map(c => c.id);
             
             // Robust match patterns to align variations between portals
@@ -406,6 +401,20 @@ window.html2canvasPro = window.html2canvas;
                 .in('student_id', classmateIds);
             
             cohortMarks = marks || [];
+
+            // Extract IDs of subjects that actually contain recorded evaluation entries for this cohort
+            const dynamicSubjectIds = [...new Set(cohortMarks.map(m => m.subject_id).filter(Boolean))];
+
+            // Filter logic: Blend strict framework with dynamic actual entries to avoid broken structural rendering matches
+            const validSubjects = (dbSubjects || []).filter(s => 
+                allowed.includes(s.subject_name.trim()) || dynamicSubjectIds.includes(s.id)
+            );
+            globalSubjects = validSubjects;
+            const subjectIds = validSubjects.map(s => s.id);
+
+            // 4. Fetch component papers
+            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
+            globalPapers = dbPapers || [];
 
             buildAvailableSlips(validSubjects, tier);
         }
@@ -588,7 +597,8 @@ window.html2canvasPro = window.html2canvas;
             const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
 
             try {
-                const staticSubjects = allowed.map((subjectName, index) => {
+                // Dynamically build static subjects based on verified database fields to maintain structural conformity
+                const staticSubjects = globalSubjects.length > 0 ? globalSubjects : allowed.map((subjectName, index) => {
                     const foundSubject = globalSubjects.find(s => s.subject_name.trim() === subjectName.trim());
                     return {
                         id: foundSubject ? foundSubject.id : index + 999,
