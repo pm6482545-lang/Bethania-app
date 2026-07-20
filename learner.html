@@ -383,23 +383,37 @@
             const { data: classmates } = await _supabase.from('students')
                 .select('*')
                 .or(`grade.eq.${grade},grade.eq."${grade}"`);
+            
             allStudentsInCohort = classmates || [];
+            
+            // Backup fallback: Make sure the logged-in student is ALWAYS included in the data array
+            if (!allStudentsInCohort.some(c => c.id === activeStudent.id)) {
+                allStudentsInCohort.push(activeStudent);
+            }
 
             // 2. Fetch all system active subjects
             const { data: dbSubjects } = await _supabase.from('subjects').select('*');
 
-            // 3. Fetch cohort marks matching normal or alternative format
+            // 3. Fetch cohort marks matching variations of session string names
             const classmateIds = allStudentsInCohort.map(c => c.id);
-            
-            // Robust match patterns to align variations between portals
             let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
             let altSessionName2 = activeSessionName.replace("Mid-Term Exam", "Mid Term 2");
 
-            const { data: marks } = await _supabase.from('marks_entry')
+            // Main query using the collected list of cohort IDs
+            let { data: marks } = await _supabase.from('marks_entry')
                 .select('*')
                 .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
                 .in('student_id', classmateIds);
             
+            // Direct Fallback Query: If cohort extraction returns empty, query strictly via the logged-in student's identifier matching criteria
+            if (!marks || marks.length === 0) {
+                const backupQuery = await _supabase.from('marks_entry')
+                    .select('*')
+                    .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
+                    .eq('student_id', activeStudent.id);
+                marks = backupQuery.data;
+            }
+
             cohortMarks = marks || [];
 
             // Extract IDs of subjects that actually contain recorded evaluation entries for this cohort
