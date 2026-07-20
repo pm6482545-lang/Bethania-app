@@ -397,18 +397,8 @@
             const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
             globalPapers = dbPapers || [];
 
-            // 4. Fetch cohort marks matching normal or alternative format (Patched for absolute identifier flexibility)
-            const identifierList = [];
-            allStudentsInCohort.forEach(c => {
-                if (c.id) {
-                    identifierList.push(c.id);
-                    identifierList.push(c.id.toString());
-                    if (!isNaN(c.id)) identifierList.push(parseInt(c.id));
-                }
-                if (c.login_id) {
-                    identifierList.push(c.login_id);
-                }
-            });
+            // 4. Fetch cohort marks matching normal or alternative format
+            const classmateIds = allStudentsInCohort.map(c => c.id);
             
             // Robust match patterns to align variations between portals
             let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
@@ -417,7 +407,7 @@
             const { data: marks } = await _supabase.from('marks_entry')
                 .select('*')
                 .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
-                .in('student_id', identifierList);
+                .in('student_id', classmateIds);
             
             cohortMarks = marks || [];
 
@@ -524,10 +514,10 @@
                     let maxSum = 0;
                     let studentHasScore = false;
 
-                    // 1. Process via component papers if they exist (Patched with flexible type-matching)
+                    // 1. Process via component papers if they exist
                     if (papers.length > 0) {
                         papers.forEach(p => {
-                            const scoreObj = cohortMarks.find(m => (m.student_id == stud.id || m.student_id == stud.login_id) && m.paper_id === p.id);
+                            const scoreObj = cohortMarks.find(m => m.student_id === stud.id && m.paper_id === p.id);
                             if (scoreObj) {
                                 const val = parseFloat(scoreObj[dbSchemaCache.scoreColumn]);
                                 if (!isNaN(val)) {
@@ -539,8 +529,8 @@
                         });
                     }
 
-                    // 2. Fallback check for direct aggregate subject level marks (Patched with flexible type-matching)
-                    const directScoreObj = cohortMarks.find(m => (m.student_id == stud.id || m.student_id == stud.login_id) && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
+                    // 2. Fallback check for direct aggregate subject level marks
+                    const directScoreObj = cohortMarks.find(m => m.student_id === stud.id && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
                     if (directScoreObj) {
                         const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
                         if (!isNaN(val)) {
