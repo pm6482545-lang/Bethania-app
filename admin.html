@@ -110,7 +110,7 @@
                 
                 <!-- Embedded PDF Preview Area (A4 Landscape aspect ratio representation) -->
                 <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
-                    <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative; overflow: hidden;">
+                    <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative;">
                         <!-- Dynamically populated PDF view with watermark -->
                     </div>
                 </div>
@@ -1950,13 +1950,30 @@
                     logging: false
                 });
 
-                const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('landscape', 'pt', 'a4');
+                
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
 
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                const imgData = canvas.toDataURL('image/png');
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+                }
+
                 pdf.save(`${currentPdfTitle || 'Document_Export'}.pdf`);
             } catch (err) {
                 alert("PDF export error: " + err.message);
