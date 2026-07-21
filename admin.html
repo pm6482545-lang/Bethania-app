@@ -584,9 +584,10 @@
             </div>
         </main>
     </div>
-window.html2canvasPro = window.html2canvasPro || window.html2canvas;
+
     <script>
-        
+        window.html2canvasPro = window.html2canvasPro || window.html2canvas;
+
         // Supabase Configuration
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
@@ -791,7 +792,6 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
                     return;
                 }
 
-                // Remove gateway block structure overlay and trigger initial data loads
                 adminLoginOverlay.classList.add('hidden');
                 portalDashboardWrapper.classList.remove('hidden');
                 initAdminEngine();
@@ -884,7 +884,6 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
             addTeacherBtn.disabled = true;
             addTeacherBtn.innerText = "Generating Profiles...";
 
-            // Create numeric safe usernames and passwords pairs
             const generatedUser = "tr_" + Math.floor(1000 + Math.random() * 9000);
             const generatedPass = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -1098,10 +1097,8 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
             startCycleBtn.disabled = true;
             startCycleBtn.innerText = "Publishing...";
             try {
-                // First, mark all existing exam sessions as inactive
                 await _supabase.from('exam_sessions').update({ is_active: false }).neq('id', 0);
 
-                // Insert the new active exam session cycle context
                 const { error } = await _supabase.from('exam_sessions').insert([{ 
                     exam_name: constructedName, 
                     deadline_at: deadlineIso, 
@@ -1189,7 +1186,6 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
             }
         });
 
-        // 1. INLINE MARKS INTERACTION ENGINE HANDLERS
         window.openAdminMarksEditor = function(studentId, name, currentScore) {
             selectedTrackerStudentId = studentId;
             document.getElementById('admin-marks-modal-desc').innerText = `Editing entry parameters for ${name}`;
@@ -1288,7 +1284,6 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
                     return;
                 }
 
-                // Check evaluation format preference for junior school tiers
                 let compilePoints = false;
                 if (tier === "junior_school") {
                     compilePoints = confirm("Do you want to compile the Points Ledger for Junior School?\n\nClick [OK] for Points Ledger layout.\nClick [Cancel] for default Raw Marks Ledger layout.");
@@ -1879,18 +1874,47 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
                 }
 
                 downloadMarksPdfBtn.disabled = false;
+
             } catch (err) {
-                alert("Broadsheet compilation error: " + err.message);
+                alert("Compilation failed: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
                 compileReportsBtn.innerText = "📊 Compile Broad Sheet";
             }
         });
 
+        // EMBEDDED MODAL PREVIEW RENDER FUNCTION
+        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
+            currentPdfTitle = title;
+            const logoSrc = document.getElementById('school-logo').src;
+            const schoolName = document.getElementById('school-title').innerText.trim();
+
+            pdfRenderCanvas.innerHTML = `
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 70px; font-weight: 900; color: rgba(226, 232, 240, 0.45); pointer-events: none; z-index: 0; white-space: nowrap; text-transform: uppercase;">
+                    ${schoolName}
+                </div>
+                <div style="position: relative; z-index: 10;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-b: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+                        <img src="${logoSrc}" style="height: 50px; width: 50px; object-fit: contain;" />
+                        <div style="text-align: right;">
+                            <h1 style="font-size: 16px; font-weight: 900; text-transform: uppercase; color: #0f172a; margin: 0;">${schoolName}</h1>
+                            <p style="font-size: 9px; color: #64748b; font-weight: bold; margin: 0; text-transform: uppercase;">Official Executive CBA Ledger Document</p>
+                        </div>
+                    </div>
+                    ${headerHtml}
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-bottom: 15px;" border="1" bordercolor="#cbd5e1">
+                        ${bodyHtml}
+                    </table>
+                    ${statsHtml}
+                </div>
+            `;
+            pdfModal.showModal();
+        }
+
         downloadMarksPdfBtn.addEventListener('click', () => {
-            if (!printableMarksReportHtml) return;
+            if (!printableMarksReportHtml) return alert("Please compile a report first!");
             openEmbeddedPdfPreview(
-                `${currentActiveExamName} - Raw Marks Master Ledger`,
+                `${getGradeLabel(reportGrade.value)} Marks Master Ledger`,
                 printableMarksReportHtml.marksHeaderHtml,
                 printableMarksReportHtml.marksBodyHtml,
                 printableMarksReportHtml.marksStatsHtml
@@ -1898,202 +1922,47 @@ window.html2canvasPro = window.html2canvasPro || window.html2canvas;
         });
 
         downloadPointsPdfBtn.addEventListener('click', () => {
-            if (!printablePointsReportHtml) return;
+            if (!printablePointsReportHtml) return alert("Please compile a report first!");
             openEmbeddedPdfPreview(
-                `${currentActiveExamName} - Points Master Ledger`,
+                `${getGradeLabel(reportGrade.value)} Points Master Ledger`,
                 printablePointsReportHtml.pointsHeaderHtml,
                 printablePointsReportHtml.pointsBodyHtml,
                 printablePointsReportHtml.pointsStatsHtml
             );
         });
 
-        // MODAL PREVIEW & PDF STREAMING COMPILER
-        let cachedPdfData = { title: "", header: "", body: "", stats: "" };
-
-        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
-            cachedPdfData = { title, header: headerHtml, body: bodyHtml, stats: statsHtml };
-            currentPdfTitle = title;
-
-            // Render exact landscape view structure inside the modal sandbox with centered watermark background styling
-            pdfRenderCanvas.innerHTML = `
-                <!-- Page 1 Container -->
-                <div style="width: 100%; box-sizing: border-box; margin-bottom: 2rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1.5rem; position: relative; min-height: 520px; overflow: hidden;">
-                    <!-- Centered Watermark Layer with Adjusted Opacity -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
-                            </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div style="margin-top: 15px;">${headerHtml}</div>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
-                            ${bodyHtml}
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Page 2 Container -->
-                <div style="width: 100%; box-sizing: border-box; position: relative; min-height: 520px; overflow: hidden;">
-                    <!-- Centered Watermark Layer with Adjusted Opacity -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; height: 380px; opacity: 0.06; pointer-events: none; background: url('https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; letter-spacing: 1.5px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase;">Determination is Nobility</p>
-                            </div>
-                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div style="margin-top: 15px;">${statsHtml}</div>
-                    </div>
-                </div>
-            `;
-
-            // Apply styling rule specifically targeting modal view tables
-            const tables = pdfRenderCanvas.querySelectorAll('table');
-            tables.forEach(t => {
-                t.style.width = '100%';
-                t.style.borderCollapse = 'collapse';
-                t.style.fontSize = '10px';
-                t.style.marginTop = '10px';
-            });
-            const cells = pdfRenderCanvas.querySelectorAll('th, td');
-            cells.forEach(c => {
-                c.style.border = '1px solid #1e293b';
-                c.style.padding = '4px 5px';
-            });
-            const headers = pdfRenderCanvas.querySelectorAll('th');
-            headers.forEach(h => {
-                h.style.backgroundColor = '#f1f5f9';
-                h.style.color = '#0f172a';
-                h.style.fontWeight = 'bold';
-            });
-
-            pdfModal.showModal();
-        }
-
-        // Direct Download as .pdf File Trigger
+        // EXECUTE DIRECT DYNAMIC LANDSCAPE PDF EXPORT
         executePdfDownloadBtn.addEventListener('click', async () => {
             executePdfDownloadBtn.disabled = true;
-            executePdfDownloadBtn.innerText = "Compiling PDF File...";
+            executePdfDownloadBtn.innerText = "Generating PDF...";
 
             try {
+                const element = pdfRenderCanvas;
+                const canvas = await window.html2canvasPro(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
-                // Standard Landscape layout declaration
-                const doc = new jsPDF({
+                
+                // Create A4 Landscape PDF
+                const pdf = new jsPDF({
                     orientation: 'landscape',
-                    unit: 'px',
+                    unit: 'mm',
                     format: 'a4'
                 });
 
-                // Structure temporary isolated nodes to compile separate pages
-                const offscreenContainer = document.createElement('div');
-                offscreenContainer.style.position = 'absolute';
-                offscreenContainer.style.left = '-9999px';
-                offscreenContainer.style.width = '1000px'; 
-                offscreenContainer.style.backgroundColor = '#ffffff';
-                document.body.appendChild(offscreenContainer);
-
-                const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
-
-                const pageOneNode = document.createElement('div');
-                pageOneNode.style.padding = '35px 40px';
-                pageOneNode.style.position = 'relative';
-                pageOneNode.style.backgroundColor = '#ffffff';
-                pageOneNode.innerHTML = `
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; opacity: 0.05; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
-                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; font-family: 'Times New Roman', serif;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 2px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif;">Determination is Nobility</p>
-                            </div>
-                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div>${cachedPdfData.header}</div>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9.5px;">
-                            ${cachedPdfData.body}
-                        </table>
-                    </div>
-                `;
-                offscreenContainer.appendChild(pageOneNode);
-
-                const styleCells = (container) => {
-                    container.querySelectorAll('table').forEach(t => {
-                        t.style.width = '100%';
-                        t.style.borderCollapse = 'collapse';
-                    });
-                    container.querySelectorAll('th, td').forEach(c => {
-                        c.style.border = '1px solid #0f172a';
-                        c.style.padding = '4px 5px';
-                    });
-                    container.querySelectorAll('th').forEach(h => {
-                        h.style.backgroundColor = '#f1f5f9';
-                        h.style.color = '#0f172a';
-                        h.style.fontWeight = 'bold';
-                    });
-                };
-                styleCells(pageOneNode);
-
-                const canvasOne = await html2canvasPro(pageOneNode, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    width: 1000
-                });
-                const imgDataOne = canvasOne.toDataURL('image/jpeg', 0.98);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
                 
-                const pdfWidth = doc.internal.pageSize.getWidth();
-                const pdfHeight = doc.internal.pageSize.getHeight();
-                
-                doc.addImage(imgDataOne, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${currentPdfTitle || 'Broadsheet_Report'}.pdf`);
 
-                const pageTwoNode = document.createElement('div');
-                pageTwoNode.style.padding = '35px 40px';
-                pageTwoNode.style.position = 'relative';
-                pageTwoNode.style.backgroundColor = '#ffffff';
-                pageTwoNode.innerHTML = `
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; opacity: 0.05; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
-                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
-                            <div style="text-align: center; flex: 1;">
-                                <h1 style="font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; font-family: 'Times New Roman', serif;">F.P.F.K BETHANIA ACADEMY</h1>
-                                <p style="font-size: 11px; letter-spacing: 2px; margin: 4px 0 0 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif;">Determination is Nobility</p>
-                            </div>
-                            <img src="${logoUrl}" style="width: 55px; height: 55px; border-radius: 50%;" />
-                        </div>
-                        <div style="margin-top: 10px;">${cachedPdfData.stats}</div>
-                    </div>
-                `;
-                offscreenContainer.appendChild(pageTwoNode);
-                styleCells(pageTwoNode);
-
-                const canvasTwo = await html2canvasPro(pageTwoNode, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    width: 1000
-                });
-                const imgDataTwo = canvasTwo.toDataURL('image/jpeg', 0.98);
-
-                doc.addPage();
-                doc.addImage(imgDataTwo, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
-                doc.save(`${currentPdfTitle.replace(/\s+/g, '_')}.pdf`);
-                document.body.removeChild(offscreenContainer);
                 pdfModal.close();
             } catch (err) {
-                alert("PDF rendering structural pipeline error: " + err.message);
-                console.error(err);
+                alert("PDF Generation error: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
