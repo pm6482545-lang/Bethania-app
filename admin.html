@@ -758,7 +758,13 @@
             return "BE2";
         }
 
-        function getMarksRating(pct) {
+        function getMarksRating(pct, tier = "junior_school") {
+            if (tier === "lower_primary" || tier === "upper_primary") {
+                if (pct >= 80) return "EE";
+                if (pct >= 50) return "ME";
+                if (pct >= 30) return "AE";
+                return "BE";
+            }
             if (pct >= 80) return "EE2";
             if (pct >= 50) return "ME1";
             if (pct >= 40) return "ME2";
@@ -766,6 +772,13 @@
             if (pct >= 20) return "AE2";
             if (pct >= 10) return "BE1";
             return "BE2";
+        }
+
+        function getRatingKeysForTier(tier) {
+            if (tier === "lower_primary" || tier === "upper_primary") {
+                return ["EE", "ME", "AE", "BE"];
+            }
+            return ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
         }
 
         // ADMINISTRATIVE USER AUTHENTICATION CONTROLLER TRIGGER
@@ -1289,7 +1302,7 @@
                     compilePoints = confirm("Do you want to compile the Points Ledger for Junior School?\n\nClick [OK] for Points Ledger layout.\nClick [Cancel] for default Raw Marks Ledger layout.");
                 }
 
-                const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
+                const ratingKeys = compilePoints ? ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"] : getRatingKeysForTier(tier);
                 const matrixDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
                 const subjectMetricsStats = {};
                 filteredSubjects.forEach(sub => {
@@ -1309,14 +1322,14 @@
                             
                             subjectMetricsStats[sub.subject_name].total += structuralValue;
                             subjectMetricsStats[sub.subject_name].count++;
-                            const individualRating = compilePoints ? getPointsRating(structuralValue) : getMarksRating(score);
+                            const individualRating = compilePoints ? getPointsRating(structuralValue) : getMarksRating(score, tier);
                             subjectMetricsStats[sub.subject_name].dist[individualRating]++;
                         } else {
                             subjectScores[sub.subject_name] = null;
                         }
                     });
                     const average = count > 0 ? (combinedTotals / count) : 0;
-                    const compositeRating = compilePoints ? getPointsRating(average) : getMarksRating(average);
+                    const compositeRating = compilePoints ? getPointsRating(average) : getMarksRating(average, tier);
                     matrixDistribution[compositeRating]++;
                     return { name: s.name, subjectScores, totals: combinedTotals, average, rating: compositeRating };
                 }).sort((a, b) => b.totals - a.totals);
@@ -1350,9 +1363,9 @@
                             <tr>
                                 <td style="text-align: center;">${index + 1}</td>
                                 <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap;">${cs.name}</td>
-                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? (compilePoints ? cs.subjectScores[sub.subject_name].toFixed(0) : cs.subjectScores[sub.subject_name]) : '-'}</td>`).join('')}
+                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? (compilePoints ? cs.subjectScores[sub.subject_name].toFixed(0) : Math.round(cs.subjectScores[sub.subject_name]) + '%') : '-'}</td>`).join('')}
                                 <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
-                                <td style="font-weight: bold; color: ${compilePoints ? '#15803d' : '#0284c7'}; text-align: center;">${compilePoints ? cs.average.toFixed(1) : cs.average.toFixed(0) + '%'}</td>
+                                <td style="font-weight: bold; color: ${compilePoints ? '#15803d' : '#0284c7'}; text-align: center;">${compilePoints ? cs.average.toFixed(1) : Math.round(cs.average) + '%'}</td>
                                 <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
                                 <td style="font-weight: 900; text-align: center;">${cs.position}</td>
                             </tr>
@@ -1367,9 +1380,9 @@
                             <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
                             ${filteredSubjects.map(sub => {
                                 const stats = subjectMetricsStats[sub.subject_name];
-                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
+                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(compilePoints ? 1 : 2) : '0.0'}</td>`;
                             }).join('')}
-                            <td style="text-align: center;">${(compiledHistoricalData.reduce((acc, curr) => acc + curr.totals, 0) / targetStudents.length).toFixed(1)}</td>
+                            <td style="text-align: center;">${(compiledHistoricalData.reduce((acc, curr) => acc + curr.totals, 0) / targetStudents.length).toFixed(compilePoints ? 1 : 2)}</td>
                             <td colspan="3" style="text-align: center;"></td>
                         </tr>
                         <tr style="background-color: #f8fafc; font-weight: bold;">
@@ -1546,16 +1559,16 @@
                 if (marksErr) throw marksErr;
                 const marksData = marks || [];
 
-                const ratingKeys = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
+                const ratingKeys = getRatingKeysForTier(tier);
                 const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
-                const pointsDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+                const pointsDistribution = Object.fromEntries(["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(k => [k, 0]));
 
                 const subjectMarksStats = {};
                 const subjectPointsStats = {};
 
                 filteredSubjects.forEach(sub => {
                     subjectMarksStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
-                    subjectPointsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                    subjectPointsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(k => [k, 0])) };
                 });
 
                 const calculatedMarksStudents = targetStudents.map(s => {
@@ -1573,7 +1586,7 @@
 
                             subjectMarksStats[sub.subject_name].total += subScore;
                             subjectMarksStats[sub.subject_name].count++;
-                            const individualRating = getMarksRating(subScore);
+                            const individualRating = getMarksRating(subScore, tier);
                             subjectMarksStats[sub.subject_name].dist[individualRating]++;
                         } else {
                             subjectScores[sub.subject_name] = null;
@@ -1581,7 +1594,7 @@
                     });
 
                     const average = count > 0 ? (totalMarks / count) : 0;
-                    const rating = getMarksRating(average);
+                    const rating = getMarksRating(average, tier);
                     marksDistribution[rating]++;
 
                     return {
@@ -1657,11 +1670,11 @@
                     
                     filteredSubjects.forEach(sub => {
                         const val = cs.subjectScores[sub.subject_name];
-                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? val : '-'}</td>`;
+                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? (tier === "lower_primary" ? `${Math.round(val)}%` : val) : '-'}</td>`;
                     });
 
                     cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${cs.totals.toFixed(0)}</td>`;
-                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${cs.average.toFixed(1)}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${tier === "lower_primary" ? `${Math.round(cs.average)}%` : cs.average.toFixed(1)}</td>`;
                     cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] bg-slate-100">${cs.rating}</span></td>`;
                     cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
                     return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
@@ -1669,7 +1682,7 @@
 
                 const totalRanked = targetStudents.length;
                 if (tier === "lower_primary") {
-                    const classMeanMarks = (calculatedMarksStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                    const classMeanMarks = Math.round(calculatedMarksStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked);
                     analyticalSummaryBadges.innerHTML = `
                         <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Cohort: ${totalRanked}</span>
                         <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Mean: ${classMeanMarks}%</span>
@@ -1717,9 +1730,9 @@
                             <tr>
                                 <td style="text-align: center;">${index + 1}</td>
                                 <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
-                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
+                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? Math.round(cs.subjectScores[sub.subject_name]) + '%' : '-'}</td>`).join('')}
                                 <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
-                                <td style="font-weight: bold; color: #0284c7; text-align: center;">${cs.average.toFixed(0)}%</td>
+                                <td style="font-weight: bold; color: #0284c7; text-align: center;">${Math.round(cs.average)}%</td>
                                 <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
                                 <td style="font-weight: 900; text-align: center;">${cs.position}</td>
                             </tr>
@@ -1734,9 +1747,9 @@
                             <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
                             ${filteredSubjects.map(sub => {
                                 const stats = subjectMarksStats[sub.subject_name];
-                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
+                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(2) : '0.00'}</td>`;
                             }).join('')}
-                            <td style="text-align: center;">${(calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(1)}</td>
+                            <td style="text-align: center;">${(calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(2)}</td>
                             <td colspan="3" style="text-align: center;"></td>
                         </tr>
                         <tr style="background-color: #f8fafc; font-weight: bold;">
@@ -1756,7 +1769,11 @@
                         ${ratingKeys.map(key => {
                             const count = marksDistribution[key] || 0;
                             const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
-                            const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
+                            const levelLabel = key === "EE" ? "Exceeding Expectation (EE)" :
+                                               key === "ME" ? "Meeting Expectation (ME)" :
+                                               key === "AE" ? "Approaching Expectation (AE)" :
+                                               key === "BE" ? "Below Expectation (BE)" :
+                                               key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
                                                key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
                                                key === "ME1" ? "Meeting Expectation 1 (ME1)" :
                                                key === "ME2" ? "Meeting Expectation 2 (ME2)" :
@@ -1843,7 +1860,7 @@
                     let pointsStatsHtml = `
                         <div style="font-weight: bold; font-size: 10px;">
                             <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
-                            ${ratingKeys.map(key => {
+                            ${["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(key => {
                                 const count = pointsDistribution[key] || 0;
                                 const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
                                 const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
@@ -1893,18 +1910,11 @@
                     BETHANIA ACADEMY
                 </div>
                 <div style="position: relative; z-index: 10;">
-                    <div style="display: flex; items-center; justify-content: space-between; border-b-2 border-slate-900 pb-3 mb-4;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${logoSrc}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://placehold.co/100x100?text=BA'" />
-                            <div>
-                                <h1 style="font-size: 18px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; tracking-wide;">BETHANIA ACADEMY</h1>
-                                <p style="font-size: 10px; color: #64748b; margin: 0; font-weight: bold; text-transform: uppercase;">EXECUTIVE CBA EVALUATION & ANALYTICS PORTAL</p>
-                            </div>
-                        </div>
-                        <div style="text-align: right; font-size: 9px; color: #475569; font-family: monospace;">
-                            <div>DATE: ${new Date().toLocaleDateString()}</div>
-                            <div>STATUS: OFFICIAL VERIFIED</div>
-                        </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; border-b-2 border-slate-900 pb-3 mb-4;">
+                        <img src="${logoSrc}" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; margin-bottom: 6px;" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                        <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 1px;">BETHANIA ACADEMY</h1>
+                        <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">EXECUTIVE CBA EVALUATION & ANALYTICS PORTAL</p>
+                        <p style="font-size: 8px; color: #475569; margin-top: 2px; font-family: monospace;">DATE: ${new Date().toLocaleDateString()} | STATUS: OFFICIAL VERIFIED</p>
                     </div>
                     ${headerHtml}
                     <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 16px; border: 1px solid #1e293b;">
