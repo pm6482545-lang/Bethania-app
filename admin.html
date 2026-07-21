@@ -504,7 +504,7 @@
                                     <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
                                         <option value="" disabled selected>Select from database...</option>
                                     </select>
-                            </div>
+                                </div>
                                 <p class="text-[10px] text-red-500 font-semibold italic bg-red-50 p-2 rounded-lg border border-red-100">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
                                 <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold shadow-sm">🗑️ Delete Selected Subject</button>
                             </div>
@@ -1495,8 +1495,8 @@
         });
 
         // PERFORMANCE METRICS REPORT COMPILER
-        let printableMarksReportHtml = "";
-        let printablePointsReportHtml = "";
+        let printableMarksReportHtml = null;
+        let printablePointsReportHtml = null;
 
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
@@ -1874,71 +1874,67 @@
                 }
 
                 downloadMarksPdfBtn.disabled = false;
-
             } catch (err) {
-                alert("Compilation failed: " + err.message);
+                alert("Broadsheet calculation error: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
                 compileReportsBtn.innerText = "📊 Compile Broad Sheet";
             }
         });
 
-        // EMBEDDED MODAL PREVIEW RENDER FUNCTION
+        // ==================== OPEN PDF EMBEDDED MODAL & DOWNLOAD LOGIC ====================
         function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
             currentPdfTitle = title;
-            const logoSrc = document.getElementById('school-logo').src;
-            const schoolName = document.getElementById('school-title').innerText.trim();
+            const schoolLogo = document.getElementById('school-logo');
+            const logoSrc = schoolLogo ? schoolLogo.src : '';
 
             pdfRenderCanvas.innerHTML = `
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 70px; font-weight: 900; color: rgba(226, 232, 240, 0.45); pointer-events: none; z-index: 0; white-space: nowrap; text-transform: uppercase;">
-                    ${schoolName}
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; font-weight: 900; color: rgba(226, 232, 240, 0.35); pointer-events: none; z-index: 0; text-transform: uppercase; white-space: nowrap;">
+                    BETHANIA ACADEMY
                 </div>
                 <div style="position: relative; z-index: 10;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-b: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
-                        <img src="${logoSrc}" style="height: 50px; width: 50px; object-fit: contain;" />
-                        <div style="text-align: right;">
-                            <h1 style="font-size: 16px; font-weight: 900; text-transform: uppercase; color: #0f172a; margin: 0;">${schoolName}</h1>
-                            <p style="font-size: 9px; color: #64748b; font-weight: bold; margin: 0; text-transform: uppercase;">Official Executive CBA Ledger Document</p>
+                    <div style="display: flex; items-center; justify-content: space-between; border-b-2 border-slate-900 pb-3 mb-4;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="${logoSrc}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                            <div>
+                                <h1 style="font-size: 18px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; tracking-wide;">BETHANIA ACADEMY</h1>
+                                <p style="font-size: 10px; color: #64748b; margin: 0; font-weight: bold; text-transform: uppercase;">EXECUTIVE CBA EVALUATION & ANALYTICS PORTAL</p>
+                            </div>
+                        </div>
+                        <div style="text-align: right; font-size: 9px; color: #475569; font-family: monospace;">
+                            <div>DATE: ${new Date().toLocaleDateString()}</div>
+                            <div>STATUS: OFFICIAL VERIFIED</div>
                         </div>
                     </div>
                     ${headerHtml}
-                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-bottom: 15px;" border="1" bordercolor="#cbd5e1">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 16px; border: 1px solid #1e293b;">
                         ${bodyHtml}
                     </table>
                     ${statsHtml}
                 </div>
             `;
+
             pdfModal.showModal();
         }
 
         downloadMarksPdfBtn.addEventListener('click', () => {
-            if (!printableMarksReportHtml) return alert("Please compile a report first!");
-            openEmbeddedPdfPreview(
-                `${getGradeLabel(reportGrade.value)} Marks Master Ledger`,
-                printableMarksReportHtml.marksHeaderHtml,
-                printableMarksReportHtml.marksBodyHtml,
-                printableMarksReportHtml.marksStatsHtml
-            );
+            if (!printableMarksReportHtml) return alert("Please compile broadsheet data first!");
+            const gradeLabel = getGradeLabel(parseInt(reportGrade.value));
+            openEmbeddedPdfPreview(`${gradeLabel} Marks Broadsheet`, printableMarksReportHtml.marksHeaderHtml, printableMarksReportHtml.marksBodyHtml, printableMarksReportHtml.marksStatsHtml);
         });
 
         downloadPointsPdfBtn.addEventListener('click', () => {
-            if (!printablePointsReportHtml) return alert("Please compile a report first!");
-            openEmbeddedPdfPreview(
-                `${getGradeLabel(reportGrade.value)} Points Master Ledger`,
-                printablePointsReportHtml.pointsHeaderHtml,
-                printablePointsReportHtml.pointsBodyHtml,
-                printablePointsReportHtml.pointsStatsHtml
-            );
+            if (!printablePointsReportHtml) return alert("Please compile broadsheet data first!");
+            const gradeLabel = getGradeLabel(parseInt(reportGrade.value));
+            openEmbeddedPdfPreview(`${gradeLabel} Points Broadsheet`, printablePointsReportHtml.pointsHeaderHtml, printablePointsReportHtml.pointsBodyHtml, printablePointsReportHtml.pointsStatsHtml);
         });
 
-        // EXECUTE DIRECT DYNAMIC LANDSCAPE PDF EXPORT
         executePdfDownloadBtn.addEventListener('click', async () => {
             executePdfDownloadBtn.disabled = true;
             executePdfDownloadBtn.innerText = "Generating PDF...";
 
             try {
-                const element = pdfRenderCanvas;
-                const canvas = await window.html2canvasPro(element, {
+                const canvas = await window.html2canvasPro(pdfRenderCanvas, {
                     scale: 2,
                     useCORS: true,
                     logging: false
@@ -1946,23 +1942,14 @@
 
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
-                
-                // Create A4 Landscape PDF
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
+                const pdf = new jsPDF('landscape', 'pt', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`${currentPdfTitle || 'Broadsheet_Report'}.pdf`);
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                pdfModal.close();
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${currentPdfTitle || 'Document_Export'}.pdf`);
             } catch (err) {
-                alert("PDF Generation error: " + err.message);
+                alert("PDF export error: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
