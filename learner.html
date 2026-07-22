@@ -167,7 +167,7 @@
             scoreColumn: 'raw_score'
         };
 
-        // Official CBC Subject Tiers (Updated Lower Primary structure)
+        // Official CBC Subject Tiers
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
@@ -184,6 +184,30 @@
                 "Creative Arts and Sports", "Christian Religious Education (C.R.E)"
             ]
         };
+
+        // Subject Alias Mapper (ensures "Psychomotor" marks dynamically map to "Creative Arts")
+        function isSubjectMatch(dbSubjectName, targetSubjectName) {
+            if (!dbSubjectName || !targetSubjectName) return false;
+            const db = dbSubjectName.trim().toLowerCase();
+            const target = targetSubjectName.trim().toLowerCase();
+            
+            if (db === target) return true;
+            
+            const creativePsychomotor = [
+                "creative arts", 
+                "psychomotor", 
+                "psychomotor activities", 
+                "creative arts activities", 
+                "creative arts & sports", 
+                "creative arts and sports"
+            ];
+
+            if (creativePsychomotor.includes(db) && creativePsychomotor.includes(target)) {
+                return true;
+            }
+            
+            return false;
+        }
 
         function getGradeTier(grade) {
             const g = parseInt(grade);
@@ -216,7 +240,6 @@
             if (val === null || val === undefined || isNaN(val)) return "-";
             let num = parseFloat(val);
             
-            // Clean up floating point representation issues (e.g. 56.000000000004)
             num = parseFloat(num.toFixed(4));
             
             if (Math.abs(num - Math.round(num)) < 0.00001) {
@@ -238,7 +261,7 @@
             return 1;                
         }
 
-        // Competency Grading System Logic with Junior vs Primary distinctions
+        // Competency Grading System Logic
         function getCompetencyLevel(val, type, tier = "junior_school") {
             let pct = val;
 
@@ -399,11 +422,16 @@
             allStudentsInCohort = classmates || [];
 
             const { data: dbSubjects } = await _supabase.from('subjects').select('*');
-            const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
-            globalSubjects = validSubjects;
-            const subjectIds = validSubjects.map(s => s.id);
+            
+            // Includes alias checking so Psychomotor DB records match Creative Arts
+            const validSubjects = (dbSubjects || []).filter(s => 
+                allowed.some(allowedSub => isSubjectMatch(s.subject_name, allowedSub))
+            );
 
-            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
+            globalSubjects = dbSubjects || [];
+            const validSubjectIds = validSubjects.map(s => s.id);
+
+            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', validSubjectIds);
             globalPapers = dbPapers || [];
 
             const classmateIds = allStudentsInCohort.map(c => c.id);
@@ -452,7 +480,7 @@
                             <p class="text-xs text-slate-500 mt-1 leading-relaxed">Contains details of raw marks scored per subject paper, accumulated percentage scores, and rank based on raw marks.</p>
                             <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
                                 <div>Average Score: <strong class="text-slate-900">${formatVal(myMarkRecord.average, 0)}%</strong></div>
-                                <div>Class Rank: <strong class="text-slate-900">#${myMarkRecord.position} of ${markRankings.length}</strong></div>
+                                <div>Class Rank: <strong class="text-slate-900">${myMarkRecord.position} of ${markRankings.length}</strong></div>
                             </div>
                         </div>
                         ${isCurrentSessionLocked ? 
@@ -470,7 +498,7 @@
                             <p class="text-xs text-slate-500 mt-1 leading-relaxed">Features converted points on the CBC 8-Point scale, total points accumulated, overall points average, and rating.</p>
                             <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
                                 <div>Mean Points: <strong class="text-slate-900">${formatVal(myPointRecord.average, 1)} Pts</strong></div>
-                                <div>Competency Rank: <strong class="text-slate-900">#${myPointRecord.position} of ${pointRankings.length}</strong></div>
+                                <div>Competency Rank: <strong class="text-slate-900">${myPointRecord.position} of ${pointRankings.length}</strong></div>
                             </div>
                         </div>
                         ${isCurrentSessionLocked ? 
@@ -490,7 +518,7 @@
                         <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                             <div class="bg-white px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-mono text-center min-w-[140px]">
                                 <span class="block text-[10px] text-slate-400">Position</span>
-                                <strong class="text-slate-900 text-base">#${myMarkRecord.position}</strong> of ${markRankings.length}
+                                <strong class="text-slate-900 text-base">${myMarkRecord.position}</strong> of ${markRankings.length}
                             </div>
                             ${isCurrentSessionLocked ? 
                                 `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200 w-full"><p>🔒 Access Restricted: Outstanding balances active.</p></div>` :
@@ -504,7 +532,7 @@
             slipsContainer.innerHTML = html;
         }
 
-        // Calculation Engine with Dynamic Formatting Logic Applied
+        // Calculation Engine with Dynamic Alias Mapping
         function calculateRankings(subjects, convertToPoints, tier) {
             const list = allStudentsInCohort.map(stud => {
                 let totals = 0;
@@ -512,7 +540,16 @@
                 let subjectBreakdown = {};
 
                 subjects.forEach(sub => {
-                    const papers = globalPapers.filter(p => p.subject_id === sub.id);
+                    // Match any DB subject entry that aligns with this target subject or its aliases (e.g. Psychomotor)
+                    const matchingDbSubjectIds = globalSubjects
+                        .filter(s => isSubjectMatch(s.subject_name, sub.subject_name))
+                        .map(s => s.id);
+
+                    if (sub.id && !matchingDbSubjectIds.includes(sub.id)) {
+                        matchingDbSubjectIds.push(sub.id);
+                    }
+
+                    const papers = globalPapers.filter(p => matchingDbSubjectIds.includes(p.subject_id));
                     let rawSum = 0;
                     let maxSum = 0;
                     let studentHasScore = false;
@@ -531,7 +568,12 @@
                         });
                     }
 
-                    const directScoreObj = cohortMarks.find(m => m.student_id === stud.id && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
+                    const directScoreObj = cohortMarks.find(m => 
+                        m.student_id === stud.id && 
+                        matchingDbSubjectIds.includes(m.subject_id) && 
+                        (!m.paper_id || m.paper_id === null)
+                    );
+
                     if (directScoreObj) {
                         const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
                         if (!isNaN(val)) {
@@ -549,7 +591,6 @@
                         } else {
                             const pct = (rawSum / maxSum) * 100;
                             totals += pct;
-                            // Uses formatVal which strips trailing .00 on integer values
                             subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${formatVal(pct, 2)}%` };
                         }
                         count++;
@@ -582,7 +623,7 @@
             return list;
         }
 
-        // Advanced Portrait PDF Compiler matching Admin layout perfectly
+        // Advanced Portrait PDF Compiler
         async function generatePDFSlip(type) {
             const grade = activeStudent.grade;
             const tier = getGradeTier(grade);
@@ -593,7 +634,7 @@
 
             try {
                 const staticSubjects = allowed.map((subjectName, index) => {
-                    const foundSubject = globalSubjects.find(s => s.subject_name.trim() === subjectName.trim());
+                    const foundSubject = globalSubjects.find(s => isSubjectMatch(s.subject_name, subjectName));
                     return {
                         id: foundSubject ? foundSubject.id : index + 999,
                         subject_name: subjectName
@@ -724,7 +765,7 @@
                                 </div>
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Position</span>
-                                    <strong style="font-size: 15px; color: #0f172a;">Rank #${me.position} of ${rankings.length}</strong>
+                                    <strong style="font-size: 15px; color: #0f172a;">Rank ${me.position} of ${rankings.length}</strong>
                                 </div>
                                 <div style="text-align: right;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Evaluation Rating</span>
