@@ -167,12 +167,11 @@
             scoreColumn: 'raw_score'
         };
 
-        // Official CBC Subject Tiers (Islamic and Hindu strictly removed)
+        // Official CBC Subject Tiers (Updated Lower Primary structure)
         const CBC_SUBJECT_TIERS = {
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
-                "Psychomotor Activities", "Religious Education Activities",
-                "Indigenous Language Activities", "Kiswahili Language Activities"
+                "Creative Arts", "Religious Education Activities", "Kiswahili Language Activities"
             ],
             upper_primary: [
                 "English", "Kiswahili", "Mathematics", "Science and Technology",
@@ -212,12 +211,16 @@
             }
         }
 
-        // Helper to format values: removes decimals if whole number, otherwise formats to specified decimals
+        // Helper to format values: strips trailing decimals if it rounds to a whole integer
         function formatVal(val, decimals = 2) {
             if (val === null || val === undefined || isNaN(val)) return "-";
-            const num = parseFloat(val);
-            if (Number.isInteger(num)) {
-                return num.toString();
+            let num = parseFloat(val);
+            
+            // Clean up floating point representation issues (e.g. 56.000000000004)
+            num = parseFloat(num.toFixed(4));
+            
+            if (Math.abs(num - Math.round(num)) < 0.00001) {
+                return Math.round(num).toString();
             }
             return num.toFixed(decimals);
         }
@@ -546,7 +549,7 @@
                         } else {
                             const pct = (rawSum / maxSum) * 100;
                             totals += pct;
-                            // Subject raw percentage/marks formatted without unnecessary trailing decimals
+                            // Uses formatVal which strips trailing .00 on integer values
                             subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${formatVal(pct, 2)}%` };
                         }
                         count++;
