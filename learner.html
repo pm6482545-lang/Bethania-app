@@ -212,7 +212,17 @@
             }
         }
 
-        // Modified Point system explicitly tied to the exact 8 sub-tiers
+        // Helper to format values: removes decimals if whole number, otherwise formats to specified decimals
+        function formatVal(val, decimals = 2) {
+            if (val === null || val === undefined || isNaN(val)) return "-";
+            const num = parseFloat(val);
+            if (Number.isInteger(num)) {
+                return num.toString();
+            }
+            return num.toFixed(decimals);
+        }
+
+        // Point system explicitly tied to the exact 8 sub-tiers
         function convertScoreToPoints(score, max) {
             const pct = (score / max) * 100;
             if (pct >= 90) return 8; 
@@ -225,29 +235,36 @@
             return 1;                
         }
 
-        // Exact sub-tier mappings executed for individual points and global averages
-        function getCompetencyLevel(val, type) {
+        // Competency Grading System Logic with Junior vs Primary distinctions
+        function getCompetencyLevel(val, type, tier = "junior_school") {
             let pct = val;
-            
-            // If checking points system directly, scale it back up to matching percentages for accurate sub-tier ranking
-            if (type === 'points') {
-                if (val >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1" };
-                if (val >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2" };
-                if (val >= 5.5) return { text: "ME1", label: "Meeting Expectations 1" };
-                if (val >= 4.5) return { text: "ME2", label: "Meeting Expectations 2" };
-                if (val >= 3.5) return { text: "AE1", label: "Approaching Expectations 1" };
-                if (val >= 2.5) return { text: "AE2", label: "Approaching Expectations 2" };
-                if (val >= 1.5) return { text: "BE1", label: "Below Expectations 1" };
-                return { text: "BE2", label: "Below Expectations 2" };
+
+            if (tier === "junior_school") {
+                if (type === 'points') {
+                    if (val >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1" };
+                    if (val >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2" };
+                    if (val >= 5.5) return { text: "ME1", label: "Meeting Expectations 1" };
+                    if (val >= 4.5) return { text: "ME2", label: "Meeting Expectations 2" };
+                    if (val >= 3.5) return { text: "AE1", label: "Approaching Expectations 1" };
+                    if (val >= 2.5) return { text: "AE2", label: "Approaching Expectations 2" };
+                    if (val >= 1.5) return { text: "BE1", label: "Below Expectations 1" };
+                    return { text: "BE2", label: "Below Expectations 2" };
+                } else {
+                    if (pct >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
+                    if (pct >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
+                    if (pct >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
+                    if (pct >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
+                    if (pct >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
+                    if (pct >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
+                    if (pct >= 10) return { text: "BE1", label: "Below Expectations 1" };
+                    return { text: "BE2", label: "Below Expectations 2" };
+                }
             } else {
-                if (pct >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
-                if (pct >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
-                if (pct >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
-                if (pct >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
-                if (pct >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
-                if (pct >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
-                if (pct >= 10) return { text: "BE1", label: "Below Expectations 1" };
-                return { text: "BE2", label: "Below Expectations 2" };
+                // Primary and Below Grading Scale
+                if (pct >= 80) return { text: "EE", label: "Exceeding Expectations" };
+                if (pct >= 50) return { text: "ME", label: "Meeting Expectations" };
+                if (pct >= 30) return { text: "AE", label: "Approaching Expectations" };
+                return { text: "BE", label: "Below Expectations" };
             }
         }
 
@@ -275,12 +292,9 @@
             const tm = selectTerm.value;
             const ex = selectExam.value;
             
-            // Construct runtime targeting string matching database naming architecture
             activeSessionName = `${yr} ${tm} ${ex}`;
 
-            // Check if fee lockouts exist for this structural scope
             try {
-                // Query using both the internal database id AND the alphanumeric login_id to be safe
                 const { data: lockRows } = await _supabase.from('fee_lockouts')
                     .select('*')
                     .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
@@ -288,7 +302,6 @@
 
                 isCurrentSessionLocked = false;
                 if (lockRows && lockRows.length > 0) {
-                    // Match structural fallback strings if any match historical selectors
                     const lockedMatch = lockRows.some(r => {
                         const rowYear = r.year || (r.exam_context ? r.exam_context.split(' ')[0] : '');
                         const rowTerm = r.term || (r.exam_context && r.exam_context.includes('Term') ? r.exam_context.match(/Term \d+/)?.[0] : '');
@@ -304,7 +317,6 @@
             await loadCohortPerformances();
         }
 
-        // Attach listeners to filter updates
         selectYear.addEventListener('change', handleParameterSync);
         selectTerm.addEventListener('change', handleParameterSync);
         selectExam.addEventListener('change', handleParameterSync);
@@ -332,20 +344,17 @@
             loginScreen.classList.add('hidden');
             dashboardScreen.classList.remove('hidden');
 
-            // Set student profile details
             labelName.innerText = activeStudent.name;
             labelGrade.innerText = activeStudent.grade <= 0 ? (activeStudent.grade === -2 ? "PP1" : "PP2") : `Grade ${activeStudent.grade}`;
             labelIdBadge.innerText = activeStudent.login_id;
 
             await fetchSessionContext();
             
-            // Sync parameters with whatever is default inside UI selectors
             const yr = selectYear.value;
             const tm = selectTerm.value;
             const ex = selectExam.value;
             activeSessionName = `${yr} ${tm} ${ex}`;
 
-            // Verify initial restrictions layout block
             try {
                 const { data: initialLocks } = await _supabase.from('fee_lockouts')
                     .select('*')
@@ -379,7 +388,6 @@
             const tier = getGradeTier(grade);
             const allowed = CBC_SUBJECT_TIERS[tier];
 
-            // 1. Fetch Students in current grade cohort (Patched using both integer and string matches)
             const gradeInt = parseInt(grade);
             const gradeStr = grade.toString();
             const { data: classmates } = await _supabase.from('students')
@@ -387,20 +395,16 @@
                 .or(`grade.eq.${gradeInt},grade.eq."${gradeStr}"`);
             allStudentsInCohort = classmates || [];
 
-            // 2. Fetch active subjects matching standard CBC lists
             const { data: dbSubjects } = await _supabase.from('subjects').select('*');
             const validSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
             globalSubjects = validSubjects;
             const subjectIds = validSubjects.map(s => s.id);
 
-            // 3. Fetch component papers
             const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', subjectIds);
             globalPapers = dbPapers || [];
 
-            // 4. Fetch cohort marks matching normal or alternative format
             const classmateIds = allStudentsInCohort.map(c => c.id);
             
-            // Robust match patterns to align variations between portals
             let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
             let altSessionName2 = activeSessionName.replace("Mid-Term Exam", "Mid Term 2");
 
@@ -418,13 +422,11 @@
         function buildAvailableSlips(subjects, tier) {
             const isJuniorSchool = (tier === "junior_school");
 
-            // Calculate Rankings for Raw Marks
-            const markRankings = calculateRankings(subjects, false);
+            const markRankings = calculateRankings(subjects, false, tier);
             const myMarkRecord = markRankings.find(r => r.id === activeStudent.id);
 
             let html = "";
 
-            // Handle lack of data records gracefully
             if (!myMarkRecord || myMarkRecord.totals === 0) {
                 slipsContainer.innerHTML = `
                     <div class="col-span-2 text-center py-8 bg-slate-100 rounded-xl border border-dashed border-slate-300">
@@ -436,8 +438,7 @@
             }
 
             if (isJuniorSchool) {
-                // Junior School: Point conversion logic
-                const pointRankings = calculateRankings(subjects, true);
+                const pointRankings = calculateRankings(subjects, true, tier);
                 const myPointRecord = pointRankings.find(r => r.id === activeStudent.id);
 
                 html += `
@@ -447,7 +448,7 @@
                             <h4 class="text-base font-extrabold text-slate-900 uppercase">Performance Summary Slip</h4>
                             <p class="text-xs text-slate-500 mt-1 leading-relaxed">Contains details of raw marks scored per subject paper, accumulated percentage scores, and rank based on raw marks.</p>
                             <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
-                                <div>Average Score: <strong class="text-slate-900">${myMarkRecord.average.toFixed(1)}%</strong></div>
+                                <div>Average Score: <strong class="text-slate-900">${formatVal(myMarkRecord.average, 0)}%</strong></div>
                                 <div>Class Rank: <strong class="text-slate-900">#${myMarkRecord.position} of ${markRankings.length}</strong></div>
                             </div>
                         </div>
@@ -465,7 +466,7 @@
                             <h4 class="text-base font-extrabold text-slate-900 uppercase">Competency Points Slip</h4>
                             <p class="text-xs text-slate-500 mt-1 leading-relaxed">Features converted points on the CBC 8-Point scale, total points accumulated, overall points average, and rating.</p>
                             <div class="grid grid-cols-2 gap-2 my-4 bg-white p-3 rounded-lg border border-slate-100 font-mono text-xs text-slate-700">
-                                <div>Mean Points: <strong class="text-slate-900">${myPointRecord.average.toFixed(1)} Pts</strong></div>
+                                <div>Mean Points: <strong class="text-slate-900">${formatVal(myPointRecord.average, 1)} Pts</strong></div>
                                 <div>Competency Rank: <strong class="text-slate-900">#${myPointRecord.position} of ${pointRankings.length}</strong></div>
                             </div>
                         </div>
@@ -476,7 +477,6 @@
                     </div>
                 `;
             } else {
-                // Primary School: Single Option
                 html += `
                     <div class="col-span-2 border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div class="space-y-1">
@@ -501,8 +501,8 @@
             slipsContainer.innerHTML = html;
         }
 
-        // Calculation Engine with Dynamic Column Fallbacks and standard Competition Rank for ties
-        function calculateRankings(subjects, convertToPoints) {
+        // Calculation Engine with Dynamic Formatting Logic Applied
+        function calculateRankings(subjects, convertToPoints, tier) {
             const list = allStudentsInCohort.map(stud => {
                 let totals = 0;
                 let count = 0;
@@ -514,7 +514,6 @@
                     let maxSum = 0;
                     let studentHasScore = false;
 
-                    // 1. Process via component papers if they exist
                     if (papers.length > 0) {
                         papers.forEach(p => {
                             const scoreObj = cohortMarks.find(m => m.student_id === stud.id && m.paper_id === p.id);
@@ -529,7 +528,6 @@
                         });
                     }
 
-                    // 2. Fallback check for direct aggregate subject level marks
                     const directScoreObj = cohortMarks.find(m => m.student_id === stud.id && m.subject_id === sub.id && (!m.paper_id || m.paper_id === null));
                     if (directScoreObj) {
                         const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
@@ -544,11 +542,12 @@
                         if (convertToPoints) {
                             const pts = convertScoreToPoints(rawSum, maxSum);
                             totals += pts;
-                            subjectBreakdown[sub.subject_name] = { score: pts, max: 8, label: `${pts} Pts` };
+                            subjectBreakdown[sub.subject_name] = { score: pts, max: 8, label: `${formatVal(pts, 1)} Pts` };
                         } else {
                             const pct = (rawSum / maxSum) * 100;
                             totals += pct;
-                            subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${pct.toFixed(1)}%` };
+                            // Subject raw percentage/marks formatted without unnecessary trailing decimals
+                            subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${formatVal(pct, 2)}%` };
                         }
                         count++;
                     } else {
@@ -561,16 +560,14 @@
                     id: stud.id,
                     name: stud.name,
                     subjectBreakdown,
-                    totals: parseFloat(totals.toFixed(4)), // Floating variance protection during tie evaluation
+                    totals: parseFloat(totals.toFixed(4)), 
                     average,
-                    rating: getCompetencyLevel(average, convertToPoints ? 'points' : 'marks')
+                    rating: getCompetencyLevel(average, convertToPoints ? 'points' : 'marks', tier)
                 };
             });
 
-            // Sort by totals descending
             list.sort((a, b) => b.totals - a.totals);
             
-            // Standard Joint/Competition Tie-breaking Logic (1, 1, 3...)
             let runningRank = 1;
             list.forEach((entry, idx) => {
                 if (idx > 0 && list[idx].totals < list[idx - 1].totals) {
@@ -600,7 +597,7 @@
                     };
                 });
 
-                const rankings = calculateRankings(staticSubjects, isJuniorPoints);
+                const rankings = calculateRankings(staticSubjects, isJuniorPoints, tier);
                 const me = rankings.find(r => r.id === activeStudent.id);
 
                 if (!me) {
@@ -608,7 +605,6 @@
                     return;
                 }
 
-                // Initialize portrait jsPDF matching Admin's structural options
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({
                     orientation: 'portrait',
@@ -616,11 +612,10 @@
                     format: 'a4'
                 });
 
-                // Create isolated sandbox element to render print CSS styles cleanly
                 const offscreenContainer = document.createElement('div');
                 offscreenContainer.style.position = 'absolute';
                 offscreenContainer.style.left = '-9999px';
-                offscreenContainer.style.width = '720px'; // Set standard safe A4 layout width
+                offscreenContainer.style.width = '720px'; 
                 offscreenContainer.style.backgroundColor = '#ffffff';
                 document.body.appendChild(offscreenContainer);
 
@@ -698,7 +693,7 @@
                                         let compText = "-";
                                         if(record && record.label !== "-") {
                                             const ptsVal = isJuniorPoints ? record.score : (record.score / record.max) * 100;
-                                            compText = getCompetencyLevel(ptsVal, isJuniorPoints ? 'points' : 'marks').text;
+                                            compText = getCompetencyLevel(ptsVal, isJuniorPoints ? 'points' : 'marks', tier).text;
                                         }
                                         return `
                                             <tr>
@@ -718,11 +713,11 @@
                             <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                                 <div style="text-align: left;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cumulative Total</span>
-                                    <strong style="font-size: 15px; color: #0f172a;">${isJuniorPoints ? me.totals.toFixed(0) : me.totals.toFixed(1)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
+                                    <strong style="font-size: 15px; color: #0f172a;">${formatVal(me.totals, isJuniorPoints ? 1 : 2)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
                                 </div>
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Calculated Mean</span>
-                                    <strong style="font-size: 15px; color: #1e40af;">${me.average.toFixed(1)}${isJuniorPoints ? ' Pts' : '%'}</strong>
+                                    <strong style="font-size: 15px; color: #1e40af;">${formatVal(me.average, isJuniorPoints ? 1 : 0)}${isJuniorPoints ? ' Pts' : '%'}</strong>
                                 </div>
                                 <div style="text-align: center;">
                                     <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Position</span>
@@ -758,7 +753,6 @@
 
                 offscreenContainer.appendChild(page);
 
-                // Fixed download trigger: executing via correct html2canvasPro asset package
                 const canvas = await html2canvasPro(page, {
                     scale: 2, 
                     useCORS: true,
@@ -767,14 +761,9 @@
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                
-                // Add rendered canvas representation to PDF
                 doc.addImage(imgData, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-
-                // Clean up background DOM sandbox instantly
                 document.body.removeChild(offscreenContainer);
 
-                // Export File
                 const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
                 doc.save(filename);
 
