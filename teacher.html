@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <!-- ================= MAIN CBA PORTAL INTERFACE (HIDDEN BY DEFAULT) ================= -->
+    <!-- ================= MAIN CBA PORTAL INTERFACE ================= -->
     <div id="portal-content" class="hidden flex-col min-h-screen">
         <header class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-8 sticky top-0 z-50 border-b-2 border-amber-500">
             <div class="flex-1 gap-3">
@@ -313,6 +313,7 @@
                 </div>
             </div>
 
+            <!-- ================= MARKS ENTRY SCREEN ================= -->
             <div id="screen-marks" class="space-y-6 hidden">
                 <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
                     <div class="card-body p-4 sm:p-8">
@@ -569,7 +570,7 @@
             await fetchSubjects();
         }
 
-        // Visible buttons navigation toggle logic
+        // Navigation toggles
         tabRoster.addEventListener('click', () => { 
             tabRoster.className = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
             tabMarks.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
@@ -861,6 +862,8 @@
             filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
 
+        // --- SUBJECT & COMPONENT WORKFLOW ---
+
         filterGrade.addEventListener('change', () => {
             const selectedGrade = filterGrade.value;
             const tier = getGradeTier(selectedGrade);
@@ -883,18 +886,18 @@
             marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
         });
 
-        // Subject selection handler -> checks database for components (papers)
+        // Subject selection listener -> Checks Supabase for papers/components created by Admin
         filterSubject.addEventListener('change', async () => {
             const subId = filterSubject.value;
             const selectedGrade = parseInt(filterGrade.value);
 
-            if(!subId) {
+            if (!subId || isNaN(selectedGrade)) {
                 marksEntryRows.innerHTML = '';
                 paperSelectContainer.classList.add('hidden');
                 return;
             }
 
-            // Query subject_papers / subject_components for this subject and grade
+            // Query subject_papers from Supabase to check if components exist for this subject & grade
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
@@ -902,20 +905,22 @@
                 .eq('grade', selectedGrade)
                 .order('paper_number', { ascending: true });
 
-            if (papersError) console.error("Error querying subject papers:", papersError);
+            if (papersError) {
+                console.error("Error querying subject papers:", papersError);
+            }
 
             currentSubjectPapers = papers || [];
 
             if (currentSubjectPapers.length > 0) {
-                // Display component dropdown for Paper 1, Paper 2, etc.
+                // Admin added components (Paper 1, Paper 2, etc.) -> Show component selector
                 paperSelectContainer.classList.remove('hidden');
                 filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
-                    currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)}</option>`).join('');
+                    currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)} (Max ${p.max_marks || 100})</option>`).join('');
                 
-                marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl"> Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
+                marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl font-bold">📄 Subject has components! Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
                 saveMarksBtn.disabled = true;
             } else {
-                // Single paper / Direct subject entry mode
+                // No components added by Admin -> Show normal direct entry
                 paperSelectContainer.classList.add('hidden');
                 filterPaper.innerHTML = '';
                 await renderMarksRoster(subId, null, 100);
@@ -948,6 +953,7 @@
 
             const studentIds = filteredStudents.map(s => s.id);
             
+            // Build Query checking test name, subject, and optional paper ID
             let query = _supabase
                 .from('marks_entry')
                 .select('student_id, raw_score')
@@ -1031,14 +1037,10 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Dynamically set the unique constraint target depending on whether a paper component is used
-            const conflictTarget = paperId 
-                ? 'student_id,test_name,paper_id' 
-                : 'student_id,subject_id,test_name';
-
+            // Upsert entries handling optional paper component IDs cleanly
             const { data, error } = await _supabase
                 .from('marks_entry')
-                .upsert(entries, { onConflict: conflictTarget }) 
+                .upsert(entries, { onConflict: paperId ? 'student_id,test_name,subject_id,paper_id' : 'student_id,test_name,subject_id' }) 
                 .select();
             
             if (error) {
