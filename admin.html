@@ -108,10 +108,10 @@
                     📄 Document Export Sandbox
                 </h3>
                 
-                <!-- Embedded PDF Preview Area (A4 Landscape aspect ratio representation) -->
+                <!-- Embedded PDF Preview Area -->
                 <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
                     <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative;">
-                        <!-- Dynamically populated PDF view with watermark -->
+                        <!-- Dynamically populated PDF view -->
                     </div>
                 </div>
 
@@ -499,7 +499,7 @@
                                 <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold shadow-sm">✨ Save Subjects & Components</button>
                             </div>
 
-                            <!-- NEW: ACTIVE EXAM SUBJECT COMPONENTS SETUP PANEL -->
+                            <!-- ACTIVE EXAM SUBJECT COMPONENTS SETUP PANEL -->
                             <div id="sub-panel-comp" class="space-y-3 hidden">
                                 <div class="bg-amber-50 border border-amber-200 text-amber-800 p-2 rounded-lg text-[10px]">
                                     <span class="font-bold">Active Exam Paper Components:</span> Set up Paper 1 & Paper 2 components specifically for the current active exam session. Results will aggregate into a single compiled score.
@@ -2036,17 +2036,9 @@
                             ${["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(key => {
                                 const count = pointsDistribution[key] || 0;
                                 const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
-                                const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
-                                                   key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
-                                                   key === "ME1" ? "Meeting Expectation 1 (ME1)" :
-                                                   key === "ME2" ? "Meeting Expectation 2 (ME2)" :
-                                                   key === "AE1" ? "Approaching Expectation 1 (AE1)" :
-                                                   key === "AE2" ? "Approaching Expectation 2 (AE2)" :
-                                                   key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
-
                                 return `
                                     <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                        <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold; text-align: left;">${levelLabel}</div>
+                                        <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold; text-align: left;">${key} Matrix Level Distribution</div>
                                         ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
                                         <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%; text-align: left;">${count} Students (${pct}%)</div>
                                     </div>
@@ -2065,51 +2057,58 @@
 
                 downloadMarksPdfBtn.disabled = false;
             } catch (err) {
-                alert("Broadsheet calculation error: " + err.message);
+                alert("Error compiling broadsheet reports: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
                 compileReportsBtn.innerText = "📊 Compile Broad Sheet";
             }
         });
 
-        // ==================== OPEN PDF EMBEDDED MODAL & DOWNLOAD LOGIC ====================
-        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
+        function openEmbeddedPdfPreview(title, headerContent, tableContent, statsContent) {
             currentPdfTitle = title;
-            const schoolLogo = document.getElementById('school-logo');
-            const logoSrc = schoolLogo ? schoolLogo.src : '';
+            const logoUrl = document.getElementById('school-logo').src;
+            const schoolTitle = document.getElementById('school-title').innerText;
 
             pdfRenderCanvas.innerHTML = `
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; font-weight: 900; color: rgba(226, 232, 240, 0.35); pointer-events: none; z-index: 0; text-transform: uppercase; white-space: nowrap;">
-                    BETHANIA ACADEMY
-                </div>
-                <div style="position: relative; z-index: 10;">
-                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; border-b-2 border-slate-900 pb-3 mb-4;">
-                        <img src="${logoSrc}" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; margin-bottom: 6px;" onerror="this.src='https://placehold.co/100x100?text=BA'" />
-                        <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 1px;">BETHANIA ACADEMY</h1>
-                        <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">EXECUTIVE CBA EVALUATION & ANALYTICS PORTAL</p>
-                        <p style="font-size: 8px; color: #475569; margin-top: 2px; font-family: monospace;">DATE: ${new Date().toLocaleDateString()} | STATUS: OFFICIAL VERIFIED</p>
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+                    <img src="${logoUrl}" style="height: 55px; width: 55px; object-fit: contain;" />
+                    <div style="text-align: center; flex-grow: 1;">
+                        <h1 style="font-size: 18px; font-weight: 900; margin: 0; color: #0f172a; text-transform: uppercase;">${schoolTitle}</h1>
+                        <p style="font-size: 9px; margin: 2px 0 0 0; color: #475569; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">Executive CBA Management Ledger</p>
                     </div>
-                    ${headerHtml}
-                    <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 16px; border: 1px solid #1e293b;">
-                        ${bodyHtml}
-                    </table>
-                    ${statsHtml}
+                    <div style="width: 55px;"></div>
                 </div>
+
+                ${headerContent}
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 16px; border: 1px solid #1e293b;" border="1" cellPadding="3">
+                    ${tableContent}
+                </table>
+
+                ${statsContent}
             `;
 
             pdfModal.showModal();
         }
 
         downloadMarksPdfBtn.addEventListener('click', () => {
-            if (!printableMarksReportHtml) return alert("Please compile broadsheet data first!");
-            const gradeLabel = getGradeLabel(parseInt(reportGrade.value));
-            openEmbeddedPdfPreview(`${gradeLabel} Marks Broadsheet`, printableMarksReportHtml.marksHeaderHtml, printableMarksReportHtml.marksBodyHtml, printableMarksReportHtml.marksStatsHtml);
+            if (!printableMarksReportHtml) return alert("Compile report first!");
+            openEmbeddedPdfPreview(
+                `${getGradeLabel(reportGrade.value)} Marks Master Ledger`,
+                printableMarksReportHtml.marksHeaderHtml,
+                printableMarksReportHtml.marksBodyHtml,
+                printableMarksReportHtml.marksStatsHtml
+            );
         });
 
         downloadPointsPdfBtn.addEventListener('click', () => {
-            if (!printablePointsReportHtml) return alert("Please compile broadsheet data first!");
-            const gradeLabel = getGradeLabel(parseInt(reportGrade.value));
-            openEmbeddedPdfPreview(`${gradeLabel} Points Broadsheet`, printablePointsReportHtml.pointsHeaderHtml, printablePointsReportHtml.pointsBodyHtml, printablePointsReportHtml.pointsStatsHtml);
+            if (!printablePointsReportHtml) return alert("Compile report first!");
+            openEmbeddedPdfPreview(
+                `${getGradeLabel(reportGrade.value)} Points Master Ledger`,
+                printablePointsReportHtml.pointsHeaderHtml,
+                printablePointsReportHtml.pointsBodyHtml,
+                printablePointsReportHtml.pointsStatsHtml
+            );
         });
 
         executePdfDownloadBtn.addEventListener('click', async () => {
@@ -2117,63 +2116,19 @@
             executePdfDownloadBtn.innerText = "Generating PDF...";
 
             try {
+                const element = pdfRenderCanvas;
+                const canvas = await window.html2canvasPro(element, { scale: 2, useCORS: true });
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('landscape', 'pt', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const margin = 20;
-                const contentWidth = pdfWidth - (margin * 2);
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                const canvas = await window.html2canvasPro(pdfRenderCanvas, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                });
-
-                const totalCanvasHeight = canvas.height;
-                const canvasWidth = canvas.width;
-                const pageCanvasHeight = (pdfHeight - (margin * 2)) * (canvasWidth / contentWidth);
-
-                let sourceY = 0;
-                let pageIndex = 1;
-
-                while (sourceY < totalCanvasHeight) {
-                    if (pageIndex > 1) {
-                        pdf.addPage();
-                    }
-
-                    const segmentHeight = Math.min(pageCanvasHeight, totalCanvasHeight - sourceY);
-                    
-                    const pageCanvas = document.createElement('canvas');
-                    pageCanvas.width = canvasWidth;
-                    pageCanvas.height = segmentHeight;
-                    
-                    const ctx = pageCanvas.getContext('2d');
-                    ctx.drawImage(
-                        canvas,
-                        0, sourceY,
-                        canvasWidth, segmentHeight,
-                        0, 0,
-                        canvasWidth, segmentHeight
-                    );
-
-                    const imgData = pageCanvas.toDataURL('image/png');
-                    const printHeight = (segmentHeight * contentWidth) / canvasWidth;
-
-                    pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, printHeight);
-
-                    // Pagination indicator
-                    pdf.setFontSize(8);
-                    pdf.setTextColor(100);
-                    pdf.text(`Page ${pageIndex}`, pdfWidth - margin - 30, pdfHeight - 10);
-
-                    sourceY += segmentHeight;
-                    pageIndex++;
-                }
-
-                pdf.save(`${currentPdfTitle || 'Document_Export'}.pdf`);
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${currentPdfTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
             } catch (err) {
-                alert("PDF export error: " + err.message);
+                alert("PDF Download Failed: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
