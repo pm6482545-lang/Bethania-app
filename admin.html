@@ -473,13 +473,14 @@
                                 <span class="text-lg">🛠️</span>
                                 <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Manage Learning Areas</h3>
                             </div>
-                            <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam papers/components, or remove outdated selections from the portals.</p>
+                            <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam paper components for the active exam, or remove outdated selections from the portals.</p>
 
                             <div class="divider my-1"></div>
 
                             <div class="tabs tabs-boxed bg-slate-100/80 p-1 mb-2">
-                                <button class="tab tab-active tab-xs w-1/2 font-bold transition-all" id="tab-add-sub">Add Content</button>
-                                <button class="tab tab-xs w-1/2 font-bold transition-all" id="tab-del-sub">Remove Content</button>
+                                <button class="tab tab-active tab-xs w-1/3 font-bold transition-all" id="tab-add-sub">Add Content</button>
+                                <button class="tab tab-xs w-1/3 font-bold transition-all" id="tab-comp-sub">Exam Components</button>
+                                <button class="tab tab-xs w-1/3 font-bold transition-all" id="tab-del-sub">Remove Content</button>
                             </div>
 
                             <div id="sub-panel-add" class="space-y-3">
@@ -496,6 +497,50 @@
                                     </div>
                                 </div>
                                 <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold shadow-sm">✨ Save Subjects & Components</button>
+                            </div>
+
+                            <!-- NEW: ACTIVE EXAM SUBJECT COMPONENTS SETUP PANEL -->
+                            <div id="sub-panel-comp" class="space-y-3 hidden">
+                                <div class="bg-amber-50 border border-amber-200 text-amber-800 p-2 rounded-lg text-[10px]">
+                                    <span class="font-bold">Active Exam Paper Components:</span> Set up Paper 1 & Paper 2 components specifically for the current active exam session. Results will aggregate into a single compiled score.
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Target Grade</label>
+                                    <select id="comp-grade-select" class="select select-bordered select-sm w-full font-medium">
+                                        <option value="" disabled selected>Select Grade...</option>
+                                        <option value="-2">PP1</option>
+                                        <option value="-1">PP2</option>
+                                        <option value="1">Grade 1</option>
+                                        <option value="2">Grade 2</option>
+                                        <option value="3">Grade 3</option>
+                                        <option value="4">Grade 4</option>
+                                        <option value="5">Grade 5</option>
+                                        <option value="6">Grade 6</option>
+                                        <option value="7">Grade 7</option>
+                                        <option value="8">Grade 8</option>
+                                        <option value="9">Grade 9</option>
+                                    </select>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Select Subject</label>
+                                    <select id="comp-subject-select" class="select select-bordered select-sm w-full font-medium">
+                                        <option value="" disabled selected>Choose Subject...</option>
+                                    </select>
+                                </div>
+                                <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                                    <span class="text-[10px] font-bold tracking-wider uppercase text-slate-600 block">Marks Allocation</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="label-text text-[10px] font-semibold text-slate-500">Paper 1 Max Score</label>
+                                            <input type="number" id="comp-paper1-max" value="100" class="input input-bordered input-xs w-full" />
+                                        </div>
+                                        <div>
+                                            <label class="label-text text-[10px] font-semibold text-slate-500">Paper 2 Max Score</label>
+                                            <input type="number" id="comp-paper2-max" value="100" class="input input-bordered input-xs w-full" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="cfg-btn-save-comp" class="btn btn-warning btn-sm w-full text-slate-900 font-bold shadow-sm">📑 Add Active Exam Components</button>
                             </div>
 
                             <div id="sub-panel-del" class="space-y-3 hidden">
@@ -642,8 +687,10 @@
 
         // Config elements
         const tabAddSub = document.getElementById('tab-add-sub');
+        const tabCompSub = document.getElementById('tab-comp-sub');
         const tabDelSub = document.getElementById('tab-del-sub');
         const subPanelAdd = document.getElementById('sub-panel-add');
+        const subPanelComp = document.getElementById('sub-panel-comp');
         const subPanelDel = document.getElementById('sub-panel-del');
         const cfgSubName = document.getElementById('cfg-sub-name');
         const cfgPaperName = document.getElementById('cfg-paper-name');
@@ -651,6 +698,13 @@
         const cfgBtnSave = document.getElementById('cfg-btn-save');
         const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
         const cfgBtnDelete = document.getElementById('cfg-btn-delete');
+
+        // Component elements
+        const compGradeSelect = document.getElementById('comp-grade-select');
+        const compSubjectSelect = document.getElementById('comp-subject-select');
+        const compPaper1Max = document.getElementById('comp-paper1-max');
+        const compPaper2Max = document.getElementById('comp-paper2-max');
+        const cfgBtnSaveComp = document.getElementById('cfg-btn-save-comp');
 
         // Modal Elements
         const pdfModal = document.getElementById('pdf-modal');
@@ -1013,17 +1067,94 @@
 
         tabAddSub.addEventListener('click', () => { 
             tabAddSub.classList.add('tab-active'); 
+            tabCompSub.classList.remove('tab-active');
             tabDelSub.classList.remove('tab-active'); 
             subPanelAdd.classList.remove('hidden'); 
+            subPanelComp.classList.add('hidden');
             subPanelDel.classList.add('hidden'); 
         });
+
+        tabCompSub.addEventListener('click', () => {
+            tabCompSub.classList.add('tab-active');
+            tabAddSub.classList.remove('tab-active');
+            tabDelSub.classList.remove('tab-active');
+            subPanelComp.classList.remove('hidden');
+            subPanelAdd.classList.add('hidden');
+            subPanelDel.classList.add('hidden');
+        });
+
         tabDelSub.addEventListener('click', () => { 
             tabDelSub.classList.add('tab-active'); 
             tabAddSub.classList.remove('tab-active'); 
+            tabCompSub.classList.remove('tab-active');
             subPanelDel.classList.remove('hidden'); 
             subPanelAdd.classList.add('hidden'); 
+            subPanelComp.classList.add('hidden');
             fetchRemovalSubjects(); 
         });
+
+        compGradeSelect.addEventListener('change', async () => {
+            const selectedGrade = compGradeSelect.value;
+            if (!selectedGrade) return;
+            const tier = getGradeTier(selectedGrade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+            compSubjectSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+
+            try {
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+                if (data) {
+                    const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
+                    compSubjectSelect.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' :
+                        '<option value="" disabled selected>Choose Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                }
+            } catch (err) {
+                compSubjectSelect.innerHTML = `<option value="" disabled>Error: ${err.message}</option>`;
+            }
+        });
+
+        cfgBtnSaveComp.addEventListener('click', async () => {
+            const selectedGrade = compGradeSelect.value;
+            const subjectId = compSubjectSelect.value;
+            const p1Max = parseFloat(compPaper1Max.value) || 100;
+            const p2Max = parseFloat(compPaper2Max.value) || 100;
+
+            if (!selectedGrade || !subjectId) return alert("Select grade and subject first!");
+            if (!currentActiveExamName) return alert("No active exam session deployed!");
+
+            cfgBtnSaveComp.disabled = true;
+            cfgBtnSaveComp.innerText = "Configuring...";
+
+            try {
+                const selectedSubjectText = compSubjectSelect.options[compSubjectSelect.selectedIndex].text;
+                
+                // Existing component check
+                const { data: existingPapers } = await _supabase.from('subject_papers').select('*').eq('subject_id', subjectId);
+                const p1Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 1');
+                const p2Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 2');
+
+                if (!p1Exist) {
+                    await _supabase.from('subject_papers').insert([{ subject_id: subjectId, paper_name: 'Paper 1', max_marks: p1Max }]);
+                } else {
+                    await _supabase.from('subject_papers').update({ max_marks: p1Max }).eq('id', p1Exist.id);
+                }
+
+                if (!p2Exist) {
+                    await _supabase.from('subject_papers').insert([{ subject_id: subjectId, paper_name: 'Paper 2', max_marks: p2Max }]);
+                } else {
+                    await _supabase.from('subject_papers').update({ max_marks: p2Max }).eq('id', p2Exist.id);
+                }
+
+                alert(`Subject components (Paper 1 & Paper 2) configured for "${selectedSubjectText}" in active exam "${currentActiveExamName}". System will aggregate them into a single compiled result out of 100.`);
+                await initAdminEngine();
+            } catch (err) {
+                alert("Error saving paper components: " + err.message);
+            } finally {
+                cfgBtnSaveComp.disabled = false;
+                cfgBtnSaveComp.innerText = "📑 Add Active Exam Components";
+            }
+        });
+
         radioMain.addEventListener('change', () => { 
             mainExamOptions.classList.remove('hidden'); 
             contestOptions.classList.add('hidden'); 
@@ -1171,16 +1302,34 @@
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
                     .in('student_id', studIds)
-                    .eq('subject_id', subId)
-                    .is('paper_id', null);
+                    .eq('subject_id', subId);
 
                 if (error) throw error;
                 const uploadedMarks = data || [];
 
                 trackerOutput.innerHTML = targetStudents.map(s => {
-                    const studentMark = uploadedMarks.find(m => m.student_id === s.id);
-                    const hasUploaded = studentMark !== undefined;
-                    let scoreDetails = hasUploaded ? `Score: ${studentMark[dbSchemaCache.scoreColumn]}` : "No Data";
+                    const studentMarks = uploadedMarks.filter(m => m.student_id === s.id);
+                    const hasUploaded = studentMarks.length > 0;
+                    
+                    let scoreDetails = "No Data";
+                    if (hasUploaded) {
+                        const directScore = studentMarks.find(m => m.paper_id === null);
+                        if (directScore) {
+                            scoreDetails = `Score: ${directScore[dbSchemaCache.scoreColumn]}`;
+                        } else {
+                            let totalEarned = 0, totalMax = 0;
+                            studentMarks.forEach(m => {
+                                const paperObj = globalPapersList.find(p => p.id === m.paper_id);
+                                const maxM = paperObj ? paperObj.max_marks : 100;
+                                totalEarned += parseFloat(m[dbSchemaCache.scoreColumn]);
+                                totalMax += maxM;
+                            });
+                            const compiled = totalMax > 0 ? (totalEarned / totalMax) * 100 : 0;
+                            scoreDetails = `Compiled: ${Math.round(compiled)}% (${studentMarks.length} Papers)`;
+                        }
+                    }
+
+                    const primaryMark = studentMarks[0];
 
                     return `
                         <div class="flex items-center justify-between p-3 text-xs border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
@@ -1190,7 +1339,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
-                                <button onclick="openAdminMarksEditor('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${hasUploaded ? studentMark[dbSchemaCache.scoreColumn] : 'null'})" class="btn btn-[10px] btn-ghost btn-xs text-blue-600 font-bold underline">Edit</button>
+                                <button onclick="openAdminMarksEditor('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${hasUploaded ? primaryMark[dbSchemaCache.scoreColumn] : 'null'})" class="btn btn-[10px] btn-ghost btn-xs text-blue-600 font-bold underline">Edit</button>
                             </div>
                         </div>
                     `;
@@ -1253,6 +1402,28 @@
             }
         });
 
+        // Helper function: Calculates compiled subject mark converting components to 100
+        function calculateCompiledSubjectScore(studentMarks, globalPapers) {
+            if (!studentMarks || studentMarks.length === 0) return null;
+            
+            const directMark = studentMarks.find(m => m.paper_id === null);
+            if (directMark) {
+                return parseFloat(directMark[dbSchemaCache.scoreColumn]);
+            }
+
+            let totalEarned = 0;
+            let totalMax = 0;
+            studentMarks.forEach(m => {
+                const paperObj = globalPapers.find(p => p.id === m.paper_id);
+                const maxMarks = paperObj ? paperObj.max_marks : 100;
+                totalEarned += parseFloat(m[dbSchemaCache.scoreColumn]);
+                totalMax += maxMarks;
+            });
+
+            if (totalMax === 0) return null;
+            return (totalEarned / totalMax) * 100;
+        }
+
         // 2. ARCHIVAL CONTEXT MATRIX PROCESSING ENGINE
         compileHistoricalBtn.addEventListener('click', async () => {
             const grade = parseInt(histGrade.value);
@@ -1285,8 +1456,7 @@
                     .select('*')
                     .eq(dbSchemaCache.examColumn, historicalContextLabel)
                     .in('student_id', studentIds)
-                    .in('subject_id', subjectIds)
-                    .is('paper_id', null);
+                    .in('subject_id', subjectIds);
 
                 if (marksErr) throw marksErr;
                 const historicalMarks = marks || [];
@@ -1313,17 +1483,18 @@
                 const compiledHistoricalData = targetStudents.map(s => {
                     let combinedTotals = 0, count = 0, subjectScores = {};
                     filteredSubjects.forEach(sub => {
-                        const m = historicalMarks.find(md => md.student_id === s.id && md.subject_id === sub.id);
-                        if (m) {
-                            const score = parseFloat(m[dbSchemaCache.scoreColumn]);
-                            const structuralValue = compilePoints ? convertScoreToPoints(score, 100) : score;
+                        const studentSubMarks = historicalMarks.filter(md => md.student_id === s.id && md.subject_id === sub.id);
+                        const compiledScore = calculateCompiledSubjectScore(studentSubMarks, globalPapersList);
+
+                        if (compiledScore !== null) {
+                            const structuralValue = compilePoints ? convertScoreToPoints(compiledScore, 100) : compiledScore;
                             combinedTotals += structuralValue;
                             subjectScores[sub.subject_name] = structuralValue;
                             count++;
                             
                             subjectMetricsStats[sub.subject_name].total += structuralValue;
                             subjectMetricsStats[sub.subject_name].count++;
-                            const individualRating = compilePoints ? getPointsRating(structuralValue) : getMarksRating(score, tier);
+                            const individualRating = compilePoints ? getPointsRating(structuralValue) : getMarksRating(compiledScore, tier);
                             subjectMetricsStats[sub.subject_name].dist[individualRating]++;
                         } else {
                             subjectScores[sub.subject_name] = null;
@@ -1554,8 +1725,7 @@
                     .select('*')
                     .eq(dbSchemaCache.examColumn, currentActiveExamName)
                     .in('student_id', studentIds)
-                    .in('subject_id', subjectIds)
-                    .is('paper_id', null);
+                    .in('subject_id', subjectIds);
 
                 if (marksErr) throw marksErr;
                 const marksData = marks || [];
@@ -1578,16 +1748,17 @@
                     let subjectScores = {};
 
                     filteredSubjects.forEach(sub => {
-                        const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
-                        if (m) {
-                            const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
-                            totalMarks += subScore;
-                            subjectScores[sub.subject_name] = subScore;
+                        const studentSubMarks = marksData.filter(md => md.student_id === s.id && md.subject_id === sub.id);
+                        const compiledSubScore = calculateCompiledSubjectScore(studentSubMarks, globalPapersList);
+
+                        if (compiledSubScore !== null) {
+                            totalMarks += compiledSubScore;
+                            subjectScores[sub.subject_name] = compiledSubScore;
                             count++;
 
-                            subjectMarksStats[sub.subject_name].total += subScore;
+                            subjectMarksStats[sub.subject_name].total += compiledSubScore;
                             subjectMarksStats[sub.subject_name].count++;
-                            const individualRating = getMarksRating(subScore, tier);
+                            const individualRating = getMarksRating(compiledSubScore, tier);
                             subjectMarksStats[sub.subject_name].dist[individualRating]++;
                         } else {
                             subjectScores[sub.subject_name] = null;
@@ -1614,10 +1785,11 @@
                     let subjectScores = {};
 
                     filteredSubjects.forEach(sub => {
-                        const m = marksData.find(md => md.student_id === s.id && md.subject_id === sub.id);
-                        if (m) {
-                            const subScore = parseFloat(m[dbSchemaCache.scoreColumn]);
-                            const points = convertScoreToPoints(subScore, 100);
+                        const studentSubMarks = marksData.filter(md => md.student_id === s.id && md.subject_id === sub.id);
+                        const compiledSubScore = calculateCompiledSubjectScore(studentSubMarks, globalPapersList);
+
+                        if (compiledSubScore !== null) {
+                            const points = convertScoreToPoints(compiledSubScore, 100);
                             totalPoints += points;
                             subjectScores[sub.subject_name] = points;
                             count++;
