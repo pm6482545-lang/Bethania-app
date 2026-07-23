@@ -1037,10 +1037,14 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Upsert entries handling optional paper component IDs cleanly
+            // Dynamically apply conflict targets depending on whether a paper component is specified
+            const upsertOptions = paperId 
+                ? { onConflict: 'student_id,test_name,subject_id,paper_id' }
+                : { onConflict: 'student_id,test_name,subject_id' };
+
             const { data, error } = await _supabase
                 .from('marks_entry')
-                .upsert(entries, { onConflict: paperId ? 'student_id,test_name,subject_id,paper_id' : 'student_id,test_name,subject_id' }) 
+                .upsert(entries, upsertOptions) 
                 .select();
             
             if (error) {
