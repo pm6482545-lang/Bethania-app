@@ -654,14 +654,7 @@
         async function pullActiveCycleState() {
             if (examCountdownInterval) clearInterval(examCountdownInterval);
             
-            // Check for explicit active session first, or order by created_at
-            let { data, error } = await _supabase.from('exam_sessions').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
-            if (!data || data.length === 0) {
-                const res = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
-                data = res.data;
-                error = res.error;
-            }
-
+            const { data, error } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false }).limit(1);
             if (!error && data && data.length > 0) {
                 const session = data[0];
                 activeExamContextName = session.exam_name;
@@ -890,7 +883,7 @@
             marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
         });
 
-        // Subject selection handler -> checks subject_papers OR subject_components tables
+        // Subject selection handler -> checks database for components (papers)
         filterSubject.addEventListener('change', async () => {
             const subId = filterSubject.value;
             const selectedGrade = parseInt(filterGrade.value);
@@ -901,43 +894,28 @@
                 return;
             }
 
-            // Query components across possible database schema table names
-            let papers = null;
-            let { data: paperData, error: papersError } = await _supabase
+            // Query subject_papers / subject_components for this subject and grade
+            const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
                 .eq('subject_id', subId)
+                .eq('grade', selectedGrade)
                 .order('paper_number', { ascending: true });
 
-            if (papersError || !paperData || paperData.length === 0) {
-                // Try alternative table name subject_components
-                const res = await _supabase
-                    .from('subject_components')
-                    .select('*')
-                    .eq('subject_id', subId);
-                if (!res.error && res.data && res.data.length > 0) {
-                    paperData = res.data;
-                }
-            }
-
-            // Filter for grade if specific grade field exists on components table
-            if (paperData && paperData.length > 0) {
-                const gradeSpecific = paperData.filter(p => p.grade === undefined || p.grade === null || parseInt(p.grade) === selectedGrade);
-                papers = gradeSpecific.length > 0 ? gradeSpecific : paperData;
-            } else {
-                papers = [];
-            }
+            if (papersError) console.error("Error querying subject papers:", papersError);
 
             currentSubjectPapers = papers || [];
 
             if (currentSubjectPapers.length > 0) {
+                // Display component dropdown for Paper 1, Paper 2, etc.
                 paperSelectContainer.classList.remove('hidden');
                 filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
-                    currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || p.max_score || 100}">${p.paper_name || p.component_name || ('Paper ' + (p.paper_number || ''))}</option>`).join('');
+                    currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)}</option>`).join('');
                 
-                marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl"> Please select Paper / Component above to enter marks.</td></tr>';
+                marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl"> Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
                 saveMarksBtn.disabled = true;
             } else {
+                // Single paper / Direct subject entry mode
                 paperSelectContainer.classList.add('hidden');
                 filterPaper.innerHTML = '';
                 await renderMarksRoster(subId, null, 100);
@@ -1053,9 +1031,14 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
+            // Dynamically set the unique constraint target depending on whether a paper component is used
+            const conflictTarget = paperId 
+                ? 'student_id,test_name,paper_id' 
+                : 'student_id,subject_id,test_name';
+
             const { data, error } = await _supabase
                 .from('marks_entry')
-                .upsert(entries, { onConflict: 'student_id,test_name,paper_id' }) 
+                .upsert(entries, { onConflict: conflictTarget }) 
                 .select();
             
             if (error) {
