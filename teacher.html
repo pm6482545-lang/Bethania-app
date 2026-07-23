@@ -862,14 +862,18 @@
             filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
 
-        // --- SUBJECT & COMPONENT WORKFLOW ---
+        // --- SUBJECT & COMPONENT WORKFLOW (UPDATED FOR COMPONENT SUPPORT) ---
 
         filterGrade.addEventListener('change', () => {
             const selectedGrade = filterGrade.value;
             const tier = getGradeTier(selectedGrade);
-            const allowedSubjects = CBC_SUBJECT_TIERS[tier];
+            const allowedSubjects = CBC_SUBJECT_TIERS[tier].map(s => s.toLowerCase().trim());
 
-            const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
+            // Case-insensitive, flexible matching for Subject Names (e.g. Mathematics vs Maths)
+            const filteredSubjects = subjectsCache.filter(s => {
+                const dbName = (s.subject_name || "").toLowerCase().trim();
+                return allowedSubjects.some(allowed => dbName.includes(allowed) || allowed.includes(dbName));
+            });
 
             paperSelectContainer.classList.add('hidden');
             filterPaper.innerHTML = '<option value="" disabled selected>Select Paper...</option>';
@@ -897,12 +901,12 @@
                 return;
             }
 
-            // Query subject_papers from Supabase to check if components exist for this subject & grade
+            // Query subject_papers flexibly (supports grade both as integer or string in DB)
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
                 .eq('subject_id', subId)
-                .eq('grade', selectedGrade)
+                .or(`grade.eq.${selectedGrade},grade.eq."${selectedGrade}"`)
                 .order('paper_number', { ascending: true });
 
             if (papersError) {
@@ -1037,14 +1041,10 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Dynamically apply conflict targets depending on whether a paper component is specified
-            const upsertOptions = paperId 
-                ? { onConflict: 'student_id,test_name,subject_id,paper_id' }
-                : { onConflict: 'student_id,test_name,subject_id' };
-
+            // Upsert entries handling optional paper component IDs cleanly
             const { data, error } = await _supabase
                 .from('marks_entry')
-                .upsert(entries, upsertOptions) 
+                .upsert(entries, { onConflict: paperId ? 'student_id,test_name,subject_id,paper_id' : 'student_id,test_name,subject_id' }) 
                 .select();
             
             if (error) {
