@@ -89,7 +89,7 @@
                 </button>
             </div>
 
-            <!-- ================= DEDICATED COUNTDOWN TIMER BANNER (STANDALONE & ATTENTION CATCHING) ================= -->
+            <!-- ================= DEDICATED COUNTDOWN TIMER BANNER ================= -->
             <div id="countdown-banner-container" class="hidden max-w-2xl mx-auto w-full">
                 <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-amber-400 shadow-xl rounded-2xl p-4 text-center space-y-2">
                     <div class="text-[11px] sm:text-xs text-amber-400 tracking-widest uppercase font-extrabold flex items-center justify-center gap-1.5">
@@ -322,7 +322,7 @@
                         </div>
                         <p class="text-xs text-slate-500 mb-6">Select the appropriate cohort and subject learning area to load assessment rosters.</p>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
                             <div class="form-control">
                                 <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Class/Grade Target</label>
                                 <select id="filter-grade" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none">
@@ -338,6 +338,13 @@
                                 <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Subject Selection</label>
                                 <select id="filter-subject" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none" disabled>
                                     <option disabled selected>Pick Grade First</option>
+                                </select>
+                            </div>
+                            <!-- DYNAMIC PAPER SELECTION DROPDOWN -->
+                            <div class="form-control hidden" id="paper-select-container">
+                                <label class="label-text font-bold text-xs text-amber-700 mb-1.5">Paper / Component</label>
+                                <select id="filter-paper" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none border-amber-300 bg-amber-50 text-amber-900">
+                                    <option value="" disabled selected>Select Paper...</option>
                                 </select>
                             </div>
                         </div>
@@ -381,6 +388,7 @@
         let activeExamContextName = "";
         let localStudentsCache = [];
         let subjectsCache = [];
+        let currentSubjectPapers = [];
         let examCountdownInterval = null;
 
         // Auth handles
@@ -441,6 +449,8 @@
         // Marks Filters
         const filterGrade = document.getElementById('filter-grade');
         const filterSubject = document.getElementById('filter-subject');
+        const paperSelectContainer = document.getElementById('paper-select-container');
+        const filterPaper = document.getElementById('filter-paper');
         const marksEntryRows = document.getElementById('marks-entry-rows');
         const paperMaxHeader = document.getElementById('paper-max-header');
         const saveMarksBtn = document.getElementById('save-marks-btn');
@@ -526,7 +536,6 @@
             btnLogin.disabled = true;
             btnLogin.innerText = "Verifying Access...";
 
-            // Query public.teachers for credentials matching username and password
             const { data, error } = await _supabase
                 .from('teachers')
                 .select('id, name, username')
@@ -537,7 +546,6 @@
             if (error) {
                 alert("❌ Connection Error: " + error.message);
             } else if (data && data.length > 0) {
-                // Success - Save Session
                 sessionStorage.setItem('activeTeacher', JSON.stringify(data[0]));
                 authForm.reset();
                 showPortalContent();
@@ -560,8 +568,6 @@
             await loadStudentRoster();
             await fetchSubjects();
         }
-
-        // ------------------ END AUTHENTICATION ENGINE ------------------
 
         // Visible buttons navigation toggle logic
         tabRoster.addEventListener('click', () => { 
@@ -800,10 +806,8 @@
             editStudentBox.scrollIntoView({ behavior: 'smooth' });
         };
 
-        // Close editor panel
         btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
 
-        // Save inline adjustments to DB
         btnSaveStudentEdit.addEventListener('click', async () => {
             const id = editStudentId.value;
             const updatedName = editStudName.value.trim();
@@ -864,6 +868,10 @@
 
             const filteredSubjects = subjectsCache.filter(s => allowedSubjects.includes(s.subject_name.trim()));
 
+            paperSelectContainer.classList.add('hidden');
+            filterPaper.innerHTML = '<option value="" disabled selected>Select Paper...</option>';
+            currentSubjectPapers = [];
+
             if (filteredSubjects.length === 0) {
                 filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No matches for this grade tier</option>';
                 filterSubject.disabled = true;
@@ -875,15 +883,58 @@
             marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
         });
 
-        // Triggered when Subject selection changes -> Loads rosters automatically now
+        // Subject selection handler -> checks database for components (papers)
         filterSubject.addEventListener('change', async () => {
             const subId = filterSubject.value;
+            const selectedGrade = parseInt(filterGrade.value);
+
             if(!subId) {
                 marksEntryRows.innerHTML = '';
+                paperSelectContainer.classList.add('hidden');
                 return;
             }
 
-            const maxMarks = "100";
+            // Query subject_papers / subject_components for this subject and grade
+            const { data: papers, error: papersError } = await _supabase
+                .from('subject_papers')
+                .select('*')
+                .eq('subject_id', subId)
+                .eq('grade', selectedGrade)
+                .order('paper_number', { ascending: true });
+
+            if (papersError) console.error("Error querying subject papers:", papersError);
+
+            currentSubjectPapers = papers || [];
+
+            if (currentSubjectPapers.length > 0) {
+                // Display component dropdown for Paper 1, Paper 2, etc.
+                paperSelectContainer.classList.remove('hidden');
+                filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
+                    currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)}</option>`).join('');
+                
+                marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl"> Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
+                saveMarksBtn.disabled = true;
+            } else {
+                // Single paper / Direct subject entry mode
+                paperSelectContainer.classList.add('hidden');
+                filterPaper.innerHTML = '';
+                await renderMarksRoster(subId, null, 100);
+            }
+        });
+
+        // Paper selection listener
+        filterPaper.addEventListener('change', async () => {
+            const subId = filterSubject.value;
+            const paperId = filterPaper.value;
+            const selectedOption = filterPaper.options[filterPaper.selectedIndex];
+            const maxScore = selectedOption ? (selectedOption.getAttribute('data-max') || 100) : 100;
+
+            if (subId && paperId) {
+                await renderMarksRoster(subId, paperId, maxScore);
+            }
+        });
+
+        async function renderMarksRoster(subId, paperId, maxMarks) {
             paperMaxHeader.innerText = `Raw Score Input (Max ${maxMarks} Marks)`;
 
             const selectedGrade = parseInt(filterGrade.value);
@@ -895,16 +946,22 @@
                 return;
             }
 
-            // Fetch existing marks where paper_id is null (direct subject entries)
             const studentIds = filteredStudents.map(s => s.id);
             
-            const { data: savedMarks, error } = await _supabase
+            let query = _supabase
                 .from('marks_entry')
                 .select('student_id, raw_score')
                 .eq('test_name', activeExamContextName)
                 .in('student_id', studentIds)
-                .eq('subject_id', subId) 
-                .is('paper_id', null);
+                .eq('subject_id', subId);
+
+            if (paperId) {
+                query = query.eq('paper_id', paperId);
+            } else {
+                query = query.is('paper_id', null);
+            }
+
+            const { data: savedMarks, error } = await query;
 
             if (error) console.error("Error loading existing marks:", error);
 
@@ -915,7 +972,6 @@
                 });
             }
 
-            // Build input scores roster dynamically
             marksEntryRows.innerHTML = filteredStudents.map(s => {
                 const existingScore = marksMap[s.id] !== undefined ? marksMap[s.id] : "";
                 return `
@@ -934,7 +990,7 @@
             }).join('');
             
             saveMarksBtn.disabled = systemIsLocked;
-        });
+        }
         
         // Save All Marks Submit Event
         saveMarksBtn.addEventListener('click', async () => {
@@ -950,6 +1006,11 @@
             if (!selectedSubjectId) {
                 return alert("⚠️ Error: Please select a subject before saving.");
             }
+
+            const paperId = currentSubjectPapers.length > 0 ? (filterPaper.value || null) : null;
+            if (currentSubjectPapers.length > 0 && !paperId) {
+                return alert("⚠️ Error: Please select a component/paper (e.g., Paper 1 or Paper 2) before saving.");
+            }
             
             const entries = Array.from(document.querySelectorAll('.score-field'))
                 .filter(input => input.value.trim() !== "") 
@@ -959,7 +1020,7 @@
                         subject_id: selectedSubjectId, 
                         test_name: activeExamContextName,
                         raw_score: parseFloat(input.value) || 0.00,
-                        paper_id: null 
+                        paper_id: paperId
                     };
                 });
 
