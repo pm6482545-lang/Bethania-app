@@ -899,7 +899,6 @@
                 return;
             }
 
-            // ✅ UPDATED FIXED QUERY: Correctly queries grade conditions and handles null grade defaults
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
@@ -1034,9 +1033,10 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
+            // Updated onConflict target to match PostgreSQL constraint
             const { data, error } = await _supabase
                 .from('marks_entry')
-                .upsert(entries, { onConflict: paperId ? 'student_id,test_name,subject_id,paper_id' : 'student_id,test_name,subject_id' }) 
+                .upsert(entries, { onConflict: 'student_id,test_name,subject_id,paper_id' }) 
                 .select();
             
             if (error) {
