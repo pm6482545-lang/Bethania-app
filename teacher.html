@@ -899,7 +899,7 @@
                 return;
             }
 
-            // STRICTOR COMPONENT CHECK: Filter explicitly by subject_id AND selected grade
+            // STRICTOR COMPONENT CHECK: Filter strictly by selected subject_id AND selected grade
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
@@ -954,6 +954,7 @@
 
             const studentIds = filteredStudents.map(s => s.id);
             
+            // STRICT QUERY: Query marks restricted strictly to the current active exam session, subject, and selected grade's student set
             let query = _supabase
                 .from('marks_entry')
                 .select('student_id, raw_score')
@@ -1036,7 +1037,7 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Updated onConflict target to match PostgreSQL constraint
+            // UPSERT BOUND strictly to student_id, test_name, subject_id, and paper_id
             const { data, error } = await _supabase
                 .from('marks_entry')
                 .upsert(entries, { onConflict: 'student_id,test_name,subject_id,paper_id' }) 
