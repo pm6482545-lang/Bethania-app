@@ -1114,45 +1114,69 @@
         });
 
         cfgBtnSaveComp.addEventListener('click', async () => {
-            const selectedGrade = compGradeSelect.value;
-            const subjectId = compSubjectSelect.value;
-            const p1Max = parseFloat(compPaper1Max.value) || 100;
-            const p2Max = parseFloat(compPaper2Max.value) || 100;
+    const selectedGrade = compGradeSelect.value;
+    const subjectId = compSubjectSelect.value;
+    const p1Max = parseFloat(compPaper1Max.value) || 100;
+    const p2Max = parseFloat(compPaper2Max.value) || 100;
 
-            if (!selectedGrade || !subjectId) return alert("Select grade and subject first!");
-            if (!currentActiveExamName) return alert("No active exam session deployed!");
+    if (!selectedGrade || !subjectId) return alert("Select grade and subject first!");
+    if (!currentActiveExamName) return alert("No active exam session deployed!");
 
-            cfgBtnSaveComp.disabled = true;
-            cfgBtnSaveComp.innerText = "Configuring...";
+    cfgBtnSaveComp.disabled = true;
+    cfgBtnSaveComp.innerText = "Configuring...";
 
-            try {
-                const selectedSubjectText = compSubjectSelect.options[compSubjectSelect.selectedIndex].text;
-                
-                const { data: existingPapers } = await _supabase.from('subject_papers').select('*').eq('subject_id', subjectId);
-                const p1Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 1');
-                const p2Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 2');
+    try {
+        const selectedSubjectText = compSubjectSelect.options[compSubjectSelect.selectedIndex].text;
+        
+        // Fetch existing papers
+        const { data: existingPapers, error: fetchErr } = await _supabase
+            .from('subject_papers')
+            .select('*')
+            .eq('subject_id', subjectId);
+            
+        if (fetchErr) throw fetchErr;
 
-                if (!p1Exist) {
-                    await _supabase.from('subject_papers').insert([{ subject_id: subjectId, paper_name: 'Paper 1', max_marks: p1Max }]);
-                } else {
-                    await _supabase.from('subject_papers').update({ max_marks: p1Max }).eq('id', p1Exist.id);
-                }
+        const p1Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 1');
+        const p2Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 2');
 
-                if (!p2Exist) {
-                    await _supabase.from('subject_papers').insert([{ subject_id: subjectId, paper_name: 'Paper 2', max_marks: p2Max }]);
-                } else {
-                    await _supabase.from('subject_papers').update({ max_marks: p2Max }).eq('id', p2Exist.id);
-                }
+        // Upsert Paper 1
+        if (!p1Exist) {
+            const { error: ins1Err } = await _supabase
+                .from('subject_papers')
+                .insert([{ subject_id: subjectId, paper_name: 'Paper 1', max_marks: p1Max }]);
+            if (ins1Err) throw ins1Err;
+        } else {
+            const { error: up1Err } = await _supabase
+                .from('subject_papers')
+                .update({ max_marks: p1Max })
+                .eq('id', p1Exist.id);
+            if (up1Err) throw up1Err;
+        }
 
-                alert(`Subject components (Paper 1 & Paper 2) configured for "${selectedSubjectText}" in active exam "${currentActiveExamName}". System will aggregate them into a single compiled result out of 100.`);
-                await initAdminEngine();
-            } catch (err) {
-                alert("Error saving paper components: " + err.message);
-            } finally {
-                cfgBtnSaveComp.disabled = false;
-                cfgBtnSaveComp.innerText = "📑 Add Active Exam Components";
-            }
-        });
+        // Upsert Paper 2
+        if (!p2Exist) {
+            const { error: ins2Err } = await _supabase
+                .from('subject_papers')
+                .insert([{ subject_id: subjectId, paper_name: 'Paper 2', max_marks: p2Max }]);
+            if (ins2Err) throw ins2Err;
+        } else {
+            const { error: up2Err } = await _supabase
+                .from('subject_papers')
+                .update({ max_marks: p2Max })
+                .eq('id', p2Exist.id);
+            if (up2Err) throw up2Err;
+        }
+
+        alert(`Subject components (Paper 1 & Paper 2) configured for "${selectedSubjectText}" in active exam "${currentActiveExamName}".`);
+        await initAdminEngine();
+    } catch (err) {
+        alert("Error saving paper components: " + err.message);
+    } finally {
+        cfgBtnSaveComp.disabled = false;
+        cfgBtnSaveComp.innerText = "📑 Add Active Exam Components";
+    }
+});
+
 
         radioMain.addEventListener('change', () => { 
             mainExamOptions.classList.remove('hidden'); 
