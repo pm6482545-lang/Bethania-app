@@ -734,6 +734,7 @@
                 stream: document.getElementById('stud-stream').value.trim(),
                 maths_club_family: document.getElementById('stud-family').value || null
             }]).select();
+
             if (!error && data) { 
                 studentForm.reset(); 
                 document.getElementById('stud-stream').value = "A"; 
@@ -742,7 +743,7 @@
                 renderManageClassTable();
                 alert("✨ Student registered successfully!");
             } else {
-                alert("❌ Registration failed: " + error.message);
+                alert("❌ Registration failed: " + (error ? error.message : "Unknown error"));
             }
         });
 
@@ -862,14 +863,13 @@
             filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
 
-        // --- SUBJECT & COMPONENT WORKFLOW (UPDATED FOR COMPONENT SUPPORT) ---
+        // --- SUBJECT & COMPONENT WORKFLOW ---
 
         filterGrade.addEventListener('change', () => {
             const selectedGrade = filterGrade.value;
             const tier = getGradeTier(selectedGrade);
             const allowedSubjects = CBC_SUBJECT_TIERS[tier].map(s => s.toLowerCase().trim());
 
-            // Case-insensitive, flexible matching for Subject Names (e.g. Mathematics vs Maths)
             const filteredSubjects = subjectsCache.filter(s => {
                 const dbName = (s.subject_name || "").toLowerCase().trim();
                 return allowedSubjects.some(allowed => dbName.includes(allowed) || allowed.includes(dbName));
@@ -890,7 +890,6 @@
             marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
         });
 
-        // Subject selection listener -> Checks Supabase for papers/components created by Admin
         filterSubject.addEventListener('change', async () => {
             const subId = filterSubject.value;
             const selectedGrade = parseInt(filterGrade.value);
@@ -901,7 +900,6 @@
                 return;
             }
 
-            // Query subject_papers flexibly (supports grade both as integer or string in DB)
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
@@ -916,7 +914,6 @@
             currentSubjectPapers = papers || [];
 
             if (currentSubjectPapers.length > 0) {
-                // Admin added components (Paper 1, Paper 2, etc.) -> Show component selector
                 paperSelectContainer.classList.remove('hidden');
                 filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
                     currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)} (Max ${p.max_marks || 100})</option>`).join('');
@@ -924,14 +921,12 @@
                 marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl font-bold">📄 Subject has components! Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
                 saveMarksBtn.disabled = true;
             } else {
-                // No components added by Admin -> Show normal direct entry
                 paperSelectContainer.classList.add('hidden');
                 filterPaper.innerHTML = '';
                 await renderMarksRoster(subId, null, 100);
             }
         });
 
-        // Paper selection listener
         filterPaper.addEventListener('change', async () => {
             const subId = filterSubject.value;
             const paperId = filterPaper.value;
@@ -957,7 +952,6 @@
 
             const studentIds = filteredStudents.map(s => s.id);
             
-            // Build Query checking test name, subject, and optional paper ID
             let query = _supabase
                 .from('marks_entry')
                 .select('student_id, raw_score')
@@ -1002,7 +996,6 @@
             saveMarksBtn.disabled = systemIsLocked;
         }
         
-        // Save All Marks Submit Event
         saveMarksBtn.addEventListener('click', async () => {
             if (systemIsLocked) {
                 return alert("⚠️ System is currently Closed. Data submission rejected.");
@@ -1041,7 +1034,6 @@
             saveMarksBtn.disabled = true;
             saveMarksBtn.innerText = "⏳ Capturing Grades...";
 
-            // Upsert entries handling optional paper component IDs cleanly
             const { data, error } = await _supabase
                 .from('marks_entry')
                 .upsert(entries, { onConflict: paperId ? 'student_id,test_name,subject_id,paper_id' : 'student_id,test_name,subject_id' }) 
@@ -1064,7 +1056,6 @@
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
 
-        // Safe load verification
         window.addEventListener('DOMContentLoaded', async () => {
             await checkActiveSession();
         });
