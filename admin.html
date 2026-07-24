@@ -1128,7 +1128,6 @@
             try {
                 const selectedSubjectText = compSubjectSelect.options[compSubjectSelect.selectedIndex].text;
                 
-                // Fetch existing component papers for this subject
                 const { data: existingPapers } = await _supabase.from('subject_papers').select('*').eq('subject_id', subjectId);
                 const p1Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 1');
                 const p2Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 2');
@@ -1402,7 +1401,7 @@
             }
         });
 
-        // Helper function: Calculates compiled subject mark converting components to 100
+        // Calculates compiled subject mark converting components to 100
         function calculateCompiledSubjectScore(studentMarks, globalPapers) {
             if (!studentMarks || studentMarks.length === 0) return null;
             
@@ -1942,35 +1941,18 @@
                         ${ratingKeys.map(key => {
                             const count = marksDistribution[key] || 0;
                             const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
-                            const levelLabel = key === "EE" ? "Exceeding Expectation (EE)" :
-                                               key === "ME" ? "Meeting Expectation (ME)" :
-                                               key === "AE" ? "Approaching Expectation (AE)" :
-                                               key === "BE" ? "Below Expectation (BE)" :
-                                               key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
-                                               key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
-                                               key === "ME1" ? "Meeting Expectation 1 (ME1)" :
-                                               key === "ME2" ? "Meeting Expectation 2 (ME2)" :
-                                               key === "AE1" ? "Approaching Expectation 1 (AE1)" :
-                                               key === "AE2" ? "Approaching Expectation 2 (AE2)" :
-                                               key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
-
                             return `
                                 <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                    <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold; text-align: left;">${levelLabel}</div>
-                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                    <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%; text-align: left;">${count} Students (${pct}%)</div>
+                                    <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
+                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                    <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students (${pct}%)</div>
                                 </div>
                             `;
                         }).join('')}
-                        <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center; background-color: #f1f5f9;">
-                            <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; text-align: left;">TOTAL ENROLLED</div>
-                            ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectMarksStats[sub.subject_name].count}</div>`).join('')}
-                            <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%; text-align: left;">${totalRanked} Students (100%)</div>
-                        </div>
                     </div>
                 `;
 
-                printableMarksReportHtml = { marksHeaderHtml, marksBodyHtml, marksStatsHtml };
+                printableMarksReportHtml = { header: marksHeaderHtml, body: marksBodyHtml, stats: marksStatsHtml, title: `${getGradeLabel(grade)} Marks Report` };
 
                 if (tier !== "lower_primary") {
                     let pointsHeaderHtml = `
@@ -1983,7 +1965,7 @@
                     let pointsBodyHtml = `
                         <thead>
                             <tr>
-                                <th style="width: 40px; text-align: center;">NO.</th>
+                                <th style="width: 35px; text-align: center;">NO.</th>
                                 <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
                                 ${filteredSubjects.map(sub => `<th style="width: 50px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
                                 <th style="width: 55px; text-align: center;">TOTAL</th>
@@ -2032,100 +2014,95 @@
 
                     let pointsStatsHtml = `
                         <div style="font-weight: bold; font-size: 10px;">
-                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX (POINTS) &bull; ${currentActiveExamName.toUpperCase()}</div>
+                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
                             ${["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(key => {
                                 const count = pointsDistribution[key] || 0;
                                 const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
                                 return `
                                     <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                        <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold; text-align: left;">${key} Matrix Level Distribution</div>
-                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                        <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%; text-align: left;">${count} Students (${pct}%)</div>
+                                        <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
+                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
+                                        <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students (${pct}%)</div>
                                     </div>
                                 `;
                             }).join('')}
                         </div>
                     `;
 
-                    printablePointsReportHtml = { pointsHeaderHtml, pointsBodyHtml, pointsStatsHtml };
+                    printablePointsReportHtml = { header: pointsHeaderHtml, body: pointsBodyHtml, stats: pointsStatsHtml, title: `${getGradeLabel(grade)} Points Report` };
                 }
 
                 downloadMarksPdfBtn.disabled = false;
             } catch (err) {
-                alert("Error compiling broadsheet: " + err.message);
+                alert("Compilation failed: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
                 compileReportsBtn.innerText = "📊 Compile Broad Sheet";
             }
         });
 
-        // EMBEDDED MODAL & PDF DOWNLOAD EXECUTION HANDLERS
-        downloadMarksPdfBtn.addEventListener('click', () => {
-            if (!printableMarksReportHtml) return alert("Compile report first!");
-            const grade = reportGrade.value;
-            openEmbeddedPdfPreview(`${getGradeLabel(grade)} - Marks Broadsheet`, printableMarksReportHtml.marksHeaderHtml, printableMarksReportHtml.marksBodyHtml, printableMarksReportHtml.marksStatsHtml);
-        });
-
-        downloadPointsPdfBtn.addEventListener('click', () => {
-            if (!printablePointsReportHtml) return alert("Compile points report first!");
-            const grade = reportGrade.value;
-            openEmbeddedPdfPreview(`${getGradeLabel(grade)} - Points Broadsheet`, printablePointsReportHtml.pointsHeaderHtml, printablePointsReportHtml.pointsBodyHtml, printablePointsReportHtml.pointsStatsHtml);
-        });
-
-        function openEmbeddedPdfPreview(docTitle, headerContent, tableContent, matrixContent) {
-            currentPdfTitle = docTitle;
-            const logoSrc = document.getElementById('school-logo').src;
-            const schoolName = document.getElementById('school-title').innerText.trim();
-
+        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
+            currentPdfTitle = title;
             pdfRenderCanvas.innerHTML = `
-                <div style="padding: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-b: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px;">
-                        <img src="${logoSrc}" style="height: 55px; width: 55px; object-fit: contain;" />
-                        <div style="text-align: center; flex: 1;">
-                            <h1 style="font-size: 18px; font-weight: 900; margin: 0; text-transform: uppercase; tracking-wide: 1px; color: #0f172a;">${schoolName}</h1>
-                            <p style="font-size: 10px; margin: 2px 0 0 0; text-transform: uppercase; color: #475569; font-weight: 600;">OFFICIAL EXECUTIVE ASSESSMENT LEDGER REPORT</p>
-                        </div>
-                        <div style="width: 55px;"></div>
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" style="height: 50px; width: 50px; border-radius: 50%;" />
+                    <div style="text-align: center; flex: 1;">
+                        <h1 style="font-size: 18px; font-weight: 900; color: #000; margin: 0; text-transform: uppercase;">BETHANIA ACADEMY</h1>
+                        <p style="font-size: 9px; margin: 0; color: #475569; font-weight: bold; uppercase tracking-wider">OFFICIAL ACADEMIC EVALUATION LEDGER &bull; MINISTRY OF EDUCATION</p>
                     </div>
-
-                    ${headerContent}
-
-                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; border: 1px solid #1e293b; margin-bottom: 16px;">
-                        ${tableContent}
-                    </table>
-
-                    ${matrixContent}
+                    <div style="width: 50px;"></div>
                 </div>
+
+                ${headerHtml}
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px; font-family: 'Courier New', Courier, monospace; margin-bottom: 20px;" border="1">
+                    ${bodyHtml}
+                </table>
+
+                ${statsHtml}
             `;
 
             pdfModal.showModal();
         }
 
+        downloadMarksPdfBtn.addEventListener('click', () => {
+            if (!printableMarksReportHtml) return;
+            openEmbeddedPdfPreview(
+                printableMarksReportHtml.title,
+                printableMarksReportHtml.header,
+                printableMarksReportHtml.body,
+                printableMarksReportHtml.stats
+            );
+        });
+
+        downloadPointsPdfBtn.addEventListener('click', () => {
+            if (!printablePointsReportHtml) return;
+            openEmbeddedPdfPreview(
+                printablePointsReportHtml.title,
+                printablePointsReportHtml.header,
+                printablePointsReportHtml.body,
+                printablePointsReportHtml.stats
+            );
+        });
+
         executePdfDownloadBtn.addEventListener('click', async () => {
             executePdfDownloadBtn.disabled = true;
-            executePdfDownloadBtn.innerText = "Exporting PDF...";
+            executePdfDownloadBtn.innerText = "Processing PDF...";
 
             try {
                 const element = pdfRenderCanvas;
-                const canvas = await window.html2canvasPro(element, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                });
+                const canvas = await window.html2canvasPro(element, { scale: 2, useCORS: true });
+                const imgData = canvas.toDataURL('image/png');
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.98);
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('l', 'mm', 'a4');
-
+                const pdf = new jsPDF('landscape', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const imgWidth = pdfWidth - 10;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                pdf.addImage(imgData, 'JPEG', 5, 5, imgWidth, Math.min(imgHeight, pdfHeight - 10));
-                pdf.save(`${currentPdfTitle || 'Executive_Report'}.pdf`);
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${currentPdfTitle || 'Academic Report'}.pdf`);
             } catch (err) {
-                alert("PDF export failed: " + err.message);
+                alert("PDF Generation Failure: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
