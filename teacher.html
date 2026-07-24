@@ -809,7 +809,7 @@
         };
 
         btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
-btnSaveStudentEdit.addEventListener('click', async () => {
+        btnSaveStudentEdit.addEventListener('click', async () => {
             const id = editStudentId.value;
             const updatedName = editStudName.value.trim();
             const updatedGrade = parseInt(editStudGrade.value);
@@ -899,11 +899,12 @@ btnSaveStudentEdit.addEventListener('click', async () => {
                 return;
             }
 
+            // ✅ UPDATED FIXED QUERY: Correctly queries grade conditions and handles null grade defaults
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
                 .eq('subject_id', subId)
-                .or(`grade.eq.${selectedGrade},grade.eq."${selectedGrade}"`)
+                .or(`grade.eq.${selectedGrade},grade.is.null`)
                 .order('paper_number', { ascending: true });
 
             if (papersError) {
