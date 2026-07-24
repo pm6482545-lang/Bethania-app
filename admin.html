@@ -1128,7 +1128,7 @@
             try {
                 const selectedSubjectText = compSubjectSelect.options[compSubjectSelect.selectedIndex].text;
                 
-                // Existing component check
+                // Fetch existing component papers for this subject
                 const { data: existingPapers } = await _supabase.from('subject_papers').select('*').eq('subject_id', subjectId);
                 const p1Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 1');
                 const p2Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 2');
@@ -1424,7 +1424,7 @@
             return (totalEarned / totalMax) * 100;
         }
 
-        // 2. ARCHIVAL CONTEXT MATRIX PROCESSING ENGINE
+        // ARCHIVAL CONTEXT MATRIX PROCESSING ENGINE
         compileHistoricalBtn.addEventListener('click', async () => {
             const grade = parseInt(histGrade.value);
             if (isNaN(grade)) return alert("Please select a target grade tier cohort!");
@@ -1593,7 +1593,7 @@
             }
         });
 
-        // 3. FINANCIAL SECURITY SLIP MANAGEMENT ENGINE INTERACTION HANDLERS
+        // FINANCIAL SECURITY SLIP MANAGEMENT ENGINE INTERACTION HANDLERS
         feeCtrlGrade.addEventListener('change', async () => {
             const selectedGrade = parseInt(feeCtrlGrade.value);
             if (isNaN(selectedGrade)) return;
@@ -1878,7 +1878,7 @@
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
 
-                // ==================== COMPILE RAW DATA STRUCTS FOR EMBEDDED MODAL & DYNAMIC DOWNLOADS ====================
+                // COMPILE RAW DATA STRUCTS FOR EMBEDDED MODAL & DYNAMIC DOWNLOADS
                 let marksHeaderHtml = `
                     <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
                         <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${currentActiveExamName.toUpperCase()}</h2>
@@ -2032,140 +2032,100 @@
 
                     let pointsStatsHtml = `
                         <div style="font-weight: bold; font-size: 10px;">
-                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
+                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX (POINTS) &bull; ${currentActiveExamName.toUpperCase()}</div>
                             ${["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(key => {
                                 const count = pointsDistribution[key] || 0;
                                 const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
-                                const levelLabel = key === "EE1" ? "Exceeding Expectation 1 (EE1)" :
-                                                   key === "EE2" ? "Exceeding Expectation 2 (EE2)" :
-                                                   key === "ME1" ? "Meeting Expectation 1 (ME1)" :
-                                                   key === "ME2" ? "Meeting Expectation 2 (ME2)" :
-                                                   key === "AE1" ? "Approaching Expectation 1 (AE1)" :
-                                                   key === "AE2" ? "Approaching Expectation 2 (AE2)" :
-                                                   key === "BE1" ? "Below Expectation 1 (BE1)" : "Below Expectation 2 (BE2)";
-
                                 return `
                                     <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                        <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold; text-align: left;">${levelLabel}</div>
+                                        <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; font-weight: bold; text-align: left;">${key} Matrix Level Distribution</div>
                                         ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
                                         <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%; text-align: left;">${count} Students (${pct}%)</div>
                                     </div>
                                 `;
                             }).join('')}
-                            <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center; background-color: #f1f5f9;">
-                                <div style="width: 260px; padding-left: 8px; border-right: 1px solid #1e293b; text-align: left;">TOTAL ENROLLED</div>
-                                ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center; border-right: 1px solid #1e293b; height: 100%; display: flex; align-items: center; justify-content: center;">${subjectPointsStats[sub.subject_name].count}</div>`).join('')}
-                                <div style="width: 170px; padding-left: 8px; font-weight: bold; display: flex; align-items: center; height: 100%; text-align: left;">${totalRanked} Students (100%)</div>
-                            </div>
                         </div>
                     `;
 
                     printablePointsReportHtml = { pointsHeaderHtml, pointsBodyHtml, pointsStatsHtml };
-                } else {
-                    printablePointsReportHtml = null;
                 }
 
                 downloadMarksPdfBtn.disabled = false;
             } catch (err) {
-                alert("Report Generation Failure: " + err.message);
+                alert("Error compiling broadsheet: " + err.message);
             } finally {
                 compileReportsBtn.disabled = false;
                 compileReportsBtn.innerText = "📊 Compile Broad Sheet";
             }
         });
 
-        // EMBEDDED PREVIEW RENDERING ENGINE
-        function openEmbeddedPdfPreview(docTitle, headerContent, tableContent, statsContent) {
+        // EMBEDDED MODAL & PDF DOWNLOAD EXECUTION HANDLERS
+        downloadMarksPdfBtn.addEventListener('click', () => {
+            if (!printableMarksReportHtml) return alert("Compile report first!");
+            const grade = reportGrade.value;
+            openEmbeddedPdfPreview(`${getGradeLabel(grade)} - Marks Broadsheet`, printableMarksReportHtml.marksHeaderHtml, printableMarksReportHtml.marksBodyHtml, printableMarksReportHtml.marksStatsHtml);
+        });
+
+        downloadPointsPdfBtn.addEventListener('click', () => {
+            if (!printablePointsReportHtml) return alert("Compile points report first!");
+            const grade = reportGrade.value;
+            openEmbeddedPdfPreview(`${getGradeLabel(grade)} - Points Broadsheet`, printablePointsReportHtml.pointsHeaderHtml, printablePointsReportHtml.pointsBodyHtml, printablePointsReportHtml.pointsStatsHtml);
+        });
+
+        function openEmbeddedPdfPreview(docTitle, headerContent, tableContent, matrixContent) {
             currentPdfTitle = docTitle;
-            const logoImg = document.getElementById('school-logo');
-            const logoSrc = logoImg ? logoImg.src : '';
+            const logoSrc = document.getElementById('school-logo').src;
+            const schoolName = document.getElementById('school-title').innerText.trim();
 
             pdfRenderCanvas.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: space-between; border-b: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 12px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        ${logoSrc ? `<img src="${logoSrc}" style="width: 60px; height: 60px; object-fit: contain; border-radius: 50%;" />` : ''}
-                        <div>
-                            <h1 style="font-size: 20px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px; color: #0f172a;">BETHANIA ACADEMY</h1>
-                            <p style="font-size: 10px; margin: 2px 0 0 0; text-transform: uppercase; font-weight: bold; color: #64748b; letter-spacing: 0.5px;">EXECUTIVE CBA EVALUATION & PERFORMANCE PORTAL</p>
+                <div style="padding: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-b: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px;">
+                        <img src="${logoSrc}" style="height: 55px; width: 55px; object-fit: contain;" />
+                        <div style="text-align: center; flex: 1;">
+                            <h1 style="font-size: 18px; font-weight: 900; margin: 0; text-transform: uppercase; tracking-wide: 1px; color: #0f172a;">${schoolName}</h1>
+                            <p style="font-size: 10px; margin: 2px 0 0 0; text-transform: uppercase; color: #475569; font-weight: 600;">OFFICIAL EXECUTIVE ASSESSMENT LEDGER REPORT</p>
                         </div>
+                        <div style="width: 55px;"></div>
                     </div>
-                    <div style="text-align: right; font-size: 9px; font-weight: bold; color: #475569;">
-                        <div>DATE GENERATED: ${new Date().toLocaleDateString('en-GB')}</div>
-                        <div style="margin-top: 2px; text-transform: uppercase; color: #0284c7;">STATUS: VERIFIED OFFICIAL</div>
-                    </div>
-                </div>
 
-                ${headerContent}
+                    ${headerContent}
 
-                <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 16px; border: 1px solid #1e293b;">
-                    ${tableContent}
-                </table>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; border: 1px solid #1e293b; margin-bottom: 16px;">
+                        ${tableContent}
+                    </table>
 
-                ${statsContent}
-
-                <div style="margin-top: 25px; padding-top: 10px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center; font-size: 9px; font-weight: bold; color: #64748b;">
-                    <span>BETHANIA ACADEMY ASSESSMENT PORTAL ENGINE</span>
-                    <span>CONFIDENTIAL &bull; INTERNAL EXAM RECORDS</span>
+                    ${matrixContent}
                 </div>
             `;
 
             pdfModal.showModal();
         }
 
-        downloadMarksPdfBtn.addEventListener('click', () => {
-            if (!printableMarksReportHtml) return alert("Please compile a broad sheet first!");
-            const activeGrade = getGradeLabel(reportGrade.value);
-            openEmbeddedPdfPreview(
-                `${activeGrade}_Marks_Broadsheet`,
-                printableMarksReportHtml.marksHeaderHtml,
-                printableMarksReportHtml.marksBodyHtml,
-                printableMarksReportHtml.marksStatsHtml
-            );
-        });
-
-        downloadPointsPdfBtn.addEventListener('click', () => {
-            if (!printablePointsReportHtml) return alert("Points calculations unavailable for this tier!");
-            const activeGrade = getGradeLabel(reportGrade.value);
-            openEmbeddedPdfPreview(
-                `${activeGrade}_Points_Broadsheet`,
-                printablePointsReportHtml.pointsHeaderHtml,
-                printablePointsReportHtml.pointsBodyHtml,
-                printablePointsReportHtml.pointsStatsHtml
-            );
-        });
-
-        // DIRECT PDF COMPILATION DOWNLOAD HANDLER (html2canvas-pro + jsPDF)
         executePdfDownloadBtn.addEventListener('click', async () => {
             executePdfDownloadBtn.disabled = true;
-            executePdfDownloadBtn.innerText = "Generating PDF...";
+            executePdfDownloadBtn.innerText = "Exporting PDF...";
 
             try {
-                const canvas = await window.html2canvasPro(pdfRenderCanvas, {
+                const element = pdfRenderCanvas;
+                const canvas = await window.html2canvasPro(element, {
                     scale: 2,
                     useCORS: true,
-                    logging: false,
-                    backgroundColor: "#ffffff"
+                    logging: false
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 0.98);
                 const { jsPDF } = window.jspdf;
-                
-                // Landscape orientation for broadsheet tables
                 const pdf = new jsPDF('l', 'mm', 'a4');
+
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pdfWidth - 10;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-                const imgProps = pdf.getImageProperties(imgData);
-                const renderedHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, Math.min(renderedHeight, pdfHeight));
-                
-                const sanitizedFileName = (currentPdfTitle || "Assessment_Report").replace(/[^a-zA-Z0-9_-]/g, "_");
-                pdf.save(`${sanitizedFileName}.pdf`);
-
-                pdfModal.close();
+                pdf.addImage(imgData, 'JPEG', 5, 5, imgWidth, Math.min(imgHeight, pdfHeight - 10));
+                pdf.save(`${currentPdfTitle || 'Executive_Report'}.pdf`);
             } catch (err) {
-                alert("PDF Generation Error: " + err.message);
+                alert("PDF export failed: " + err.message);
             } finally {
                 executePdfDownloadBtn.disabled = false;
                 executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
