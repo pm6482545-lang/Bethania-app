@@ -891,47 +891,33 @@
 
         filterSubject.addEventListener('change', async () => {
             const subId = filterSubject.value;
-            const rawGradeVal = filterGrade.value;
-            const selectedGradeNum = parseInt(rawGradeVal);
+            const selectedGrade = parseInt(filterGrade.value);
 
-            if (!subId || isNaN(selectedGradeNum)) {
+            if (!subId || isNaN(selectedGrade)) {
                 marksEntryRows.innerHTML = '';
                 paperSelectContainer.classList.add('hidden');
                 return;
             }
 
-            // ROBUST COMPONENT CHECK
-            // Step 1: Query for exact subject_id
-            const { data: allPapers, error: papersError } = await _supabase
+            // STRICTOR COMPONENT CHECK: Filter strictly by selected subject_id AND selected grade
+            const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
                 .eq('subject_id', subId)
+                .eq('grade', selectedGrade)
                 .order('paper_number', { ascending: true });
 
             if (papersError) {
-                console.error("Error querying subject_papers:", papersError);
-                alert("⚠️ Error loading subject components from database: " + papersError.message);
-                currentSubjectPapers = [];
-            } else if (allPapers && allPapers.length > 0) {
-                // Step 2: Filter in JS to accommodate integer, string, or unassigned grade columns safely
-                const matchedPapers = allPapers.filter(p => {
-                    if (p.grade === null || p.grade === undefined || p.grade === "") return true; // Global component
-                    return String(p.grade) === String(selectedGradeNum) || String(p.grade) === String(rawGradeVal);
-                });
-                currentSubjectPapers = matchedPapers.length > 0 ? matchedPapers : allPapers;
-            } else {
-                currentSubjectPapers = [];
+                console.error("Error querying subject papers:", papersError);
             }
 
-            // If components exist for this subject
+            currentSubjectPapers = papers || [];
+
+            // If components exist for this EXACT subject and grade combination
             if (currentSubjectPapers.length > 0) {
                 paperSelectContainer.classList.remove('hidden');
                 filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
-                    currentSubjectPapers.map(p => {
-                        const name = p.paper_name || (`Paper ${p.paper_number || ''}`);
-                        const maxM = p.max_marks || 100;
-                        return `<option value="${p.id}" data-max="${maxM}">${name} (Max ${maxM})</option>`;
-                    }).join('');
+                    currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)} (Max ${p.max_marks || 100})</option>`).join('');
                 
                 marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl font-bold">📄 Subject has components! Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
                 saveMarksBtn.disabled = true;
