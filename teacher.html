@@ -899,11 +899,12 @@
                 return;
             }
 
+            // STRICTOR COMPONENT CHECK: Filter explicitly by subject_id AND selected grade
             const { data: papers, error: papersError } = await _supabase
                 .from('subject_papers')
                 .select('*')
                 .eq('subject_id', subId)
-                .or(`grade.eq.${selectedGrade},grade.is.null`)
+                .eq('grade', selectedGrade)
                 .order('paper_number', { ascending: true });
 
             if (papersError) {
@@ -912,6 +913,7 @@
 
             currentSubjectPapers = papers || [];
 
+            // If components exist for this EXACT subject and grade combination
             if (currentSubjectPapers.length > 0) {
                 paperSelectContainer.classList.remove('hidden');
                 filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
@@ -920,6 +922,7 @@
                 marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl font-bold">📄 Subject has components! Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
                 saveMarksBtn.disabled = true;
             } else {
+                // If NO components exist, keep dropdown hidden and load default single paper entry view
                 paperSelectContainer.classList.add('hidden');
                 filterPaper.innerHTML = '';
                 await renderMarksRoster(subId, null, 100);
