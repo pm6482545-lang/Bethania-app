@@ -809,8 +809,7 @@
         };
 
         btnCloseEdit.addEventListener('click', () => { editStudentBox.classList.add('hidden'); });
-
-        btnSaveStudentEdit.addEventListener('click', async () => {
+btnSaveStudentEdit.addEventListener('click', async () => {
             const id = editStudentId.value;
             const updatedName = editStudName.value.trim();
             const updatedGrade = parseInt(editStudGrade.value);
@@ -850,7 +849,7 @@
             btnSaveStudentEdit.disabled = false;
             btnSaveStudentEdit.innerText = "Save Updates";
         });
-
+       
         async function fetchSubjects() {
             const { data: subjectData, error: subjectError } = await _supabase.from('subjects').select('*').order('subject_name');
             if (subjectError) console.error("Error fetching subjects:", subjectError);
