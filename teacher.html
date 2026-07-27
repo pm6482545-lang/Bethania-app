@@ -869,7 +869,8 @@
 
             const filteredSubjects = subjectsCache.filter(s => {
                 const dbName = (s.subject_name || "").toLowerCase().trim();
-                return allowedSubjects.some(allowed => dbName === allowed || allowed.includes(dbName) || dbName.includes(allowed));
+                // EXACT MATCH FIX: Prevents overlapping substring matching between tiers
+                return allowedSubjects.includes(dbName);
             });
 
             // Hard Reset Paper Component & Save button
