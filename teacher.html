@@ -583,7 +583,6 @@
             tabRoster.className = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200";
             screenMarks.classList.remove('hidden'); 
             screenRoster.classList.add('hidden'); 
-            fetchSubjects(); 
         });
 
         // Toggle Single vs Batch Admissions
@@ -859,7 +858,6 @@
             } else {
                 subjectsCache = subjectData || [];
             }
-            filterGrade.innerHTML = '<option value="" disabled selected>Choose Grade...</option>' + ['-2','-1','1','2','3','4','5','6','7','8','9'].map(g => `<option value="${g}">${gradeMap[g]}</option>`).join('');
         }
 
         // --- SUBJECT & COMPONENT WORKFLOW ---
@@ -874,13 +872,12 @@
                 return allowedSubjects.some(allowed => dbName === allowed || allowed.includes(dbName) || dbName.includes(allowed));
             });
 
+            // Hard Reset Paper Component & Save button
             paperSelectContainer.classList.add('hidden');
             filterPaper.innerHTML = '<option value="" disabled selected>Select Paper...</option>';
             currentSubjectPapers = [];
+            saveMarksBtn.disabled = true;
 
-            // Reset subject dropdown state completely
-            filterSubject.value = "";
-            
             if (filteredSubjects.length === 0) {
                 filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No matches for this grade tier</option>';
                 filterSubject.disabled = true;
@@ -889,6 +886,10 @@
                     filteredSubjects.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
                 filterSubject.disabled = false; 
             }
+
+            // EXPLICIT reset of selectedIndex AFTER setting innerHTML
+            filterSubject.selectedIndex = 0;
+
             marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">Please select options above to load learner database entries.</td></tr>';
         });
 
@@ -921,6 +922,7 @@
                 paperSelectContainer.classList.remove('hidden');
                 filterPaper.innerHTML = '<option value="" disabled selected>Choose Component / Paper...</option>' + 
                     currentSubjectPapers.map(p => `<option value="${p.id}" data-max="${p.max_marks || 100}">${p.paper_name || ('Paper ' + p.paper_number)} (Max ${p.max_marks || 100})</option>`).join('');
+                filterPaper.selectedIndex = 0;
                 
                 marksEntryRows.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-amber-700 italic bg-amber-50 rounded-xl font-bold">📄 Subject has components! Please select Paper 1 or Paper 2 above to enter marks.</td></tr>';
                 saveMarksBtn.disabled = true;
