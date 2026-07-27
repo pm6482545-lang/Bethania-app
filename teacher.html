@@ -461,8 +461,9 @@
                 "Language Activities",
                 "Mathematical Activities",
                 "Environmental Activities",
-                "Creative Arts",
+                "Psychomotor Activities",
                 "Religious Education Activities",
+                "Indigenous Language Activities",
                 "Kiswahili Language Activities"
             ],
             upper_primary: [
@@ -471,9 +472,11 @@
                 "Mathematics",
                 "Science and Technology",
                 "Agriculture and Nutrition",
-                "Creative Arts and Sports",
+                "Creative Arts",
                 "Social Studies",
                 "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
             ],
             junior_school: [
                 "English",
@@ -485,6 +488,8 @@
                 "Agriculture and Nutrition",
                 "Creative Arts and Sports",
                 "Christian Religious Education (C.R.E)",
+                "Islamic Religious Education (I.R.E)",
+                "Hindu Religious Education (H.R.E)"
             ]
         };
 
@@ -866,13 +871,16 @@
 
             const filteredSubjects = subjectsCache.filter(s => {
                 const dbName = (s.subject_name || "").toLowerCase().trim();
-                return allowedSubjects.some(allowed => dbName.includes(allowed) || allowed.includes(dbName));
+                return allowedSubjects.some(allowed => dbName === allowed || allowed.includes(dbName) || dbName.includes(allowed));
             });
 
             paperSelectContainer.classList.add('hidden');
             filterPaper.innerHTML = '<option value="" disabled selected>Select Paper...</option>';
             currentSubjectPapers = [];
 
+            // Reset subject dropdown state completely
+            filterSubject.value = "";
+            
             if (filteredSubjects.length === 0) {
                 filterSubject.innerHTML = '<option value="" disabled selected>⚠️ No matches for this grade tier</option>';
                 filterSubject.disabled = true;
