@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Standard PDF Compilation & Rendering Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
         ::-webkit-scrollbar {
             width: 6px;
@@ -110,13 +110,13 @@
                 
                 <!-- Embedded PDF Preview Area -->
                 <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
-                    <div id="pdf-render-canvas" class="bg-white mx-auto p-8 shadow-md text-slate-900" style="width: 1000px; font-family: 'Times New Roman', Times, serif; min-height: 700px; position: relative;">
+                    <div id="pdf-render-canvas" class="bg-white mx-auto p-6 shadow-md text-slate-900 overflow-x-auto" style="min-height: 500px; font-family: 'Times New Roman', Times, serif;">
                         <!-- Dynamically populated PDF view -->
                     </div>
                 </div>
 
                 <div class="modal-action flex justify-between items-center mt-6">
-                    <p class="text-xs text-slate-500 italic">Verify structural formatting. Click Download to save directly as a valid .pdf file.</p>
+                    <p class="text-xs text-slate-500 italic">Verify structural formatting. Click Download to save directly as a multi-page PDF file.</p>
                     <div class="flex gap-3">
                         <form method="dialog">
                             <button class="btn btn-sm btn-ghost">Close</button>
@@ -631,8 +631,6 @@
     </div>
 
     <script>
-        window.html2canvasPro = window.html2canvasPro || window.html2canvas;
-
         // Supabase Configuration
         const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
@@ -729,7 +727,7 @@
         let currentActiveExamName = "";
         let globalPapersList = [];
         let localStudentsCache = [];
-        let currentPdfTitle = "";
+        let currentPdfDataPayload = null;
         let selectedTrackerStudentId = null;
         let selectedTrackerSubjectId = null;
 
@@ -1529,80 +1527,21 @@
                     name: sub.subject_name, avg: subjectMetricsStats[sub.subject_name].count > 0 ? subjectMetricsStats[sub.subject_name].total / subjectMetricsStats[sub.subject_name].count : 0
                 })).sort((a, b) => b.avg - a.avg);
 
-                let marksHeaderHtml = `
-                    <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
-                        <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${historicalContextLabel.toUpperCase()}</h2>
-                        <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">HISTORICAL CBA ARCHIVE REPORT BALANCES (${compilePoints ? 'POINTS' : 'MARKS'})</h3>
-                    </div>
-                `;
+                const reportPayload = buildPdfPayload({
+                    gradeLabel: getGradeLabel(grade),
+                    examContext: historicalContextLabel,
+                    reportType: compilePoints ? "POINTS MASTER LEDGER" : "MARKS MASTER LEDGER",
+                    filteredSubjects,
+                    studentsData: compiledHistoricalData,
+                    subjectStats: subjectMetricsStats,
+                    ratingKeys,
+                    matrixDistribution,
+                    subjectRankedList: arrangedSubjectList,
+                    totalRanked: targetStudents.length,
+                    isPoints: compilePoints
+                });
 
-                let marksBodyHtml = `
-                    <thead>
-                        <tr>
-                            <th style="width: 35px; text-align: center;">NO.</th>
-                            <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
-                            ${filteredSubjects.map(sub => `<th style="width: 50px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                            <th style="width: 55px; text-align: center;">TOTAL</th>
-                            <th style="width: 55px; text-align: center;">AVRG</th>
-                            <th style="width: 60px; text-align: center;">RATE</th>
-                            <th style="width: 50px; text-align: center;">POS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${compiledHistoricalData.map((cs, index) => `
-                            <tr>
-                                <td style="text-align: center;">${index + 1}</td>
-                                <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap;">${cs.name}</td>
-                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? (compilePoints ? cs.subjectScores[sub.subject_name].toFixed(0) : Math.round(cs.subjectScores[sub.subject_name]) + '%') : '-'}</td>`).join('')}
-                                <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
-                                <td style="font-weight: bold; color: ${compilePoints ? '#15803d' : '#0284c7'}; text-align: center;">${compilePoints ? cs.average.toFixed(1) : Math.round(cs.average) + '%'}</td>
-                                <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
-                                <td style="font-weight: 900; text-align: center;">${cs.position}</td>
-                            </tr>
-                        `).join('')}
-                        <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
-                            ${filteredSubjects.map(sub => `<td style="text-align: center;">${subjectMetricsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
-                            <td style="text-align: center;">${compiledHistoricalData.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
-                            <td colspan="3" style="text-align: center;"></td>
-                        </tr>
-                        <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
-                            ${filteredSubjects.map(sub => {
-                                const stats = subjectMetricsStats[sub.subject_name];
-                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(compilePoints ? 1 : 2) : '0.0'}</td>`;
-                            }).join('')}
-                            <td style="text-align: center;">${(compiledHistoricalData.reduce((acc, curr) => acc + curr.totals, 0) / targetStudents.length).toFixed(compilePoints ? 1 : 2)}</td>
-                            <td colspan="3" style="text-align: center;"></td>
-                        </tr>
-                        <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="2" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
-                            ${filteredSubjects.map(sub => {
-                                const rank = arrangedSubjectList.findIndex(x => x.name === sub.subject_name) + 1;
-                                return `<td style="text-align: center;">${rank}</td>`;
-                            }).join('')}
-                            <td colspan="4" style="text-align: center;"></td>
-                        </tr>
-                    </tbody>
-                `;
-
-                let marksStatsHtml = `
-                    <div style="font-weight: bold; font-size: 10px;">
-                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ARCHIVE ARCHITECTURE</div>
-                        ${ratingKeys.map(key => {
-                            const count = matrixDistribution[key] || 0;
-                            return `
-                                <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                    <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
-                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectMetricsStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                    <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students</div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-
-                openEmbeddedPdfPreview(`${historicalContextLabel} Archive Report`, marksHeaderHtml, marksBodyHtml, marksStatsHtml);
+                openEmbeddedPdfPreview(reportPayload);
             } catch (err) {
                 alert("Archival processing failure: " + err.message);
             } finally {
@@ -1698,8 +1637,8 @@
         });
 
         // PERFORMANCE METRICS REPORT COMPILER
-        let printableMarksReportHtml = null;
-        let printablePointsReportHtml = null;
+        let printableMarksPayload = null;
+        let printablePointsPayload = null;
 
         compileReportsBtn.addEventListener('click', async () => {
             const grade = parseInt(reportGrade.value);
@@ -1896,158 +1835,36 @@
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
 
-                let marksHeaderHtml = `
-                    <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
-                        <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${currentActiveExamName.toUpperCase()}</h2>
-                        <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - MARKS MASTER LEDGER</h3>
-                    </div>
-                `;
-
-                let marksBodyHtml = `
-                    <thead>
-                        <tr>
-                            <th style="width: 35px; text-align: center;">NO.</th>
-                            <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
-                            ${filteredSubjects.map(sub => `<th style="width: 50px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                            <th style="width: 55px; text-align: center;">TOTAL</th>
-                            <th style="width: 55px; text-align: center;">AVRG</th>
-                            <th style="width: 60px; text-align: center;">RATE</th>
-                            <th style="width: 50px; text-align: center;">POS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${calculatedMarksStudents.map((cs, index) => `
-                            <tr>
-                                <td style="text-align: center;">${index + 1}</td>
-                                <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
-                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? Math.round(cs.subjectScores[sub.subject_name]) + '%' : '-'}</td>`).join('')}
-                                <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
-                                <td style="font-weight: bold; color: #0284c7; text-align: center;">${Math.round(cs.average)}%</td>
-                                <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
-                                <td style="font-weight: 900; text-align: center;">${cs.position}</td>
-                            </tr>
-                        `).join('')}
-                        <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
-                            ${filteredSubjects.map(sub => `<td style="text-align: center;">${subjectMarksStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
-                            <td style="text-align: center;">${calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
-                            <td colspan="3" style="text-align: center;"></td>
-                        </tr>
-                        <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
-                            ${filteredSubjects.map(sub => {
-                                const stats = subjectMarksStats[sub.subject_name];
-                                return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(2) : '0.00'}</td>`;
-                            }).join('')}
-                            <td style="text-align: center;">${(calculatedMarksStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(2)}</td>
-                            <td colspan="3" style="text-align: center;"></td>
-                        </tr>
-                        <tr style="background-color: #f8fafc; font-weight: bold;">
-                            <td colspan="2" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
-                            ${filteredSubjects.map(sub => {
-                                const rank = subjectMarksList.findIndex(x => x.name === sub.subject_name) + 1;
-                                return `<td style="text-align: center;">${rank}</td>`;
-                            }).join('')}
-                            <td colspan="4" style="text-align: center;"></td>
-                        </tr>
-                    </tbody>
-                `;
-
-                let marksStatsHtml = `
-                    <div style="font-weight: bold; font-size: 10px;">
-                        <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
-                        ${ratingKeys.map(key => {
-                            const count = marksDistribution[key] || 0;
-                            const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
-                            return `
-                                <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                    <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
-                                    ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectMarksStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                    <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students (${pct}%)</div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-
-                printableMarksReportHtml = { header: marksHeaderHtml, body: marksBodyHtml, stats: marksStatsHtml, title: `${getGradeLabel(grade)} Marks Report` };
+                printableMarksPayload = buildPdfPayload({
+                    gradeLabel: getGradeLabel(grade),
+                    examContext: currentActiveExamName,
+                    reportType: "MARKS MASTER LEDGER",
+                    filteredSubjects,
+                    studentsData: calculatedMarksStudents,
+                    subjectStats: subjectMarksStats,
+                    ratingKeys,
+                    matrixDistribution: marksDistribution,
+                    subjectRankedList: subjectMarksList,
+                    totalRanked,
+                    isPoints: false
+                });
 
                 if (tier !== "lower_primary") {
-                    let pointsHeaderHtml = `
-                        <div style="text-align: center; margin-bottom: 12px; line-height: 1.4;">
-                            <h2 style="font-size: 13px; font-weight: bold; margin: 2px 0; text-transform: uppercase; color: #000;">${getGradeLabel(grade).toUpperCase()} &bull; ${currentActiveExamName.toUpperCase()}</h2>
-                            <h3 style="font-size: 10px; font-weight: bold; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - POINTS MASTER LEDGER</h3>
-                        </div>
-                    `;
-
-                    let pointsBodyHtml = `
-                        <thead>
-                            <tr>
-                                <th style="width: 35px; text-align: center;">NO.</th>
-                                <th style="width: 170px; text-align: left; white-space: nowrap;">LEARNER FULL NAME</th>
-                                ${filteredSubjects.map(sub => `<th style="width: 50px; text-align: center;">${getSubjectShorthand(sub.subject_name)}</th>`).join('')}
-                                <th style="width: 55px; text-align: center;">TOTAL</th>
-                                <th style="width: 55px; text-align: center;">AVRG</th>
-                                <th style="width: 60px; text-align: center;">RATE</th>
-                                <th style="width: 50px; text-align: center;">POS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${calculatedPointsStudents.map((cs, index) => `
-                                <tr>
-                                    <td style="text-align: center;">${index + 1}</td>
-                                    <td style="width: 170px; text-align: left; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cs.name}</td>
-                                    ${filteredSubjects.map(sub => `<td style="text-align: center;">${cs.subjectScores[sub.subject_name] !== null ? cs.subjectScores[sub.subject_name] : '-'}</td>`).join('')}
-                                    <td style="font-weight: bold; text-align: center;">${cs.totals.toFixed(0)}</td>
-                                    <td style="font-weight: bold; color: #15803d; text-align: center;">${cs.average.toFixed(1)}</td>
-                                    <td style="font-weight: bold; text-align: center;">${cs.rating}</td>
-                                    <td style="font-weight: 900; text-align: center;">${cs.position}</td>
-                                </tr>
-                            `).join('')}
-                            <tr style="background-color: #f8fafc; font-weight: bold;">
-                                <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL</td>
-                                ${filteredSubjects.map(sub => `<td style="text-align: center;">${subjectPointsStats[sub.subject_name].total.toFixed(0)}</td>`).join('')}
-                                <td style="text-align: center;">${calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0).toFixed(0)}</td>
-                                <td colspan="3" style="text-align: center;"></td>
-                            </tr>
-                            <tr style="background-color: #f8fafc; font-weight: bold;">
-                                <td colspan="2" style="text-align: left; padding-left: 10px;">AVERAGE</td>
-                                ${filteredSubjects.map(sub => {
-                                    const stats = subjectPointsStats[sub.subject_name];
-                                    return `<td style="text-align: center;">${stats.count > 0 ? (stats.total / stats.count).toFixed(1) : '0.0'}</td>`;
-                                }).join('')}
-                                <td style="text-align: center;">${(calculatedPointsStudents.reduce((acc, curr) => acc + curr.totals, 0) / totalRanked).toFixed(1)}</td>
-                                <td colspan="3" style="text-align: center;"></td>
-                            </tr>
-                            <tr style="background-color: #f8fafc; font-weight: bold;">
-                                <td colspan="2" style="text-align: left; padding-left: 10px;">SUBJECT POSITION</td>
-                                ${filteredSubjects.map(sub => {
-                                    const rank = subjectPointsList.findIndex(x => x.name === sub.subject_name) + 1;
-                                    return `<td style="text-align: center;">${rank}</td>`;
-                                }).join('')}
-                                <td colspan="4" style="text-align: center;"></td>
-                            </tr>
-                        </tbody>
-                    `;
-
-                    let pointsStatsHtml = `
-                        <div style="font-weight: bold; font-size: 10px;">
-                            <div style="margin-bottom: 8px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX &bull; ${currentActiveExamName.toUpperCase()}</div>
-                            ${["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(key => {
-                                const count = pointsDistribution[key] || 0;
-                                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
-                                return `
-                                    <div style="display: flex; border: 1px solid #1e293b; margin-bottom: -1px; height: 25px; align-items: center;">
-                                        <div style="width: 260px; padding-left: 8px; text-align: left;">${key} Matrix Level Distribution</div>
-                                        ${filteredSubjects.map(sub => `<div style="flex: 1; text-align: center;">${subjectPointsStats[sub.subject_name].dist[key]}</div>`).join('')}
-                                        <div style="width: 170px; padding-left: 8px; font-weight: bold; text-align: left;">${count} Students (${pct}%)</div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `;
-
-                    printablePointsReportHtml = { header: pointsHeaderHtml, body: pointsBodyHtml, stats: pointsStatsHtml, title: `${getGradeLabel(grade)} Points Report` };
+                    printablePointsPayload = buildPdfPayload({
+                        gradeLabel: getGradeLabel(grade),
+                        examContext: currentActiveExamName,
+                        reportType: "POINTS MASTER LEDGER",
+                        filteredSubjects,
+                        studentsData: calculatedPointsStudents,
+                        subjectStats: subjectPointsStats,
+                        ratingKeys: ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"],
+                        matrixDistribution: pointsDistribution,
+                        subjectRankedList: subjectPointsList,
+                        totalRanked,
+                        isPoints: true
+                    });
+                } else {
+                    printablePointsPayload = null;
                 }
 
                 downloadMarksPdfBtn.disabled = false;
@@ -2059,74 +1876,254 @@
             }
         });
 
-        // EMBEDDED PREVIEW AND EXPORT MODAL HANDLERS
-        downloadMarksPdfBtn.addEventListener('click', () => {
-            if (!printableMarksReportHtml) return alert("Compile broad sheet first!");
-            openEmbeddedPdfPreview(
-                printableMarksReportHtml.title,
-                printableMarksReportHtml.header,
-                printableMarksReportHtml.body,
-                printableMarksReportHtml.stats
-            );
-        });
+        // BUILD DATA STRUCTURE FOR ADVANCED VECTOR PDF GENERATOR
+        function buildPdfPayload(params) {
+            const { gradeLabel, examContext, reportType, filteredSubjects, studentsData, subjectStats, ratingKeys, matrixDistribution, subjectRankedList, totalRanked, isPoints } = params;
 
-        downloadPointsPdfBtn.addEventListener('click', () => {
-            if (!printablePointsReportHtml) return alert("Compile broad sheet first!");
-            openEmbeddedPdfPreview(
-                printablePointsReportHtml.title,
-                printablePointsReportHtml.header,
-                printablePointsReportHtml.body,
-                printablePointsReportHtml.stats
-            );
-        });
+            const tableHeaders = ["NO.", "LEARNER FULL NAME"];
+            filteredSubjects.forEach(sub => tableHeaders.push(getSubjectShorthand(sub.subject_name)));
+            tableHeaders.push("TOTAL", "AVRG", "RATE", "POS");
 
-        function openEmbeddedPdfPreview(title, headerHtml, bodyHtml, statsHtml) {
-            currentPdfTitle = title;
-            pdfRenderCanvas.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
-                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" style="height: 48px; width: 48px; border-radius: 50%; object-fit: cover;" alt="Logo" />
-                    <div style="text-align: center;">
-                        <h1 style="font-size: 16px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px; color: #0f172a;">BETHANIA ACADEMY</h1>
-                        <p style="font-size: 9px; margin: 2px 0 0 0; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; color: #64748b;">Competency-Based Assessment Portfolio Engine</p>
-                    </div>
-                    <div style="width: 48px;"></div>
+            const tableRows = studentsData.map((cs, index) => {
+                const row = [index + 1, cs.name];
+                filteredSubjects.forEach(sub => {
+                    const val = cs.subjectScores[sub.subject_name];
+                    row.push(val !== null ? (isPoints ? val.toFixed(0) : `${Math.round(val)}%`) : '-');
+                });
+                row.push(
+                    cs.totals.toFixed(0),
+                    isPoints ? cs.average.toFixed(1) : `${Math.round(cs.average)}%`,
+                    cs.rating,
+                    cs.position
+                );
+                return row;
+            });
+
+            // Summary Totals Row
+            const totalsRow = ["", "TOTAL"];
+            filteredSubjects.forEach(sub => {
+                totalsRow.push(subjectStats[sub.subject_name].total.toFixed(0));
+            });
+            const grandTotalSum = studentsData.reduce((acc, curr) => acc + curr.totals, 0);
+            totalsRow.push(grandTotalSum.toFixed(0), "", "", "");
+            tableRows.push(totalsRow);
+
+            // Summary Average Row
+            const averageRow = ["", "AVERAGE"];
+            filteredSubjects.forEach(sub => {
+                const stats = subjectStats[sub.subject_name];
+                averageRow.push(stats.count > 0 ? (stats.total / stats.count).toFixed(isPoints ? 1 : 2) : '0.00');
+            });
+            const overallAverage = totalRanked > 0 ? (grandTotalSum / totalRanked) : 0;
+            averageRow.push("", overallAverage.toFixed(isPoints ? 1 : 2), "", "");
+            tableRows.push(averageRow);
+
+            // Subject Ranks Row
+            const ranksRow = ["", "SUBJECT POSITION"];
+            filteredSubjects.forEach(sub => {
+                const rank = subjectRankedList.findIndex(x => x.name === sub.subject_name) + 1;
+                ranksRow.push(rank);
+            });
+            ranksRow.push("", "", "", "");
+            tableRows.push(ranksRow);
+
+            // Distribution Analysis Data Matrix
+            const matrixHeaders = ["Level Matrix Distribution"];
+            filteredSubjects.forEach(sub => matrixHeaders.push(getSubjectShorthand(sub.subject_name)));
+            matrixHeaders.push("Total Enrolled");
+
+            const matrixRows = ratingKeys.map(key => {
+                const count = matrixDistribution[key] || 0;
+                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
+                const r = [`${key} Level`];
+                filteredSubjects.forEach(sub => {
+                    r.push(subjectStats[sub.subject_name].dist[key] || 0);
+                });
+                r.push(`${count} (${pct}%)`);
+                return r;
+            });
+
+            return {
+                title: `${gradeLabel} - ${reportType}`,
+                gradeLabel,
+                examContext,
+                reportType,
+                headers: tableHeaders,
+                rows: tableRows,
+                matrixHeaders,
+                matrixRows
+            };
+        }
+
+        // EMBEDDED PREVIEW ENGINE
+        function openEmbeddedPdfPreview(payload) {
+            currentPdfDataPayload = payload;
+            
+            let canvasHtml = `
+                <div style="text-align: center; margin-bottom: 12px; line-height: 1.2;">
+                    <h2 style="font-size: 14px; font-weight: bold; margin: 0; text-transform: uppercase; color: #000;">${payload.gradeLabel.toUpperCase()} &bull; ${payload.examContext.toUpperCase()}</h2>
+                    <p style="font-size: 11px; font-weight: bold; margin: 3px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - ${payload.reportType}</p>
                 </div>
-                ${headerHtml}
-                <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 16px;" border="1" cellpadding="3">
-                    ${bodyHtml}
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px;">
+                    <thead>
+                        <tr style="background-color: #0f172a; color: white;">
+                            ${payload.headers.map(h => `<th style="border: 1px solid #cbd5e1; padding: 4px; text-align: center;">${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${payload.rows.map((row, idx) => {
+                            const isFooter = idx >= payload.rows.length - 3;
+                            const bg = isFooter ? 'background-color: #f1f5f9; font-weight: bold;' : '';
+                            return `<tr style="${bg}">
+                                ${row.map((cell, cidx) => `<td style="border: 1px solid #cbd5e1; padding: 4px; text-align: ${cidx === 1 ? 'left' : 'center'};">${cell}</td>`).join('')}
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
                 </table>
-                ${statsHtml}
+                <div style="font-size: 10px; font-weight: bold; margin-top: 10px;">
+                    <div style="margin-bottom: 5px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX</div>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #1e293b; color: white;">
+                                ${payload.matrixHeaders.map(h => `<th style="border: 1px solid #cbd5e1; padding: 3px; text-align: center;">${h}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${payload.matrixRows.map(row => `
+                                <tr>
+                                    ${row.map((cell, cidx) => `<td style="border: 1px solid #cbd5e1; padding: 3px; text-align: ${cidx === 0 ? 'left' : 'center'};">${cell}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
             `;
+
+            pdfRenderCanvas.innerHTML = canvasHtml;
             pdfModal.showModal();
         }
 
-        executePdfDownloadBtn.addEventListener('click', async () => {
-            executePdfDownloadBtn.disabled = true;
-            executePdfDownloadBtn.innerText = "Rendering PDF...";
+        downloadMarksPdfBtn.addEventListener('click', () => {
+            if (printableMarksPayload) openEmbeddedPdfPreview(printableMarksPayload);
+        });
 
-            try {
-                const element = pdfRenderCanvas;
-                const canvas = await window.html2canvasPro(element, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                });
+        downloadPointsPdfBtn.addEventListener('click', () => {
+            if (printablePointsPayload) openEmbeddedPdfPreview(printablePointsPayload);
+        });
 
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        // HIGH-PERFORMANCE MULTI-PAGE VECTOR PDF GENERATOR
+        executePdfDownloadBtn.addEventListener('click', () => {
+            if (!currentPdfDataPayload) return alert("No active PDF payload detected to process.");
 
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`${currentPdfTitle || 'Broadsheet_Report'}.pdf`);
-                pdfModal.close();
-            } catch (err) {
-                alert("PDF Generation Error: " + err.message);
-            } finally {
-                executePdfDownloadBtn.disabled = false;
-                executePdfDownloadBtn.innerText = "💾 Download as .pdf File";
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'pt',
+                format: 'a4'
+            });
+
+            const payload = currentPdfDataPayload;
+            const schoolTitle = document.getElementById('school-title').innerText.trim().toUpperCase() || "BETHANIA ACADEMY";
+
+            // Print Page Header Vector Elements
+            const drawHeader = (data) => {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(13);
+                doc.setTextColor(15, 23, 42);
+                doc.text(schoolTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(51, 65, 85);
+                const titleStr = `${payload.gradeLabel.toUpperCase()} • ${payload.examContext.toUpperCase()} - ${payload.reportType}`;
+                doc.text(titleStr, doc.internal.pageSize.getWidth() / 2, 42, { align: "center" });
+
+                doc.setDrawColor(203, 213, 225);
+                doc.setLineWidth(0.75);
+                doc.line(30, 48, doc.internal.pageSize.getWidth() - 30, 48);
+            };
+
+            // Master Scores Table
+            doc.autoTable({
+                head: [payload.headers],
+                body: payload.rows,
+                startY: 55,
+                margin: { left: 30, right: 30, top: 55, bottom: 30 },
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 8,
+                    cellPadding: 3,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineColor: [203, 213, 225],
+                    lineWidth: 0.5,
+                    textColor: [15, 23, 42]
+                },
+                headStyles: {
+                    fillColor: [15, 23, 42],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 8.5
+                },
+                columnStyles: {
+                    1: { halign: 'left', cellWidth: 'auto' }
+                },
+                didParseCell: function(data) {
+                    // Apply distinct styling to Totals/Averages summary rows
+                    const totalRows = payload.rows.length;
+                    if (data.section === 'body' && data.row.index >= totalRows - 3) {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.fillColor = [241, 245, 249];
+                    }
+                },
+                didDrawPage: drawHeader
+            });
+
+            // Append Analysis Level Matrix
+            let finalY = doc.lastAutoTable.finalY + 15;
+            
+            // Check if Matrix table needs to drop to new page to prevent vertical overflow clipping
+            if (finalY + 120 > doc.internal.pageSize.getHeight()) {
+                doc.addPage();
+                finalY = 55;
             }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
+            doc.setTextColor(15, 23, 42);
+            doc.text("PERFORMANCE ANALYSIS LEVEL MATRIX", 30, finalY);
+
+            doc.autoTable({
+                head: [payload.matrixHeaders],
+                body: payload.matrixRows,
+                startY: finalY + 6,
+                margin: { left: 30, right: 30, top: 55, bottom: 30 },
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 7.5,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineColor: [203, 213, 225],
+                    lineWidth: 0.5,
+                    textColor: [15, 23, 42]
+                },
+                headStyles: {
+                    fillColor: [30, 41, 59],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: { halign: 'left', cellWidth: 'auto' }
+                },
+                didDrawPage: drawHeader
+            });
+
+            // Save Document Standard Direct Download
+            const cleanFileName = `${payload.gradeLabel}_${payload.reportType.replace(/\s+/g, '_')}.pdf`;
+            doc.save(cleanFileName);
         });
     </script>
 </body>
