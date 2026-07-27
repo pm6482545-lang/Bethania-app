@@ -461,7 +461,7 @@
                 "Language Activities",
                 "Mathematical Activities",
                 "Environmental Activities",
-                "Psychomotor Activities",
+                "Creative Arts",
                 "Religious Education Activities",
                 "Indigenous Language Activities",
                 "Kiswahili Language Activities"
@@ -472,7 +472,7 @@
                 "Mathematics",
                 "Science and Technology",
                 "Agriculture and Nutrition",
-                "Creative Arts",
+                "Creative Arts and Sports",
                 "Social Studies",
                 "Christian Religious Education (C.R.E)",
                 "Islamic Religious Education (I.R.E)",
@@ -869,7 +869,6 @@
 
             const filteredSubjects = subjectsCache.filter(s => {
                 const dbName = (s.subject_name || "").toLowerCase().trim();
-                // EXACT MATCH FIX: Prevents overlapping substring matching between tiers
                 return allowedSubjects.includes(dbName);
             });
 
