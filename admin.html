@@ -1522,7 +1522,13 @@
                     return { name: s.name, subjectScores, totals: combinedTotals, average, rating: compositeRating };
                 }).sort((a, b) => b.totals - a.totals);
 
-                compiledHistoricalData.forEach((cs, i) => { cs.position = i + 1; });
+                let histRank = 1;
+                compiledHistoricalData.forEach((cs, i) => { 
+                    if (i > 0 && cs.totals < compiledHistoricalData[i - 1].totals) {
+                        histRank = i + 1;
+                    }
+                    cs.position = histRank; 
+                });
                 const arrangedSubjectList = filteredSubjects.map(sub => ({
                     name: sub.subject_name, avg: subjectMetricsStats[sub.subject_name].count > 0 ? subjectMetricsStats[sub.subject_name].total / subjectMetricsStats[sub.subject_name].count : 0
                 })).sort((a, b) => b.avg - a.avg);
@@ -1775,11 +1781,23 @@
                 });
 
                 calculatedMarksStudents.sort((a, b) => b.totals - a.totals);
-                calculatedMarksStudents.forEach((cs, i) => { cs.position = i + 1; });
+                let marksRank = 1;
+                calculatedMarksStudents.forEach((cs, i) => { 
+                    if (i > 0 && cs.totals < calculatedMarksStudents[i - 1].totals) {
+                        marksRank = i + 1;
+                    }
+                    cs.position = marksRank; 
+                });
 
                 if (tier !== "lower_primary") {
                     calculatedPointsStudents.sort((a, b) => b.totals - a.totals);
-                    calculatedPointsStudents.forEach((cs, i) => { cs.position = i + 1; });
+                    let pointsRank = 1;
+                    calculatedPointsStudents.forEach((cs, i) => { 
+                        if (i > 0 && cs.totals < calculatedPointsStudents[i - 1].totals) {
+                            pointsRank = i + 1;
+                        }
+                        cs.position = pointsRank; 
+                    });
                 }
 
                 let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th>`;
@@ -1918,11 +1936,20 @@
             averageRow.push("", overallAverage.toFixed(isPoints ? 1 : 2), "", "");
             tableRows.push(averageRow);
 
-            // Subject Ranks Row
+            // Subject Ranks Row with tie support
             const ranksRow = ["", "SUBJECT POSITION"];
+            const sortedSubList = [...subjectRankedList].sort((a, b) => b.avg - a.avg);
             filteredSubjects.forEach(sub => {
-                const rank = subjectRankedList.findIndex(x => x.name === sub.subject_name) + 1;
-                ranksRow.push(rank);
+                let subRank = 1;
+                for (let i = 0; i < sortedSubList.length; i++) {
+                    if (i > 0 && sortedSubList[i].avg < sortedSubList[i - 1].avg) {
+                        subRank = i + 1;
+                    }
+                    if (sortedSubList[i].name === sub.subject_name) {
+                        ranksRow.push(subRank);
+                        break;
+                    }
+                }
             });
             ranksRow.push("", "", "", "");
             tableRows.push(ranksRow);
