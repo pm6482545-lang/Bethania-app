@@ -169,6 +169,15 @@
 
         // Official CBC Subject Tiers
         const CBC_SUBJECT_TIERS = {
+            pre_primary: [
+                "Language Activities",
+                "Mathemathics Activities",
+                "Environmental Activities",
+                "Creative Arts",
+                "Religious Education Activities",
+                "Indigenous Language Activities",
+                "Reading"
+            ],
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
                 "Creative Arts", "Religious Education Activities", "Kiswahili Language Activities"
@@ -211,7 +220,8 @@
 
         function getGradeTier(grade) {
             const g = parseInt(grade);
-            if (g <= 3) return "lower_primary";
+            if (g <= 0) return "pre_primary";
+            if (g >= 1 && g <= 3) return "lower_primary";
             if (g >= 4 && g <= 6) return "upper_primary";
             return "junior_school";
         }
