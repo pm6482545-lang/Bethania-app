@@ -737,6 +737,15 @@
         };
 
         const CBC_SUBJECT_TIERS = {
+            pre_primary: [
+                "Language Activities",
+                "Mathemathics Activities",
+                "Environmental Activities",
+                "Creative Arts",
+                "Religious Education Activities",
+                "Indigenous Language Activities",
+                "Reading"
+            ],
             lower_primary: [
                 "Language Activities", "Mathematical Activities", "Environmental Activities",
                 "Creative Arts", "Religious Education Activities",
@@ -773,6 +782,7 @@
 
         function getGradeTier(grade) {
             const g = parseInt(grade);
+            if (g < 0) return "pre_primary";
             if (g <= 3) return "lower_primary";
             if (g >= 4 && g <= 6) return "upper_primary";
             if (g >= 7 && g <= 9) return "junior_school";
@@ -811,7 +821,7 @@
         }
 
         function getMarksRating(pct, tier = "junior_school") {
-            if (tier === "lower_primary" || tier === "upper_primary") {
+            if (tier === "pre_primary" || tier === "lower_primary" || tier === "upper_primary") {
                 if (pct >= 80) return "EE";
                 if (pct >= 50) return "ME";
                 if (pct >= 30) return "AE";
@@ -828,7 +838,7 @@
         }
 
         function getRatingKeysForTier(tier) {
-            if (tier === "lower_primary" || tier === "upper_primary") {
+            if (tier === "pre_primary" || tier === "lower_primary" || tier === "upper_primary") {
                 return ["EE", "ME", "AE", "BE"];
             }
             return ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
@@ -1663,7 +1673,7 @@
                 const tier = getGradeTier(grade);
                 const allowed = CBC_SUBJECT_TIERS[tier];
 
-                if (tier === "lower_primary") {
+                if (tier === "pre_primary" || tier === "lower_primary") {
                     downloadPointsPdfBtn.disabled = true;
                     downloadPointsPdfBtn.classList.add('opacity-40', 'cursor-not-allowed');
                 } else {
@@ -1742,7 +1752,7 @@
                     };
                 });
 
-                const calculatedPointsStudents = tier === "lower_primary" ? [] : targetStudents.map(s => {
+                const calculatedPointsStudents = (tier === "pre_primary" || tier === "lower_primary") ? [] : targetStudents.map(s => {
                     let totalPoints = 0;
                     let count = 0;
                     let subjectScores = {};
@@ -1789,7 +1799,7 @@
                     cs.position = marksRank; 
                 });
 
-                if (tier !== "lower_primary") {
+                if (tier !== "pre_primary" && tier !== "lower_primary") {
                     calculatedPointsStudents.sort((a, b) => b.totals - a.totals);
                     let pointsRank = 1;
                     calculatedPointsStudents.forEach((cs, i) => { 
@@ -1804,32 +1814,32 @@
                 filteredSubjects.forEach(sub => {
                     headerHtml += `<th class="py-3 px-4 text-center">${getSubjectShorthand(sub.subject_name)}</th>`;
                 });
-                if (tier === "lower_primary") {
+                if (tier === "pre_primary" || tier === "lower_primary") {
                     headerHtml += `<th class="py-3 px-4 text-center">Total Marks</th><th class="py-3 px-4 text-center">Mean Marks</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
                 } else {
                     headerHtml += `<th class="py-3 px-4 text-center">Total Points</th><th class="py-3 px-4 text-center">Mean Points</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
                 }
                 broadsheetHeader.innerHTML = headerHtml;
 
-                const liveRenderStudents = tier === "lower_primary" ? calculatedMarksStudents : calculatedPointsStudents;
+                const liveRenderStudents = (tier === "pre_primary" || tier === "lower_primary") ? calculatedMarksStudents : calculatedPointsStudents;
 
                 broadsheetRows.innerHTML = liveRenderStudents.map(cs => {
                     let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
                     
                     filteredSubjects.forEach(sub => {
                         const val = cs.subjectScores[sub.subject_name];
-                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? (tier === "lower_primary" ? `${Math.round(val)}%` : val) : '-'}</td>`;
+                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? ((tier === "pre_primary" || tier === "lower_primary") ? `${Math.round(val)}%` : val) : '-'}</td>`;
                     });
 
                     cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${cs.totals.toFixed(0)}</td>`;
-                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${tier === "lower_primary" ? `${Math.round(cs.average)}%` : cs.average.toFixed(1)}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${(tier === "pre_primary" || tier === "lower_primary") ? `${Math.round(cs.average)}%` : cs.average.toFixed(1)}</td>`;
                     cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] bg-slate-100">${cs.rating}</span></td>`;
                     cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
                     return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
                 }).join('');
 
                 const totalRanked = targetStudents.length;
-                if (tier === "lower_primary") {
+                if (tier === "pre_primary" || tier === "lower_primary") {
                     const classMeanMarks = Math.round(calculatedMarksStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked);
                     analyticalSummaryBadges.innerHTML = `
                         <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Cohort: ${totalRanked}</span>
@@ -1848,7 +1858,7 @@
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
                 
-                const subjectPointsList = tier === "lower_primary" ? [] : filteredSubjects.map(sub => {
+                const subjectPointsList = (tier === "pre_primary" || tier === "lower_primary") ? [] : filteredSubjects.map(sub => {
                     const stats = subjectPointsStats[sub.subject_name];
                     return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
                 }).sort((a, b) => b.avg - a.avg);
@@ -1867,7 +1877,7 @@
                     isPoints: false
                 });
 
-                if (tier !== "lower_primary") {
+                if (tier !== "pre_primary" && tier !== "lower_primary") {
                     printablePointsPayload = buildPdfPayload({
                         gradeLabel: getGradeLabel(grade),
                         examContext: currentActiveExamName,
