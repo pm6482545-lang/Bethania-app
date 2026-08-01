@@ -1,0 +1,2977 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bethania Academy - Executive Admin Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Standard PDF Compilation & Rendering Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
+
+    <!-- 🔐 ADMINISTRATIVE GATEWAY LOGIN WALL OVERLAY -->
+    <div id="admin-login-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 text-center space-y-5">
+            <div class="avatar bg-slate-100 p-2 rounded-full mx-auto ring-4 ring-amber-400/30">
+                <div class="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center">
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" />
+                </div>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight uppercase">Executive Login Required</h2>
+                <p class="text-xs text-slate-500 mt-1">Please authenticate with your Supabase Admin Credentials</p>
+            </div>
+            <div class="space-y-3 text-left">
+                <div class="form-control">
+                    <label class="label-text font-bold text-slate-600 text-[11px] uppercase tracking-wider mb-1">Admin Username</label>
+                    <input type="text" id="admin-login-user" placeholder="Enter username" class="input input-bordered input-sm w-full focus:outline-none" />
+                </div>
+                <div class="form-control">
+                    <label class="label-text font-bold text-slate-600 text-[11px] uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="admin-login-pass" placeholder="••••••••" class="input input-bordered input-sm w-full focus:outline-none" />
+                </div>
+            </div>
+            <button id="admin-login-btn" class="btn btn-primary btn-sm w-full text-white font-bold tracking-wide uppercase">
+                🚀 Authenticate Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTROL PORTAL PORTFOLIO HOUSING CONTENT (HIDDEN BY DEFAULT UNTIL VERIFIED) -->
+    <div id="portal-dashboard-wrapper" class="hidden">
+        <!-- EXECUTIVE HEADER -->
+        <header class="navbar bg-slate-900 text-white shadow-md px-4 sm:px-8 sticky top-0 z-50 border-b border-amber-500/20">
+            <div class="flex-1">
+                <div class="flex items-center gap-3.5">
+                    <div class="avatar bg-white p-1 rounded-full ring-2 ring-amber-400/50">
+                        <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" id="school-logo" alt="Bethania Academy Logo" onerror="this.src='https://placehold.co/100x100?text=BA'" />
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-base font-extrabold tracking-wider uppercase text-amber-400" id="school-title">Bethania Academy</h1>
+                        <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-widest uppercase">Executive CBA Management Portal</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-none gap-2">
+                <span class="text-[10px] sm:text-xs font-mono bg-slate-800/80 border border-slate-700/60 py-1.5 px-3 sm:px-4 rounded-lg flex items-center gap-2" id="db-status">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Syncing Server...
+                </span>
+            </div>
+        </header>
+
+        <!-- DYNAMIC MARKS ENTRY MODAL -->
+        <dialog id="admin-marks-modal" class="modal">
+            <div class="modal-box bg-white text-slate-800 max-w-sm rounded-xl border p-5">
+                <h3 class="font-bold text-sm uppercase tracking-tight mb-2">Adjust Student Score</h3>
+                <p id="admin-marks-modal-desc" class="text-xs text-slate-500 mb-4"></p>
+                <div class="form-control w-full mb-4">
+                    <label class="label-text font-bold text-xs text-slate-600 mb-1">Keyed Score Value</label>
+                    <input type="number" id="admin-modal-score-input" min="0" max="100" class="input input-bordered input-sm focus:outline-none" placeholder="e.g. 84" />
+                </div>
+                <div class="modal-action gap-2 mt-0">
+                    <button type="button" onclick="document.getElementById('admin-marks-modal').close()" class="btn btn-sm btn-ghost">Cancel</button>
+                    <button type="button" id="admin-modal-save-btn" class="btn btn-sm btn-primary text-white font-bold px-4">Save Entry</button>
+                </div>
+            </div>
+        </dialog>
+
+        <!-- IN-PAGE MODAL FOR INSTANT PDF PREVIEW AND ACTION -->
+        <dialog id="pdf-modal" class="modal">
+            <div class="modal-box w-11/12 max-w-5xl bg-white p-6 relative rounded-2xl shadow-2xl">
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-slate-500 hover:bg-slate-100">✕</button>
+                </form>
+                <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
+                    📄 Document Export Sandbox
+                </h3>
+                
+                <!-- Embedded PDF Preview Area -->
+                <div class="border border-slate-200 rounded-xl bg-slate-100 p-4 max-h-[60vh] overflow-y-auto shadow-inner">
+                    <div id="pdf-render-canvas" class="bg-white mx-auto p-6 shadow-md text-slate-900 overflow-x-auto" style="min-height: 500px; font-family: 'Times New Roman', Times, serif;">
+                        <!-- Dynamically populated PDF view -->
+                    </div>
+                </div>
+
+                <div class="modal-action flex justify-between items-center mt-6">
+                    <p class="text-xs text-slate-500 italic">Verify structural formatting. Click Download to save directly as a multi-page PDF file.</p>
+                    <div class="flex gap-3">
+                        <form method="dialog">
+                            <button class="btn btn-sm btn-ghost">Close</button>
+                        </form>
+                        <button id="execute-pdf-download-btn" class="btn btn-sm btn-primary text-white font-bold">
+                            💾 Download as .pdf File
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </dialog>
+
+        <main class="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6 mt-2">
+
+            <!-- 🧑‍🏫 REGISTER & ACCOMMODATE TEACHERS MANAGEMENT BOARD -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <span class="text-xl">🧑‍🏫</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Manage & Register Teachers</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50/80 p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                            <div class="space-y-3">
+                                <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Add New Staff Faculty Account</span>
+                                <div class="form-control">
+                                    <input type="text" id="new-teacher-name" placeholder="Teacher Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 italic">The engine will auto-assign a uniquely secure Username and Password instantly for logging into index.html.</p>
+                            </div>
+                            <button id="add-teacher-btn" class="btn btn-sm btn-secondary w-full text-white font-bold mt-4 shadow-sm">
+                                🔑 Generate Staff Access Credentials
+                            </button>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Staff Members Roster & Active Access Logins</label>
+                            <div id="manage-teacher-list" class="max-h-48 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100">
+                                <p class="text-xs text-slate-400 text-center py-8 italic">Loading current faculty roster...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 👥 MANAGE LEARNERS BOARD -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <span class="text-xl">👥</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Manage Learners</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5 block">Select Grade to Edit</label>
+                                <select id="manage-grade-select" class="select select-bordered select-sm w-full font-medium focus:outline-none focus:border-slate-400">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option>
+                                    <option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                            <div id="manage-learner-list" class="max-h-60 overflow-y-auto border border-slate-200/80 rounded-lg p-2.5 bg-slate-50 divide-y divide-slate-100">
+                                <p class="text-xs text-slate-400 text-center py-8 italic">Select a grade to load learners...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-50/80 p-5 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                            <div class="space-y-3">
+                                <span class="text-xs font-bold tracking-wide uppercase text-slate-500 block mb-1">Register New Learner</span>
+                                <div class="form-control">
+                                    <input type="text" id="new-name" placeholder="Full Name" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                                </div>
+                                <div class="form-control">
+                                    <input type="text" id="new-stream" placeholder="Stream (e.g. North)" class="input input-bordered input-sm w-full focus:outline-none focus:border-slate-400" />
+                                </div>
+                            </div>
+                            <button id="add-learner-btn" class="btn btn-sm btn-primary w-full text-white font-bold mt-4 shadow-sm">
+                                ✨ Save Learner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 🗓️ CREATE TIME TABLE BOARD -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6 space-y-5">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">🗓️</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Create Time Table</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 -mt-3">Build a master lesson block time table for Primary, Junior School, or both combined. Subjects load automatically per grade from the database — key in the teacher code and weekly lesson count for each, then generate and download a professional PDF.</p>
+
+                    <div class="divider my-0"></div>
+
+                    <!-- STEP 1: LEVEL & STRUCTURE -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block">Step 1 &bull; Level & Daily Structure</span>
+                        <p class="text-[10px] text-slate-400 italic">Both tiers run 2-lesson blocks separated by short break, long break & lunch. Primary is a 7-lesson day ending with 1 lesson after lunch (no games); Junior School is an 8-lesson day ending with a games block after lunch.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="form-control">
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">School Level</label>
+                            <select id="tt-level-select" class="select select-bordered select-sm w-full font-medium">
+                                <option value="" disabled selected>Choose Level...</option>
+                                <option value="primary">Primary Only (Grade 4 - 6)</option>
+                                <option value="junior">Junior School Only (Grade 7 - 9)</option>
+                                <option value="both">Primary & Junior School (Grade 4 - 9)</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Block Start Time</label>
+                            <input type="text" value="8:20 AM" disabled class="input input-bordered input-sm w-full bg-slate-100 font-bold text-center" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div id="tt-primary-structure-card" class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                            <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block">Primary Block &bull; 7 Lessons/Day</span>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Short Break (min)</label>
+                                    <input type="number" id="tt-p-short-dur" value="20" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Long Break (min)</label>
+                                    <input type="number" id="tt-p-long-dur" value="25" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Lunch (min)</label>
+                                    <input type="number" id="tt-p-lunch-dur" value="80" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                            </div>
+                            <p class="text-[9px] text-slate-400 leading-snug">2 lessons &rarr; short break &rarr; 2 lessons &rarr; long break &rarr; 2 lessons &rarr; lunch &rarr; 1 lesson (no games block)</p>
+                        </div>
+                        <div id="tt-junior-structure-card" class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                            <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block">Junior School Block &bull; 8 Lessons/Day</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Short Break (min)</label>
+                                    <input type="number" id="tt-j-short-dur" value="20" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Long Break (min)</label>
+                                    <input type="number" id="tt-j-long-dur" value="25" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Lunch (min)</label>
+                                    <input type="number" id="tt-j-lunch-dur" value="85" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                                <div>
+                                    <label class="label-text text-[10px] font-semibold text-slate-500">Games (min)</label>
+                                    <input type="number" id="tt-j-games-dur" value="80" min="0" class="input input-bordered input-xs w-full" />
+                                </div>
+                            </div>
+                            <p class="text-[9px] text-slate-400 leading-snug">2 lessons &rarr; short break &rarr; 2 lessons &rarr; long break &rarr; 2 lessons &rarr; lunch &rarr; 2 lessons &rarr; games</p>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: GRADES & STREAMS -->
+                    <div class="space-y-1 pt-1">
+                        <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block">Step 2 &bull; Grades & Streams</span>
+                        <p class="text-[10px] text-slate-400 italic">Toggle "Has Streams" only for grades that run parallel streams (e.g. 4 North, 4 South) — add as many as needed.</p>
+                    </div>
+                    <div id="tt-grade-stream-config" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <p class="text-xs text-slate-400 italic col-span-full text-center py-4">Choose a School Level above to configure grades...</p>
+                    </div>
+
+                    <button id="tt-build-grid-btn" class="btn btn-primary btn-sm w-full font-bold shadow-sm">📋 Load Subjects & Build Entry Grid</button>
+
+                    <!-- STEP 3: SUBJECT / TEACHER CODE ENTRY GRID -->
+                    <div id="tt-entry-grid-container" class="space-y-4 hidden"></div>
+
+                    <button id="tt-generate-btn" class="btn btn-secondary btn-sm w-full font-bold shadow-sm hidden">⚙️ Generate Time Table</button>
+
+                    <div id="tt-conflicts-box" class="hidden text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3"></div>
+
+                    <!-- STEP 4: PREVIEW -->
+                    <div id="tt-preview-container" class="space-y-5 hidden"></div>
+
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button id="tt-download-primary-btn" class="btn btn-sm btn-primary flex-1 text-white font-bold shadow-sm hidden">💾 Download Primary Block Time Table (PDF)</button>
+                        <button id="tt-download-junior-btn" class="btn btn-sm btn-primary flex-1 text-white font-bold shadow-sm hidden">💾 Download Junior School Block Time Table (PDF)</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NEW LEARNER SLIP & ACCESS FEE MANAGEMENT CONTROL PANEL -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="text-xl">💳</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Learner Access & Fee Management Control</h2>
+                    </div>
+                    <p class="text-xs text-slate-500">Select standard parameters below to flag leaners who are restricted from downloading examination slips on learner.html due to outstanding balances.</p>
+                    
+                    <div class="divider my-2"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Target Year</label>
+                            <select id="fee-ctrl-year" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Target Term</label>
+                            <select id="fee-ctrl-term" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2" selected>Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Exam Category</label>
+                            <select id="fee-ctrl-series" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid Term Exam">Mid Term Exam</option>
+                                <option value="End Term Exam">End Term Exam</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Grade Tier</label>
+                            <select id="fee-ctrl-grade" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="" disabled selected>Select Grade...</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="fee-lockout-matrix-container" class="hidden mt-4 space-y-3">
+                        <div class="flex justify-between items-center bg-slate-100 px-3 py-2 rounded-lg border">
+                            <span class="text-xs font-bold text-slate-700 uppercase">Enrolled Cohort Lockout Options</span>
+                            <button id="save-fee-restrictions-btn" class="btn btn-xs btn-primary text-white font-bold">🔒 Save Restrictions Matrix</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-white max-h-52 overflow-y-auto p-2 border rounded-lg" id="fee-lockout-checkbox-grid">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HISTORICAL PERFORMANCE LEDGER ACCESSIBILITY MODULE -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="text-xl">🗄️</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Historical Performance Ledger</h2>
+                    </div>
+                    <p class="text-xs text-slate-500">Access, query, and generate landscape reports from inactive historical database cycles by adjusting parameters below.</p>
+                    
+                    <div class="divider my-2"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Archive Year</label>
+                            <select id="hist-year" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Archive Term</label>
+                            <select id="hist-term" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2" selected>Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Archive Series</label>
+                            <select id="hist-series" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid Term Exam">Mid Term Exam</option>
+                                <option value="End Term Exam">End Term Exam</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] tracking-wider uppercase text-slate-500 mb-1">Grade Class</label>
+                            <select id="hist-grade" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="" disabled selected>Choose Grade...</option>
+                                <option value="-2">PP1</option>
+                                <option value="-1">PP2</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                        <button id="compile-historical-btn" class="btn btn-sm btn-secondary font-bold text-white shadow-sm w-full">🗂️ Compile Historical Ledger</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ASSESSMENT CYCLE DEPLOYER -->
+            <section class="card bg-white shadow-md border border-slate-200/60">
+                <div class="card-body p-5 sm:p-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="text-xl">🚀</span>
+                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Deploy New Assessment Cycle</h2>
+                    </div>
+                    <p class="text-xs text-slate-500">Initialize school-wide exam schedules. Once deployed, the teacher interface automatically adapts and targets only the specified evaluation model.</p>
+
+                    <div class="divider my-3"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+                        <div class="form-control bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4">
+                            <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase">1. Select Assessment Type</label>
+                            <div class="flex gap-3">
+                                <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
+                                    <input type="radio" name="exam_class" value="main" class="radio radio-xs sm:radio-sm radio-primary" checked id="radio-main" />
+                                    <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🏫 Main Exam</span>
+                                </label>
+                                <label class="label cursor-pointer gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm w-1/2 hover:bg-slate-50 hover:border-slate-300 transition duration-150">
+                                    <input type="radio" name="exam_class" value="contest" class="radio radio-xs sm:radio-sm radio-secondary" id="radio-contest" />
+                                    <span class="label-text text-xs sm:text-sm font-semibold text-slate-700">🧮 Contest</span>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="form-control">
+                                    <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Calendar Year</label>
+                                    <select id="cycle-year" class="select select-bordered select-sm w-full font-medium focus:outline-none">
+                                        <option value="2026">2026</option>
+                                        <option value="2027">2027</option>
+                                    </select>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1">Target Term</label>
+                                    <select id="cycle-term" class="select select-bordered select-sm w-full font-medium focus:outline-none">
+                                        <option value="Term 1">Term 1</option>
+                                        <option value="Term 2" selected>Term 2</option>
+                                        <option value="Term 3">Term 3</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 space-y-4 flex flex-col justify-between">
+                            <div id="main-exam-options" class="space-y-2">
+                                <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Main Exam Series</label>
+                                <select id="main-series" class="select select-bordered select-sm w-full font-medium focus:outline-none">
+                                    <option value="Opener Exam">Opener Exam</option>
+                                    <option value="Mid Term Exam" selected>Mid Term Exam</option>
+                                    <option value="End Term Exam">End Term Exam</option>
+                                </select>
+                            </div>
+
+                            <div id="contest-options" class="space-y-2 hidden">
+                                <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase block">2. Contest Identifier Series</label>
+                                <input type="text" id="contest-series" placeholder="e.g. Series A, Inter-School" class="input input-bordered input-sm w-full" value="Series A" />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label-text font-bold text-slate-600 text-xs tracking-wider uppercase mb-1">3. Closing Submission Deadline</label>
+                                <input type="datetime-local" id="cycle-deadline" class="input input-bordered input-sm w-full font-medium" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-actions justify-end mt-5">
+                        <button id="start-cycle-btn" class="btn btn-neutral btn-sm sm:btn-md hover:bg-slate-800 text-white font-bold px-6 sm:px-8 shadow-md w-full sm:w-auto transition-colors duration-150">
+                            ⚡ Publish Active Exam Context
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- THREE-COLUMN ACTION LAYOUT -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- CONTROL COLUMNS -->
+                <div class="space-y-6 lg:col-span-1">
+                    
+                    <!-- SUBMISSION MONITOR -->
+                    <div class="card bg-white shadow-md border border-slate-200/60">
+                        <div class="card-body p-4 sm:p-5 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">📡</span>
+                                <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Submission Tracker</h3>
+                            </div>
+                            <p class="text-xs text-slate-500">Analyze real-time data uploads. Subjects filter automatically according to the grade tier selected.</p>
+
+                            <div class="divider my-1"></div>
+
+                            <div class="form-control">
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Class Level</label>
+                                <select id="tracker-grade" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="" disabled selected>Choose Class...</option>
+                                    <option value="-2">PP1</option>
+                                    <option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                </select>
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label-text font-semibold text-xs text-slate-600 mb-1.5">Subject Component</label>
+                                <select id="tracker-subject" class="select select-bordered select-sm w-full font-medium" disabled>
+                                    <option value="" disabled selected>Choose class level first...</option>
+                                </select>
+                            </div>
+
+                            <button id="check-uploads-btn" class="btn btn-outline btn-sm w-full font-bold">🔍 Compute Submission Matrix</button>
+
+                            <div class="border border-slate-200/80 rounded-lg overflow-hidden bg-slate-50">
+                                <div class="bg-slate-100/80 p-2.5 border-b border-slate-200 flex justify-between items-center text-[10px] sm:text-[11px] font-bold text-slate-600 tracking-wider uppercase">
+                                    <span>Learner Name</span>
+                                    <span>Action Logs</span>
+                                </div>
+                                <div class="max-h-60 overflow-y-auto divide-y divide-slate-100" id="tracker-output">
+                                    <p class="text-center py-8 text-xs italic text-slate-400">Select parameters to audit...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LEARNING AREA MANAGER -->
+                    <div class="card bg-white shadow-md border border-slate-200/60">
+                        <div class="card-body p-4 sm:p-5 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">🛠️</span>
+                                <h3 class="card-title text-sm sm:text-base font-bold text-slate-900 uppercase">Manage Learning Areas</h3>
+                            </div>
+                            <p class="text-xs text-slate-500">Rapidly register missing learning areas, setup exam paper components for the active exam, or remove outdated selections from the portals.</p>
+
+                            <div class="divider my-1"></div>
+
+                            <div class="tabs tabs-boxed bg-slate-100/80 p-1 mb-2">
+                                <button class="tab tab-active tab-xs w-1/3 font-bold transition-all" id="tab-add-sub">Add Content</button>
+                                <button class="tab tab-xs w-1/3 font-bold transition-all" id="tab-comp-sub">Exam Components</button>
+                                <button class="tab tab-xs w-1/3 font-bold transition-all" id="tab-del-sub">Remove Content</button>
+                            </div>
+
+                            <div id="sub-panel-add" class="space-y-3">
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">1. Subject / Learning Area Title</label>
+                                    <input type="text" id="cfg-sub-name" placeholder="e.g., Creative Arts and Sports" class="input input-bordered input-sm w-full" />
+                                </div>
+
+                                <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                                    <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 block mb-1">Optional Component Paper Setup</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="cfg-paper-name" placeholder="Paper name (e.g. Paper 1)" class="input input-bordered input-xs w-full" />
+                                        <input type="number" id="cfg-paper-max" placeholder="Max Score (e.g. 50)" class="input input-bordered input-xs w-full" />
+                                    </div>
+                                </div>
+                                <button id="cfg-btn-save" class="btn btn-primary btn-sm w-full text-white font-bold shadow-sm">✨ Save Subjects & Components</button>
+                            </div>
+
+                            <!-- ACTIVE EXAM SUBJECT COMPONENTS SETUP PANEL -->
+                            <div id="sub-panel-comp" class="space-y-3 hidden">
+                                <div class="bg-amber-50 border border-amber-200 text-amber-800 p-2 rounded-lg text-[10px]">
+                                    <span class="font-bold">Active Exam Paper Components:</span> Set up Paper 1 & Paper 2 components specifically for the current active exam session. Results will aggregate into a single compiled score.
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Target Grade</label>
+                                    <select id="comp-grade-select" class="select select-bordered select-sm w-full font-medium">
+                                        <option value="" disabled selected>Select Grade...</option>
+                                        <option value="-2">PP1</option>
+                                        <option value="-1">PP2</option>
+                                        <option value="1">Grade 1</option>
+                                        <option value="2">Grade 2</option>
+                                        <option value="3">Grade 3</option>
+                                        <option value="4">Grade 4</option>
+                                        <option value="5">Grade 5</option>
+                                        <option value="6">Grade 6</option>
+                                        <option value="7">Grade 7</option>
+                                        <option value="8">Grade 8</option>
+                                        <option value="9">Grade 9</option>
+                                    </select>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Select Subject</label>
+                                    <select id="comp-subject-select" class="select select-bordered select-sm w-full font-medium">
+                                        <option value="" disabled selected>Choose Subject...</option>
+                                    </select>
+                                </div>
+                                <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-2">
+                                    <span class="text-[10px] font-bold tracking-wider uppercase text-slate-600 block">Marks Allocation</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="label-text text-[10px] font-semibold text-slate-500">Paper 1 Max Score</label>
+                                            <input type="number" id="comp-paper1-max" value="100" class="input input-bordered input-xs w-full" />
+                                        </div>
+                                        <div>
+                                            <label class="label-text text-[10px] font-semibold text-slate-500">Paper 2 Max Score</label>
+                                            <input type="number" id="comp-paper2-max" value="100" class="input input-bordered input-xs w-full" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="cfg-btn-save-comp" class="btn btn-warning btn-sm w-full text-slate-900 font-bold shadow-sm">📑 Add Active Exam Components</button>
+                            </div>
+
+                            <div id="sub-panel-del" class="space-y-3 hidden">
+                                <div class="form-control">
+                                    <label class="label-text text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Target Subject to Delete</label>
+                                    <select id="cfg-del-sub-dropdown" class="select select-bordered select-sm w-full font-medium">
+                                        <option value="" disabled selected>Select from database...</option>
+                                    </select>
+                                </div>
+                                <p class="text-[10px] text-red-500 font-semibold italic bg-red-50 p-2 rounded-lg border border-red-100">Warning: Removing a subject automatically strips out all linked exam component papers.</p>
+                                <button id="cfg-btn-delete" class="btn btn-error btn-sm w-full text-white font-bold shadow-sm">🗑️ Delete Selected Subject</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BROAD SHEET LEDGER GENERATOR -->
+                <div class="card bg-white shadow-md border border-slate-200/60 lg:col-span-2">
+                    <div class="card-body p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">📊</span>
+                                <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase">Performance Analytical Engine</h2>
+                            </div>
+                            <span class="badge badge-warning text-[9px] sm:text-[10px] font-bold uppercase py-2.5 px-3 tracking-wide" id="detected-active-label">No Deployed Exam Series Found</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Compile curriculum reports directly from the database matching current CBA assessment protocols.</p>
+
+                        <div class="divider my-2"></div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200/60 items-end">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-slate-600 text-[11px] tracking-wider uppercase mb-1.5">Class Cohort</label>
+                                <select id="report-grade" class="select select-bordered select-sm w-full font-medium">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option>
+                                    <option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                </select>
+                            </div>
+
+                            <button id="compile-reports-btn" class="btn btn-neutral btn-sm font-bold text-white shadow-md w-full transition-all">
+                                📊 Compile Broad Sheet
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200/80 mt-5">
+                            <table class="table table-xs table-zebra w-full font-medium text-slate-700">
+                                <thead class="bg-slate-900 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" id="broadsheet-header">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left">Learner Name</th>
+                                        <th class="py-3 px-4 text-left">Loading Column Configuration...</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="broadsheet-rows" class="font-mono text-xs">
+                                    <tr>
+                                        <td colspan="2" class="text-center py-12 text-slate-400 italic">Select constraints and click "Compile Broad Sheet" above...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-5">
+                            <div id="analytical-summary-badges" class="flex flex-wrap gap-2 justify-center sm:justify-start"></div>
+                            <div class="flex gap-2.5 w-full sm:w-auto">
+                                <button id="download-marks-pdf-btn" class="btn btn-info text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                    📄 Export Marks (PDF)
+                                </button>
+                                <button id="download-points-pdf-btn" class="btn btn-success text-white btn-sm font-bold flex-1 sm:flex-none shadow-sm" disabled>
+                                    📄 Export Points (PDF)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Gateway Verification Elements
+        const adminLoginOverlay = document.getElementById('admin-login-overlay');
+        const portalDashboardWrapper = document.getElementById('portal-dashboard-wrapper');
+        const adminLoginUser = document.getElementById('admin-login-user');
+        const adminLoginPass = document.getElementById('admin-login-pass');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+
+        // Staff Faculty Elements
+        const newTeacherName = document.getElementById('new-teacher-name');
+        const addTeacherBtn = document.getElementById('add-teacher-btn');
+        const manageTeacherList = document.getElementById('manage-teacher-list');
+
+        // State Elements
+        const dbStatus = document.getElementById('db-status');
+        const detectedActiveLabel = document.getElementById('detected-active-label');
+        const radioMain = document.getElementById('radio-main');
+        const radioContest = document.getElementById('radio-contest');
+        const mainExamOptions = document.getElementById('main-exam-options');
+        const contestOptions = document.getElementById('contest-options');
+        const startCycleBtn = document.getElementById('start-cycle-btn');
+
+        const cycleYear = document.getElementById('cycle-year');
+        const cycleTerm = document.getElementById('cycle-term');
+        const mainSeries = document.getElementById('main-series');
+        const contestSeries = document.getElementById('contest-series');
+        const cycleDeadline = document.getElementById('cycle-deadline');
+
+        // Select & Management Options
+        const manageGradeSelect = document.getElementById('manage-grade-select');
+        const manageList = document.getElementById('manage-learner-list');
+        const newNameInput = document.getElementById('new-name');
+        const newStreamInput = document.getElementById('new-stream');
+        const addLearnerBtn = document.getElementById('add-learner-btn');
+
+        const trackerGrade = document.getElementById('tracker-grade');
+        const trackerSubject = document.getElementById('tracker-subject');
+        const checkUploadsBtn = document.getElementById('check-uploads-btn');
+        const trackerOutput = document.getElementById('tracker-output');
+
+        const reportGrade = document.getElementById('report-grade');
+        const compileReportsBtn = document.getElementById('compile-reports-btn');
+        const broadsheetHeader = document.getElementById('broadsheet-header');
+        const broadsheetRows = document.getElementById('broadsheet-rows');
+        const downloadMarksPdfBtn = document.getElementById('download-marks-pdf-btn');
+        const downloadPointsPdfBtn = document.getElementById('download-points-pdf-btn');
+        const analyticalSummaryBadges = document.getElementById('analytical-summary-badges');
+
+        // Config elements
+        const tabAddSub = document.getElementById('tab-add-sub');
+        const tabCompSub = document.getElementById('tab-comp-sub');
+        const tabDelSub = document.getElementById('tab-del-sub');
+        const subPanelAdd = document.getElementById('sub-panel-add');
+        const subPanelComp = document.getElementById('sub-panel-comp');
+        const subPanelDel = document.getElementById('sub-panel-del');
+        const cfgSubName = document.getElementById('cfg-sub-name');
+        const cfgPaperName = document.getElementById('cfg-paper-name');
+        const cfgPaperMax = document.getElementById('cfg-paper-max');
+        const cfgBtnSave = document.getElementById('cfg-btn-save');
+        const cfgDelSubDropdown = document.getElementById('cfg-del-sub-dropdown');
+        const cfgBtnDelete = document.getElementById('cfg-btn-delete');
+
+        // Component elements
+        const compGradeSelect = document.getElementById('comp-grade-select');
+        const compSubjectSelect = document.getElementById('comp-subject-select');
+        const compPaper1Max = document.getElementById('comp-paper1-max');
+        const compPaper2Max = document.getElementById('comp-paper2-max');
+        const cfgBtnSaveComp = document.getElementById('cfg-btn-save-comp');
+
+        // Modal Elements
+        const pdfModal = document.getElementById('pdf-modal');
+        const pdfRenderCanvas = document.getElementById('pdf-render-canvas');
+        const executePdfDownloadBtn = document.getElementById('execute-pdf-download-btn');
+
+        // New Elements Added
+        const feeCtrlYear = document.getElementById('fee-ctrl-year');
+        const feeCtrlTerm = document.getElementById('fee-ctrl-term');
+        const feeCtrlSeries = document.getElementById('fee-ctrl-series');
+        const feeCtrlGrade = document.getElementById('fee-ctrl-grade');
+        const feeLockoutMatrixContainer = document.getElementById('fee-lockout-matrix-container');
+        const feeLockoutCheckboxGrid = document.getElementById('fee-lockout-checkbox-grid');
+        const saveFeeRestrictionsBtn = document.getElementById('save-fee-restrictions-btn');
+
+        const histYear = document.getElementById('hist-year');
+        const histTerm = document.getElementById('hist-term');
+        const histSeries = document.getElementById('hist-series');
+        const histGrade = document.getElementById('hist-grade');
+        const compileHistoricalBtn = document.getElementById('compile-historical-btn');
+
+        let currentActiveExamName = "";
+        let globalPapersList = [];
+        let localStudentsCache = [];
+        let currentPdfDataPayload = null;
+        let selectedTrackerStudentId = null;
+        let selectedTrackerSubjectId = null;
+
+        let dbSchemaCache = {
+            examColumn: 'test_name',
+            scoreColumn: 'raw_score'
+        };
+
+        const CBC_SUBJECT_TIERS = {
+            pre_primary: [
+                "Language Activities",
+                "Mathematical Activities",
+                "Environmental Activities",
+                "Creative Arts",
+                "Religious Education Activities",
+                "Indigenous Language Activities",
+                "Reading"
+            ],
+            lower_primary: [
+                "Language Activities", "Mathematical Activities", "Environmental Activities",
+                "Creative Arts", "Religious Education Activities",
+                "Kiswahili Language Activities"
+            ],
+            upper_primary: [
+                "English", "Kiswahili", "Mathematics", "Science and Technology",
+                "Agriculture and Nutrition", "Creative Arts and Sports", "Social Studies", 
+                "Christian Religious Education (C.R.E)", "PPI",
+            ],
+            junior_school: [
+                "English", "Kiswahili", "Mathematics", "Integrated Science",
+                "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
+                "Creative Arts and Sports", "Christian Religious Education (C.R.E)", 
+            
+            ]
+        };
+
+        const SUBJECT_SHORTHANDS = {
+            "Language Activities": "LAN", "Mathematical Activities": "MAT", "Environmental Activities": "ENV",
+            "Creative Arts": "ART", "Religious Education Activities": "REA", "Reading": "RED",
+            "Indigenous Language Activities": "IND", "Kiswahili Language Activities": "KIS",
+            "English": "ENG", "Kiswahili": "KIS", "Mathematics": "MAT", "Science and Technology": "SCI",
+            "Agriculture and Nutrition": "AGR", "Creative Arts and Sports": "CAS", "Social Studies": "SST",
+            "Christian Religious Education (C.R.E)": "CRE", "Islamic Religious Education (I.R.E)": "IRE",
+            "Hindu Religious Education (H.R.E)": "HRE", "Integrated Science": "INT",
+            "Pre-Technical Studies": "PRE", "Creative Arts and Sports": "CAS", "PPI": "PPI"
+        };
+
+        function getSubjectShorthand(fullName) {
+            const trimmed = fullName.trim();
+            return SUBJECT_SHORTHANDS[trimmed] || trimmed.substring(0, 3).toUpperCase();
+        }
+
+        function getGradeTier(grade) {
+            const g = parseInt(grade);
+            if (g < 0) return "pre_primary";
+            if (g <= 3) return "lower_primary";
+            if (g >= 4 && g <= 6) return "upper_primary";
+            if (g >= 7 && g <= 9) return "junior_school";
+            return "upper_primary";
+        }
+
+        function getGradeLabel(grade) {
+            const val = parseInt(grade);
+            if (val === -2) return "PP1";
+            if (val === -1) return "PP2";
+            return `Grade ${val}`;
+        }
+
+        function convertScoreToPoints(score, max) {
+            const pct = (score / max) * 100;
+            if (pct >= 90) return 8;
+            if (pct >= 75) return 7;
+            if (pct >= 58) return 6;
+            if (pct >= 40) return 5;
+            if (pct >= 30) return 4;
+            if (pct >= 20) return 3;
+            if (pct >= 10) return 2;
+            return 1;
+        }
+
+        function getPointsRating(avg) {
+            if (avg >= 7.5 && avg <= 8.0) return "EE1";
+            if (avg >= 6.5 && avg < 7.5) return "EE2";
+            if (avg >= 5.5 && avg < 6.5) return "ME1";
+            if (avg >= 4.5 && avg < 5.5) return "ME2";
+            if (avg >= 3.5 && avg < 4.5) return "AE1";
+            if (avg >= 2.5 && avg < 3.5) return "AE2";
+            if (avg >= 1.5 && avg < 2.5) return "BE1";
+            if (avg >= 1.0 && avg < 1.5) return "BE2";
+            return "BE2";
+        }
+
+        function getMarksRating(pct, tier = "junior_school") {
+            if (tier === "pre_primary" || tier === "lower_primary" || tier === "upper_primary") {
+                if (pct >= 80) return "EE";
+                if (pct >= 50) return "ME";
+                if (pct >= 30) return "AE";
+                return "BE";
+            }
+            if (pct >= 90) return "EE1";
+            if (pct >= 75) return "EE2";
+            if (pct >= 58) return "ME1";
+            if (pct >= 40) return "ME2";
+            if (pct >= 30) return "AE1";
+            if (pct >= 20) return "AE2";
+            if (pct >= 10) return "BE1";
+            return "BE2";
+        }
+
+        function getRatingKeysForTier(tier) {
+            if (tier === "pre_primary" || tier === "lower_primary" || tier === "upper_primary") {
+                return ["EE", "ME", "AE", "BE"];
+            }
+            return ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
+        }
+
+        // ADMINISTRATIVE USER AUTHENTICATION CONTROLLER TRIGGER
+        adminLoginBtn.addEventListener('click', async () => {
+            const user = adminLoginUser.value.trim();
+            const pass = adminLoginPass.value.trim();
+            if (!user || !pass) return alert("Please fill out all credentials!");
+
+            adminLoginBtn.disabled = true;
+            adminLoginBtn.innerText = "Authenticating...";
+
+            try {
+                const { data, error } = await _supabase.from('users')
+                    .select('*')
+                    .eq('username', user)
+                    .eq('password', pass)
+                    .limit(1);
+
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    alert("Access Denied: Invalid Administrative Credentials.");
+                    adminLoginBtn.disabled = false;
+                    adminLoginBtn.innerText = "🚀 Authenticate Dashboard";
+                    return;
+                }
+
+                adminLoginOverlay.classList.add('hidden');
+                portalDashboardWrapper.classList.remove('hidden');
+                initAdminEngine();
+            } catch (err) {
+                alert("Database Authentication Failure: " + err.message);
+                adminLoginBtn.disabled = false;
+                adminLoginBtn.innerText = "🚀 Authenticate Dashboard";
+            }
+        });
+
+        async function detectMarksSchema() {
+            try {
+                const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
+                if (data && data.length > 0) {
+                    const row = data[0];
+                    if ('exam_name' in row) dbSchemaCache.examColumn = 'exam_name';
+                    else if ('exam_session' in row) dbSchemaCache.examColumn = 'exam_session';
+                    else dbSchemaCache.examColumn = 'test_name';
+
+                    if ('score' in row) dbSchemaCache.scoreColumn = 'score';
+                    else if ('marks' in row) dbSchemaCache.scoreColumn = 'marks';
+                    else dbSchemaCache.scoreColumn = 'raw_score';
+                }
+            } catch (err) {
+                console.warn("Schema sniffing warning.", err);
+            }
+        }
+
+        async function initAdminEngine() {
+            try {
+                await detectMarksSchema();
+                await fetchTeachersRoster();
+
+                const { data: students, error: studentErr } = await _supabase.from('students').select('*');
+                if (studentErr) throw studentErr;
+                localStudentsCache = students || [];
+
+                const { data: papers, error: papersErr } = await _supabase.from('subject_papers').select('*');
+                if (papersErr) throw papersErr;
+                globalPapersList = papers || [];
+
+                const { data: sessions, error: sessionErr } = await _supabase.from('exam_sessions')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                if (sessionErr) throw sessionErr;
+
+                if (sessions && sessions.length > 0) {
+                    currentActiveExamName = sessions[0].exam_name;
+                    dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
+                    detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
+                }
+            } catch (err) {
+                console.error("Initialization failed:", err);
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-error"></span> Connection Offline`;
+            }
+        }
+
+        // TEACHER ROSTER CREDENTIAL MANAGEMENT UTILITIES
+        async function fetchTeachersRoster() {
+            manageTeacherList.innerHTML = '<p class="text-xs text-center py-4">Loading roster...</p>';
+            try {
+                const { data, error } = await _supabase.from('teachers').select('*').order('name');
+                if (error) throw error;
+                
+                manageTeacherList.innerHTML = (data || []).map(t => `
+                    <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-900">${t.name}</span>
+                            <div class="flex items-center gap-3 text-[10px] text-slate-500 font-mono mt-0.5">
+                                <span>User: <strong class="text-blue-600">${t.username || 'N/A'}</strong></span>
+                                <span>Pass: <strong class="text-emerald-600">${t.password || 'N/A'}</strong></span>
+                            </div>
+                        </div>
+                        <button onclick="removeTeacher('${t.id}')" class="btn btn-error btn-xs text-white px-2.5">Remove</button>
+                    </div>
+                `).join('');
+                if (!data || data.length === 0) {
+                    manageTeacherList.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No staff profiles registered yet.</p>';
+                }
+            } catch (err) {
+                manageTeacherList.innerHTML = `<p class="text-xs text-error text-center py-6">Roster Load Error: ${err.message}</p>`;
+            }
+        }
+
+        addTeacherBtn.addEventListener('click', async () => {
+            const name = newTeacherName.value.trim();
+            if (!name) return alert("Staff member name cannot be empty!");
+
+            addTeacherBtn.disabled = true;
+            addTeacherBtn.innerText = "Generating Profiles...";
+
+            const generatedUser = "tr_" + Math.floor(1000 + Math.random() * 9000);
+            const generatedPass = Math.floor(100000 + Math.random() * 900000).toString();
+
+            try {
+                const { error } = await _supabase.from('teachers').insert([{
+                    name,
+                    username: generatedUser,
+                    password: generatedPass
+                }]);
+                if (error) throw error;
+
+                alert(`Account Configured Successfully!\nStaff Username: ${generatedUser}\nPassword: ${generatedPass}`);
+                newTeacherName.value = "";
+                await fetchTeachersRoster();
+            } catch (err) {
+                alert("Profile configuration error: " + err.message);
+            } finally {
+                addTeacherBtn.disabled = false;
+                addTeacherBtn.innerText = "🔑 Generate Staff Access Credentials";
+            }
+        });
+
+        async function removeTeacher(id) {
+            if (!confirm("Are you sure? This will instantly terminate login credentials for this teacher.")) return;
+            try {
+                const { error } = await _supabase.from('teachers').delete().eq('id', id);
+                if (error) throw error;
+                alert("Staff account detached.");
+                await fetchTeachersRoster();
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+        window.removeTeacher = removeTeacher;
+
+        function generateStudentID() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
+            const l2 = letters.charAt(Math.floor(Math.random() * letters.length));
+            const nums = Math.floor(1000 + Math.random() * 9000); 
+            return `${l1}${l2}${nums}`;
+        }
+
+        async function fetchManageList() {
+            const grade = parseInt(manageGradeSelect.value);
+            if (!grade) return;
+            manageList.innerHTML = '<p class="text-xs text-center py-4">Loading learners...</p>';
+            try {
+                const { data, error } = await _supabase.from('students').select('*').eq('grade', grade);
+                if (error) throw error;
+                
+                manageList.innerHTML = (data || []).map(s => `
+                    <div class="flex justify-between items-center text-xs p-2.5 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-slate-800">${s.name} <span class="text-slate-400 font-mono italic">(${s.stream})</span></span>
+                            <span class="text-[10px] text-slate-400 font-mono mt-0.5">ID: ${s.login_id || 'NO ID'}</span>
+                        </div>
+                        <button onclick="removeLearner('${s.id}')" class="btn btn-error btn-xs text-white px-2.5">Delete</button>
+                    </div>
+                `).join('');
+                if (!data || data.length === 0) {
+                    manageList.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">No learners in grade.</p>';
+                }
+            } catch (err) {
+                manageList.innerHTML = `<p class="text-xs text-error text-center py-8">Load Error: ${err.message}</p>`;
+            }
+        }
+
+        async function removeLearner(id) {
+            if (!confirm("Are you sure? This will delete the learner permanently.")) return;
+            try {
+                const { error } = await _supabase.from('students').delete().eq('id', id);
+                if (error) throw error;
+                alert("Learner deleted.");
+                fetchManageList();
+                initAdminEngine();
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+        window.removeLearner = removeLearner;
+
+        manageGradeSelect.addEventListener('change', fetchManageList);
+
+        addLearnerBtn.addEventListener('click', async () => {
+            const grade = manageGradeSelect.value;
+            const name = newNameInput.value.trim();
+            const stream = newStreamInput.value.trim();
+            if (!grade || !name) return alert("Fill out the required inputs!");
+            
+            addLearnerBtn.disabled = true;
+            addLearnerBtn.innerText = "Saving...";
+            try {
+                const { error } = await _supabase.from('students').insert([{ 
+                    name, 
+                    stream, 
+                    grade: parseInt(grade),
+                    login_id: generateStudentID() 
+                }]);
+                if (error) throw error;
+                alert("New learner saved!");
+                newNameInput.value = "";
+                newStreamInput.value = "";
+                fetchManageList();
+                initAdminEngine();
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                addLearnerBtn.disabled = false;
+                addLearnerBtn.innerText = "✨ Save Learner";
+            }
+        });
+
+        tabAddSub.addEventListener('click', () => { 
+            tabAddSub.classList.add('tab-active'); 
+            tabCompSub.classList.remove('tab-active');
+            tabDelSub.classList.remove('tab-active'); 
+            subPanelAdd.classList.remove('hidden'); 
+            subPanelComp.classList.add('hidden');
+            subPanelDel.classList.add('hidden'); 
+        });
+
+        tabCompSub.addEventListener('click', () => {
+            tabCompSub.classList.add('tab-active');
+            tabAddSub.classList.remove('tab-active');
+            tabDelSub.classList.remove('tab-active');
+            subPanelComp.classList.remove('hidden');
+            subPanelAdd.classList.add('hidden');
+            subPanelDel.classList.add('hidden');
+        });
+
+        tabDelSub.addEventListener('click', () => { 
+            tabDelSub.classList.add('tab-active'); 
+            tabAddSub.classList.remove('tab-active'); 
+            tabCompSub.classList.remove('tab-active');
+            subPanelDel.classList.remove('hidden'); 
+            subPanelAdd.classList.add('hidden'); 
+            subPanelComp.classList.add('hidden');
+            fetchRemovalSubjects(); 
+        });
+
+        compGradeSelect.addEventListener('change', async () => {
+            const selectedGrade = compGradeSelect.value;
+            if (!selectedGrade) return;
+            const tier = getGradeTier(selectedGrade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+            compSubjectSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+
+            try {
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+                if (data) {
+                    const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
+                    compSubjectSelect.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching subjects...</option>' :
+                        '<option value="" disabled selected>Choose Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                }
+            } catch (err) {
+                compSubjectSelect.innerHTML = `<option value="" disabled>Error: ${err.message}</option>`;
+            }
+        });
+
+        cfgBtnSaveComp.addEventListener('click', async () => {
+            const selectedGrade = compGradeSelect.value;
+            const subjectId = compSubjectSelect.value;
+            const p1Max = parseFloat(compPaper1Max.value) || 100;
+            const p2Max = parseFloat(compPaper2Max.value) || 100;
+
+            if (!selectedGrade || !subjectId) return alert("Select grade and subject first!");
+            if (!currentActiveExamName) return alert("No active exam session deployed!");
+
+            cfgBtnSaveComp.disabled = true;
+            cfgBtnSaveComp.innerText = "Configuring...";
+
+            try {
+                const selectedSubjectText = compSubjectSelect.options[compSubjectSelect.selectedIndex].text;
+                
+                const { data: existingPapers, error: fetchErr } = await _supabase
+                    .from('subject_papers')
+                    .select('*')
+                    .eq('subject_id', subjectId);
+                    
+                if (fetchErr) throw fetchErr;
+
+                const p1Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 1');
+                const p2Exist = (existingPapers || []).find(p => p.paper_name === 'Paper 2');
+
+                if (!p1Exist) {
+                    const { error: ins1Err } = await _supabase
+                        .from('subject_papers')
+                        .insert([{ subject_id: subjectId, paper_name: 'Paper 1', max_marks: p1Max }]);
+                    if (ins1Err) throw ins1Err;
+                } else {
+                    const { error: up1Err } = await _supabase
+                        .from('subject_papers')
+                        .update({ max_marks: p1Max })
+                        .eq('id', p1Exist.id);
+                    if (up1Err) throw up1Err;
+                }
+
+                if (!p2Exist) {
+                    const { error: ins2Err } = await _supabase
+                        .from('subject_papers')
+                        .insert([{ subject_id: subjectId, paper_name: 'Paper 2', max_marks: p2Max }]);
+                    if (ins2Err) throw ins2Err;
+                } else {
+                    const { error: up2Err } = await _supabase
+                        .from('subject_papers')
+                        .update({ max_marks: p2Max })
+                        .eq('id', p2Exist.id);
+                    if (up2Err) throw up2Err;
+                }
+
+                alert(`Subject components (Paper 1 & Paper 2) configured for "${selectedSubjectText}" in active exam "${currentActiveExamName}".`);
+                await initAdminEngine();
+            } catch (err) {
+                alert("Error saving paper components: " + err.message);
+            } finally {
+                cfgBtnSaveComp.disabled = false;
+                cfgBtnSaveComp.innerText = "📑 Add Active Exam Components";
+            }
+        });
+
+        radioMain.addEventListener('change', () => { 
+            mainExamOptions.classList.remove('hidden'); 
+            contestOptions.classList.add('hidden'); 
+        });
+        radioContest.addEventListener('change', () => { 
+            contestOptions.classList.remove('hidden'); 
+            mainExamOptions.classList.add('hidden'); 
+        });
+
+        cfgBtnSave.addEventListener('click', async () => {
+            const subjectTitle = cfgSubName.value.trim();
+            if (!subjectTitle) return alert("A subject title is required!");
+
+            cfgBtnSave.disabled = true;
+            cfgBtnSave.innerText = "Saving...";
+            try {
+                const { data: subData, error: subErr } = await _supabase.from('subjects').insert([{ subject_name: subjectTitle }]).select();
+                if (subErr) throw subErr;
+
+                const savedSubject = subData[0];
+                const paperTitle = cfgPaperName.value.trim();
+                const maxVal = parseFloat(cfgPaperMax.value) || 100;
+
+                if (paperTitle) {
+                    await _supabase.from('subject_papers').insert([{ 
+                        subject_id: savedSubject.id, 
+                        paper_name: paperTitle, 
+                        max_marks: maxVal 
+                    }]);
+                }
+
+                alert(`Subject "${subjectTitle}" saved!`);
+                cfgSubName.value = ""; 
+                cfgPaperName.value = ""; 
+                cfgPaperMax.value = "";
+                await initAdminEngine();
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                cfgBtnSave.disabled = false;
+                cfgBtnSave.innerText = "✨ Save Subjects & Components";
+            }
+        });
+
+        async function fetchRemovalSubjects() {
+            cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Loading...</option>';
+            try {
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+                if (data) {
+                    cfgDelSubDropdown.innerHTML = '<option value="" disabled selected>Select Subject...</option>' + 
+                        data.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                }
+            } catch (err) {
+                cfgDelSubDropdown.innerHTML = `<option value="" disabled>Error: ${err.message}</option>`;
+            }
+        }
+
+        cfgBtnDelete.addEventListener('click', async () => {
+            const selectedId = cfgDelSubDropdown.value;
+            if (!selectedId) return alert("Select a subject first!");
+            if (!confirm("Are you sure? This action deletes linked component papers as well.")) return;
+
+            cfgBtnDelete.disabled = true;
+            cfgBtnDelete.innerText = "Deleting...";
+            try {
+                await _supabase.from('subject_papers').delete().eq('subject_id', selectedId);
+                await _supabase.from('subjects').delete().eq('id', selectedId);
+                alert("Subject removed.");
+                fetchRemovalSubjects();
+                await initAdminEngine();
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                cfgBtnDelete.disabled = false;
+                cfgBtnDelete.innerText = "🗑️ Delete Selected Subject";
+            }
+        });
+
+        startCycleBtn.addEventListener('click', async () => {
+            if (!cycleDeadline.value) return alert("Set a closing deadline!");
+            let constructedName = radioMain.checked ? `${cycleYear.value} ${cycleTerm.value} ${mainSeries.value}` : `${cycleYear.value} ${cycleTerm.value} Maths Contest ${contestSeries.value}`;
+            const deadlineIso = new Date(cycleDeadline.value).toISOString();
+
+            startCycleBtn.disabled = true;
+            startCycleBtn.innerText = "Publishing...";
+            try {
+                await _supabase.from('exam_sessions').update({ is_active: false }).neq('id', 0);
+
+                const { error } = await _supabase.from('exam_sessions').insert([{ 
+                    exam_name: constructedName, 
+                    deadline_at: deadlineIso, 
+                    is_active: true 
+                }]);
+                if (error) throw error;
+                
+                alert(`Assessment Context "${constructedName}" Deployed!`);
+                currentActiveExamName = constructedName;
+                dbStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Active: ${currentActiveExamName}`;
+                detectedActiveLabel.innerText = `Active Cycle: ${currentActiveExamName}`;
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                startCycleBtn.disabled = false;
+                startCycleBtn.innerText = "⚡ Publish Active Exam Context";
+            }
+        });
+
+        trackerGrade.addEventListener('change', async () => {
+            trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
+            const selectedGrade = trackerGrade.value;
+            const tier = getGradeTier(selectedGrade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+
+            try {
+                const { data, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+                if (data) {
+                    const filteredList = data.filter(s => allowed.includes(s.subject_name.trim()));
+                    trackerSubject.innerHTML = filteredList.length === 0 ? '<option value="" disabled selected>No matching areas...</option>' : 
+                        '<option value="" disabled selected>Choose Subject...</option>' + filteredList.map(s => `<option value="${s.id}">${s.subject_name}</option>`).join('');
+                    trackerSubject.disabled = false;
+                }
+            } catch (err) {
+                trackerSubject.innerHTML = `<option value="" disabled>Error: ${err.message}</option>`;
+            }
+        });
+
+        checkUploadsBtn.addEventListener('click', async () => {
+            const grade = parseInt(trackerGrade.value);
+            const subId = trackerSubject.value;
+            if (!grade || !subId) return alert("Select grade and subject components first!");
+
+            const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+            if (targetStudents.length === 0) {
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">No student profiles found.</p>`;
+                return;
+            }
+
+            selectedTrackerSubjectId = subId;
+            trackerOutput.innerHTML = '<p class="text-center py-8 text-xs italic text-slate-400">Computing Uploads...</p>';
+            try {
+                const studIds = targetStudents.map(s => s.id);
+                const { data, error } = await _supabase.from('marks_entry')
+                    .select('*')
+                    .eq(dbSchemaCache.examColumn, currentActiveExamName)
+                    .in('student_id', studIds)
+                    .eq('subject_id', subId);
+
+                if (error) throw error;
+                const uploadedMarks = data || [];
+
+                trackerOutput.innerHTML = targetStudents.map(s => {
+                    const studentMarks = uploadedMarks.filter(m => m.student_id === s.id);
+                    const hasUploaded = studentMarks.length > 0;
+                    
+                    let scoreDetails = "No Data";
+                    if (hasUploaded) {
+                        const directScore = studentMarks.find(m => m.paper_id === null);
+                        if (directScore) {
+                            scoreDetails = `Score: ${directScore[dbSchemaCache.scoreColumn]}`;
+                        } else {
+                            let totalEarned = 0, totalMax = 0;
+                            studentMarks.forEach(m => {
+                                const paperObj = globalPapersList.find(p => p.id === m.paper_id);
+                                const maxM = paperObj ? paperObj.max_marks : 100;
+                                totalEarned += parseFloat(m[dbSchemaCache.scoreColumn]);
+                                totalMax += maxM;
+                            });
+                            const compiled = totalMax > 0 ? (totalEarned / totalMax) * 100 : 0;
+                            scoreDetails = `Compiled: ${Math.round(compiled)}% (${studentMarks.length} Papers)`;
+                        }
+                    }
+
+                    const primaryMark = studentMarks[0];
+
+                    return `
+                        <div class="flex items-center justify-between p-3 text-xs border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-slate-800">${s.name}</span>
+                                <span class="text-[9px] text-slate-400 font-mono mt-0.5">Stream: ${s.stream} | ${scoreDetails}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${hasUploaded ? `<span class="badge badge-success text-white font-bold text-[9px]">Uploaded</span>` : `<span class="badge badge-error text-white font-bold text-[9px]">Missing</span>`}
+                                <button onclick="openAdminMarksEditor('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${hasUploaded ? primaryMark[dbSchemaCache.scoreColumn] : 'null'})" class="btn btn-[10px] btn-ghost btn-xs text-blue-600 font-bold underline">Edit</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                trackerOutput.innerHTML = `<p class="p-6 text-center text-xs text-error font-semibold italic">Error: ${err.message}</p>`;
+            }
+        });
+
+        window.openAdminMarksEditor = function(studentId, name, currentScore) {
+            selectedTrackerStudentId = studentId;
+            document.getElementById('admin-marks-modal-desc').innerText = `Editing entry parameters for ${name}`;
+            document.getElementById('admin-modal-score-input').value = currentScore !== null ? currentScore : "";
+            document.getElementById('admin-marks-modal').showModal();
+        };
+
+        document.getElementById('admin-modal-save-btn').addEventListener('click', async () => {
+            const scoreVal = document.getElementById('admin-modal-score-input').value.trim();
+            if (!scoreVal || isNaN(scoreVal)) return alert("Please enter a valid numeric mark score!");
+
+            const parsedScore = parseFloat(scoreVal);
+            document.getElementById('admin-modal-save-btn').innerText = "Saving...";
+
+            try {
+                const { data, error: selectErr } = await _supabase.from('marks_entry')
+                    .select('id')
+                    .eq(dbSchemaCache.examColumn, currentActiveExamName)
+                    .eq('student_id', selectedTrackerStudentId)
+                    .eq('subject_id', selectedTrackerSubjectId)
+                    .is('paper_id', null);
+
+                if (selectErr) throw selectErr;
+
+                let responseError;
+                if (data && data.length > 0) {
+                    const updateObj = {};
+                    updateObj[dbSchemaCache.scoreColumn] = parsedScore;
+                    const { error } = await _supabase.from('marks_entry').update(updateObj).eq('id', data[0].id);
+                    responseError = error;
+                } else {
+                    const insertObj = {
+                        student_id: selectedTrackerStudentId,
+                        subject_id: selectedTrackerSubjectId,
+                        paper_id: null
+                    };
+                    insertObj[dbSchemaCache.examColumn] = currentActiveExamName;
+                    insertObj[dbSchemaCache.scoreColumn] = parsedScore;
+                    const { error } = await _supabase.from('marks_entry').insert([insertObj]);
+                    responseError = error;
+                }
+
+                if (responseError) throw responseError;
+                alert("Score entry adjusted successfully!");
+                document.getElementById('admin-marks-modal').close();
+                checkUploadsBtn.click();
+            } catch(err) {
+                alert("Failed to modify score parameters: " + err.message);
+            } finally {
+                document.getElementById('admin-modal-save-btn').innerText = "Save Entry";
+            }
+        });
+
+        function calculateCompiledSubjectScore(studentMarks, globalPapers) {
+            if (!studentMarks || studentMarks.length === 0) return null;
+            
+            const directMark = studentMarks.find(m => m.paper_id === null);
+            if (directMark) {
+                return parseFloat(directMark[dbSchemaCache.scoreColumn]);
+            }
+
+            let totalEarned = 0;
+            let totalMax = 0;
+            studentMarks.forEach(m => {
+                const paperObj = globalPapers.find(p => p.id === m.paper_id);
+                const maxMarks = paperObj ? paperObj.max_marks : 100;
+                totalEarned += parseFloat(m[dbSchemaCache.scoreColumn]);
+                totalMax += maxMarks;
+            });
+
+            if (totalMax === 0) return null;
+            return (totalEarned / totalMax) * 100;
+        }
+
+        // ARCHIVAL CONTEXT MATRIX PROCESSING ENGINE
+        compileHistoricalBtn.addEventListener('click', async () => {
+            const grade = parseInt(histGrade.value);
+            if (isNaN(grade)) return alert("Please select a target grade tier cohort!");
+
+            const historicalContextLabel = `${histYear.value} ${histTerm.value} ${histSeries.value}`;
+            compileHistoricalBtn.disabled = true;
+            compileHistoricalBtn.innerText = "Compiling Records...";
+
+            try {
+                const tier = getGradeTier(grade);
+                const allowed = CBC_SUBJECT_TIERS[tier];
+                const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+
+                if (targetStudents.length === 0) {
+                    alert("No enrolled student matching this specific class level was found.");
+                    compileHistoricalBtn.disabled = false;
+                    compileHistoricalBtn.innerText = "🗂️ Compile Historical Ledger";
+                    return;
+                }
+
+                const { data: dbSubjects, error: subErr } = await _supabase.from('subjects').select('*');
+                if (subErr) throw subErr;
+
+                const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+                const subjectIds = filteredSubjects.map(s => s.id);
+                const studentIds = targetStudents.map(s => s.id);
+
+                const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
+                    .select('*')
+                    .eq(dbSchemaCache.examColumn, historicalContextLabel)
+                    .in('student_id', studentIds)
+                    .in('subject_id', subjectIds);
+
+                if (marksErr) throw marksErr;
+                const historicalMarks = marks || [];
+
+                if (historicalMarks.length === 0) {
+                    alert(`No historical dataset metrics found matching the cycle context: "${historicalContextLabel}"`);
+                    compileHistoricalBtn.disabled = false;
+                    compileHistoricalBtn.innerText = "🗂️ Compile Historical Ledger";
+                    return;
+                }
+
+                let compilePoints = false;
+                if (tier === "junior_school") {
+                    compilePoints = confirm("Do you want to compile the Points Ledger for Junior School?\n\nClick [OK] for Points Ledger layout.\nClick [Cancel] for default Raw Marks Ledger layout.");
+                }
+
+                const ratingKeys = compilePoints ? ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"] : getRatingKeysForTier(tier);
+                const matrixDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+                const subjectMetricsStats = {};
+                filteredSubjects.forEach(sub => {
+                    subjectMetricsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                });
+
+                const compiledHistoricalData = targetStudents.map(s => {
+                    let combinedTotals = 0, count = 0, subjectScores = {};
+                    filteredSubjects.forEach(sub => {
+                        const studentSubMarks = historicalMarks.filter(md => md.student_id === s.id && md.subject_id === sub.id);
+                        const compiledScore = calculateCompiledSubjectScore(studentSubMarks, globalPapersList);
+
+                        if (compiledScore !== null) {
+                            const structuralValue = compilePoints ? convertScoreToPoints(compiledScore, 100) : compiledScore;
+                            combinedTotals += structuralValue;
+                            subjectScores[sub.subject_name] = structuralValue;
+                            count++;
+                            
+                            subjectMetricsStats[sub.subject_name].total += structuralValue;
+                            subjectMetricsStats[sub.subject_name].count++;
+                            const individualRating = compilePoints ? getPointsRating(structuralValue) : getMarksRating(compiledScore, tier);
+                            subjectMetricsStats[sub.subject_name].dist[individualRating]++;
+                        } else {
+                            subjectScores[sub.subject_name] = null;
+                        }
+                    });
+                    const average = count > 0 ? (combinedTotals / count) : 0;
+                    const compositeRating = compilePoints ? getPointsRating(average) : getMarksRating(average, tier);
+                    matrixDistribution[compositeRating]++;
+                    return { name: s.name, subjectScores, totals: combinedTotals, average, rating: compositeRating };
+                }).sort((a, b) => b.totals - a.totals);
+
+                let histRank = 1;
+                compiledHistoricalData.forEach((cs, i) => { 
+                    if (i > 0 && cs.totals < compiledHistoricalData[i - 1].totals) {
+                        histRank = i + 1;
+                    }
+                    cs.position = histRank; 
+                });
+                const arrangedSubjectList = filteredSubjects.map(sub => ({
+                    name: sub.subject_name, avg: subjectMetricsStats[sub.subject_name].count > 0 ? subjectMetricsStats[sub.subject_name].total / subjectMetricsStats[sub.subject_name].count : 0
+                })).sort((a, b) => b.avg - a.avg);
+
+                const reportPayload = buildPdfPayload({
+                    gradeLabel: getGradeLabel(grade),
+                    examContext: historicalContextLabel,
+                    reportType: compilePoints ? "POINTS MASTER LEDGER" : "MARKS MASTER LEDGER",
+                    filteredSubjects,
+                    studentsData: compiledHistoricalData,
+                    subjectStats: subjectMetricsStats,
+                    ratingKeys,
+                    matrixDistribution,
+                    subjectRankedList: arrangedSubjectList,
+                    totalRanked: targetStudents.length,
+                    isPoints: compilePoints
+                });
+
+                openEmbeddedPdfPreview(reportPayload);
+            } catch (err) {
+                alert("Archival processing failure: " + err.message);
+            } finally {
+                compileHistoricalBtn.disabled = false;
+                compileHistoricalBtn.innerText = "🗂️ Compile Historical Ledger";
+            }
+        });
+
+        // FINANCIAL SECURITY SLIP MANAGEMENT ENGINE INTERACTION HANDLERS
+        feeCtrlGrade.addEventListener('change', async () => {
+            const selectedGrade = parseInt(feeCtrlGrade.value);
+            if (isNaN(selectedGrade)) return;
+
+            feeLockoutCheckboxGrid.innerHTML = '<p class="text-xs text-slate-400 italic text-center col-span-full">Querying structural roster configuration...</p>';
+            feeLockoutMatrixContainer.classList.remove('hidden');
+
+            try {
+                const targetStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+                if (targetStudents.length === 0) {
+                    feeLockoutCheckboxGrid.innerHTML = '<p class="text-xs text-error font-semibold text-center col-span-full">No learners enrolled inside this specific class level roster context.</p>';
+                    return;
+                }
+
+                const targetExamContext = `${feeCtrlYear.value} ${feeCtrlTerm.value} ${feeCtrlSeries.value}`;
+                
+                const { data: balanceLocks, error } = await _supabase.from('fee_lockouts')
+                    .select('student_id')
+                    .eq('exam_context', targetExamContext);
+
+                if (error) throw error;
+                const lockedIds = (balanceLocks || []).map(l => l.student_id);
+
+                feeLockoutCheckboxGrid.innerHTML = targetStudents.map(s => {
+                    const isChecked = lockedIds.includes(s.id) ? "checked" : "";
+                    return `
+                        <label class="flex items-center gap-2.5 p-2 rounded border border-slate-100 hover:bg-slate-50 cursor-pointer text-xs">
+                            <input type="checkbox" name="lockout_student_box" value="${s.id}" ${isChecked} class="checkbox checkbox-xs checkbox-primary" />
+                            <span class="truncate font-medium text-slate-700">${s.name} <strong class="text-[10px] text-slate-400 font-mono">(${s.stream})</strong></span>
+                        </label>
+                    `;
+                }).join('');
+            } catch (err) {
+                feeLockoutCheckboxGrid.innerHTML = `<p class="text-xs text-error col-span-full font-bold">Failed to load locks: ${err.message}</p>`;
+            }
+        });
+
+        saveFeeRestrictionsBtn.addEventListener('click', async () => {
+            const selectedGrade = parseInt(feeCtrlGrade.value);
+            if (isNaN(selectedGrade)) return alert("Specify target class cohorts configuration first!");
+
+            const targetExamContext = `${feeCtrlYear.value} ${feeCtrlTerm.value} ${feeCtrlSeries.value}`;
+            const checkBoxes = document.querySelectorAll('input[name="lockout_student_box"]');
+            
+            const targetStudents = localStudentsCache.filter(s => s.grade === selectedGrade);
+            const studentIdsInGrade = targetStudents.map(s => s.id);
+
+            const selectedStudentIds = [];
+            checkBoxes.forEach(box => {
+                if (box.checked) selectedStudentIds.push(box.value);
+            });
+
+            saveFeeRestrictionsBtn.disabled = true;
+            saveFeeRestrictionsBtn.innerText = "Syncing Overrides...";
+
+            try {
+                if (studentIdsInGrade.length > 0) {
+                    const { error: deleteErr } = await _supabase.from('fee_lockouts')
+                        .delete()
+                        .eq('exam_context', targetExamContext)
+                        .in('student_id', studentIdsInGrade);
+
+                    if (deleteErr) throw deleteErr;
+                }
+
+                if (selectedStudentIds.length > 0) {
+                    const inserts = selectedStudentIds.map(sid => ({
+                        student_id: sid,
+                        exam_context: targetExamContext,
+                        restricted: true
+                    }));
+
+                    const { error: insertErr } = await _supabase.from('fee_lockouts').insert(inserts);
+                    if (insertErr) throw insertErr;
+                }
+
+                alert(`Financial restrictions matrix updated successfully for context series: "${targetExamContext}"`);
+            } catch (err) {
+                alert("Failed to write restriction blocks to database architecture: " + err.message);
+            } finally {
+                saveFeeRestrictionsBtn.disabled = false;
+                saveFeeRestrictionsBtn.innerText = "🔒 Save Restrictions Matrix";
+            }
+        });
+
+        // PERFORMANCE METRICS REPORT COMPILER
+        let printableMarksPayload = null;
+        let printablePointsPayload = null;
+
+        compileReportsBtn.addEventListener('click', async () => {
+            const grade = parseInt(reportGrade.value);
+            if (isNaN(grade)) return alert("Please select a target class cohort!");
+
+            const schoolLogo = document.getElementById('school-logo');
+            const schoolNameText = document.getElementById('school-title').innerText.trim();
+            if (!schoolLogo.complete || schoolLogo.naturalWidth === 0 || !schoolNameText) {
+                return alert("Branding error: missing logo asset. Broadsheet compilation halted.");
+            }
+
+            compileReportsBtn.disabled = true;
+            compileReportsBtn.innerText = "Compiling Database records...";
+
+            try {
+                const tier = getGradeTier(grade);
+                const allowed = CBC_SUBJECT_TIERS[tier];
+
+                if (tier === "pre_primary" || tier === "lower_primary") {
+                    downloadPointsPdfBtn.disabled = true;
+                    downloadPointsPdfBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                } else {
+                    downloadPointsPdfBtn.disabled = false;
+                    downloadPointsPdfBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                }
+
+                const targetStudents = localStudentsCache.filter(s => s.grade === grade);
+                if (targetStudents.length === 0) {
+                    broadsheetRows.innerHTML = `<tr><td colspan="4" class="text-center py-12 text-rose-500 italic">No student profiles registered in this grade.</td></tr>`;
+                    return;
+                }
+
+                const { data: dbSubjects, error: subErr } = await _supabase.from('subjects').select('*');
+                if (subErr) throw subErr;
+
+                const filteredSubjects = (dbSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+                const subjectIds = filteredSubjects.map(s => s.id);
+                const studentIds = targetStudents.map(s => s.id);
+
+                const { data: marks, error: marksErr } = await _supabase.from('marks_entry')
+                    .select('*')
+                    .eq(dbSchemaCache.examColumn, currentActiveExamName)
+                    .in('student_id', studentIds)
+                    .in('subject_id', subjectIds);
+
+                if (marksErr) throw marksErr;
+                const marksData = marks || [];
+
+                const ratingKeys = getRatingKeysForTier(tier);
+                const marksDistribution = Object.fromEntries(ratingKeys.map(k => [k, 0]));
+                const pointsDistribution = Object.fromEntries(["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(k => [k, 0]));
+
+                const subjectMarksStats = {};
+                const subjectPointsStats = {};
+
+                filteredSubjects.forEach(sub => {
+                    subjectMarksStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(ratingKeys.map(k => [k, 0])) };
+                    subjectPointsStats[sub.subject_name] = { total: 0, count: 0, dist: Object.fromEntries(["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"].map(k => [k, 0])) };
+                });
+
+                const calculatedMarksStudents = targetStudents.map(s => {
+                    let totalMarks = 0;
+                    let count = 0;
+                    let subjectScores = {};
+
+                    filteredSubjects.forEach(sub => {
+                        const studentSubMarks = marksData.filter(md => md.student_id === s.id && md.subject_id === sub.id);
+                        const compiledSubScore = calculateCompiledSubjectScore(studentSubMarks, globalPapersList);
+
+                        if (compiledSubScore !== null) {
+                            totalMarks += compiledSubScore;
+                            subjectScores[sub.subject_name] = compiledSubScore;
+                            count++;
+
+                            subjectMarksStats[sub.subject_name].total += compiledSubScore;
+                            subjectMarksStats[sub.subject_name].count++;
+                            const individualRating = getMarksRating(compiledSubScore, tier);
+                            subjectMarksStats[sub.subject_name].dist[individualRating]++;
+                        } else {
+                            subjectScores[sub.subject_name] = null;
+                        }
+                    });
+
+                    const average = count > 0 ? (totalMarks / count) : 0;
+                    const rating = getMarksRating(average, tier);
+                    marksDistribution[rating]++;
+
+                    return {
+                        id: s.id,
+                        name: s.name,
+                        subjectScores,
+                        totals: totalMarks,
+                        average: average,
+                        rating: rating
+                    };
+                });
+
+                const calculatedPointsStudents = (tier === "pre_primary" || tier === "lower_primary") ? [] : targetStudents.map(s => {
+                    let totalPoints = 0;
+                    let count = 0;
+                    let subjectScores = {};
+
+                    filteredSubjects.forEach(sub => {
+                        const studentSubMarks = marksData.filter(md => md.student_id === s.id && md.subject_id === sub.id);
+                        const compiledSubScore = calculateCompiledSubjectScore(studentSubMarks, globalPapersList);
+
+                        if (compiledSubScore !== null) {
+                            const points = convertScoreToPoints(compiledSubScore, 100);
+                            totalPoints += points;
+                            subjectScores[sub.subject_name] = points;
+                            count++;
+
+                            subjectPointsStats[sub.subject_name].total += points;
+                            subjectPointsStats[sub.subject_name].count++;
+                            const individualRating = getPointsRating(points);
+                            subjectPointsStats[sub.subject_name].dist[individualRating]++;
+                        } else {
+                            subjectScores[sub.subject_name] = null;
+                        }
+                    });
+
+                    const average = count > 0 ? (totalPoints / count) : 0;
+                    const rating = getPointsRating(average);
+                    pointsDistribution[rating]++;
+
+                    return {
+                        id: s.id,
+                        name: s.name,
+                        subjectScores,
+                        totals: totalPoints,
+                        average: average,
+                        rating: rating
+                    };
+                });
+
+                calculatedMarksStudents.sort((a, b) => b.totals - a.totals);
+                let marksRank = 1;
+                calculatedMarksStudents.forEach((cs, i) => { 
+                    if (i > 0 && cs.totals < calculatedMarksStudents[i - 1].totals) {
+                        marksRank = i + 1;
+                    }
+                    cs.position = marksRank; 
+                });
+
+                if (tier !== "pre_primary" && tier !== "lower_primary") {
+                    calculatedPointsStudents.sort((a, b) => b.totals - a.totals);
+                    let pointsRank = 1;
+                    calculatedPointsStudents.forEach((cs, i) => { 
+                        if (i > 0 && cs.totals < calculatedPointsStudents[i - 1].totals) {
+                            pointsRank = i + 1;
+                        }
+                        cs.position = pointsRank; 
+                    });
+                }
+
+                let headerHtml = `<tr><th class="py-3 px-4 text-left">Learner Name</th>`;
+                filteredSubjects.forEach(sub => {
+                    headerHtml += `<th class="py-3 px-4 text-center">${getSubjectShorthand(sub.subject_name)}</th>`;
+                });
+                if (tier === "pre_primary" || tier === "lower_primary") {
+                    headerHtml += `<th class="py-3 px-4 text-center">Total Marks</th><th class="py-3 px-4 text-center">Mean Marks</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
+                } else {
+                    headerHtml += `<th class="py-3 px-4 text-center">Total Points</th><th class="py-3 px-4 text-center">Mean Points</th><th class="py-3 px-4 text-center">Rating</th><th class="py-3 px-4 text-center">Pos</th></tr>`;
+                }
+                broadsheetHeader.innerHTML = headerHtml;
+
+                const liveRenderStudents = (tier === "pre_primary" || tier === "lower_primary") ? calculatedMarksStudents : calculatedPointsStudents;
+
+                broadsheetRows.innerHTML = liveRenderStudents.map(cs => {
+                    let cells = `<td class="text-left font-bold py-3 px-4 text-slate-900">${cs.name}</td>`;
+                    
+                    filteredSubjects.forEach(sub => {
+                        const val = cs.subjectScores[sub.subject_name];
+                        cells += `<td class="text-center py-3 px-4 font-mono text-slate-600">${val !== null ? ((tier === "pre_primary" || tier === "lower_primary") ? `${Math.round(val)}%` : val) : '-'}</td>`;
+                    });
+
+                    cells += `<td class="text-center py-3 px-4 font-bold text-slate-800">${cs.totals.toFixed(0)}</td>`;
+                    cells += `<td class="text-center py-3 px-4 font-semibold text-sky-800">${(tier === "pre_primary" || tier === "lower_primary") ? `${Math.round(cs.average)}%` : cs.average.toFixed(1)}</td>`;
+                    cells += `<td class="text-center py-3 px-4"><span class="badge font-bold border-none text-[10px] bg-slate-100">${cs.rating}</span></td>`;
+                    cells += `<td class="text-center py-3 px-4 font-extrabold text-slate-950">${cs.position}</td>`;
+                    return `<tr class="hover:bg-slate-50/50 transition-colors">${cells}</tr>`;
+                }).join('');
+
+                const totalRanked = targetStudents.length;
+                if (tier === "pre_primary" || tier === "lower_primary") {
+                    const classMeanMarks = Math.round(calculatedMarksStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked);
+                    analyticalSummaryBadges.innerHTML = `
+                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Cohort: ${totalRanked}</span>
+                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Mean: ${classMeanMarks}%</span>
+                    `;
+                } else {
+                    const classMeanPoints = (calculatedPointsStudents.reduce((acc, curr) => acc + curr.average, 0) / totalRanked).toFixed(1);
+                    analyticalSummaryBadges.innerHTML = `
+                        <span class="badge badge-neutral border-none p-3 font-semibold text-xs uppercase tracking-wider">Cohort: ${totalRanked}</span>
+                        <span class="badge badge-primary border-none p-3 font-semibold text-xs uppercase tracking-wider">Class Mean: ${classMeanPoints} Pts</span>
+                    `;
+                }
+
+                const subjectMarksList = filteredSubjects.map(sub => {
+                    const stats = subjectMarksStats[sub.subject_name];
+                    return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
+                }).sort((a, b) => b.avg - a.avg);
+                
+                const subjectPointsList = (tier === "pre_primary" || tier === "lower_primary") ? [] : filteredSubjects.map(sub => {
+                    const stats = subjectPointsStats[sub.subject_name];
+                    return { name: sub.subject_name, avg: stats.count > 0 ? stats.total / stats.count : 0 };
+                }).sort((a, b) => b.avg - a.avg);
+
+                printableMarksPayload = buildPdfPayload({
+                    gradeLabel: getGradeLabel(grade),
+                    examContext: currentActiveExamName,
+                    reportType: "MARKS MASTER LEDGER",
+                    filteredSubjects,
+                    studentsData: calculatedMarksStudents,
+                    subjectStats: subjectMarksStats,
+                    ratingKeys,
+                    matrixDistribution: marksDistribution,
+                    subjectRankedList: subjectMarksList,
+                    totalRanked,
+                    isPoints: false
+                });
+
+                if (tier !== "pre_primary" && tier !== "lower_primary") {
+                    printablePointsPayload = buildPdfPayload({
+                        gradeLabel: getGradeLabel(grade),
+                        examContext: currentActiveExamName,
+                        reportType: "POINTS MASTER LEDGER",
+                        filteredSubjects,
+                        studentsData: calculatedPointsStudents,
+                        subjectStats: subjectPointsStats,
+                        ratingKeys: ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"],
+                        matrixDistribution: pointsDistribution,
+                        subjectRankedList: subjectPointsList,
+                        totalRanked,
+                        isPoints: true
+                    });
+                } else {
+                    printablePointsPayload = null;
+                }
+
+                downloadMarksPdfBtn.disabled = false;
+            } catch (err) {
+                alert("Compilation failed: " + err.message);
+            } finally {
+                compileReportsBtn.disabled = false;
+                compileReportsBtn.innerText = "📊 Compile Broad Sheet";
+            }
+        });
+
+        // BUILD DATA STRUCTURE FOR ADVANCED VECTOR PDF GENERATOR
+        function buildPdfPayload(params) {
+            const { gradeLabel, examContext, reportType, filteredSubjects, studentsData, subjectStats, ratingKeys, matrixDistribution, subjectRankedList, totalRanked, isPoints } = params;
+
+            const tableHeaders = ["NO.", "LEARNER FULL NAME"];
+            filteredSubjects.forEach(sub => tableHeaders.push(getSubjectShorthand(sub.subject_name)));
+            tableHeaders.push("TOTAL", "AVRG", "RATE", "POS");
+
+            const tableRows = studentsData.map((cs, index) => {
+                const row = [index + 1, cs.name];
+                filteredSubjects.forEach(sub => {
+                    const val = cs.subjectScores[sub.subject_name];
+                    row.push(val !== null ? (isPoints ? val.toFixed(0) : `${Math.round(val)}%`) : '-');
+                });
+                row.push(
+                    cs.totals.toFixed(0),
+                    isPoints ? cs.average.toFixed(1) : `${Math.round(cs.average)}%`,
+                    cs.rating,
+                    cs.position
+                );
+                return row;
+            });
+
+            // Summary Totals Row
+            const totalsRow = ["", "TOTAL"];
+            filteredSubjects.forEach(sub => {
+                totalsRow.push(subjectStats[sub.subject_name].total.toFixed(0));
+            });
+            const grandTotalSum = studentsData.reduce((acc, curr) => acc + curr.totals, 0);
+            totalsRow.push(grandTotalSum.toFixed(0), "", "", "");
+            tableRows.push(totalsRow);
+
+            // Summary Average Row
+            const averageRow = ["", "AVERAGE"];
+            filteredSubjects.forEach(sub => {
+                const stats = subjectStats[sub.subject_name];
+                averageRow.push(stats.count > 0 ? (stats.total / stats.count).toFixed(isPoints ? 1 : 2) : '0.00');
+            });
+            const overallAverage = totalRanked > 0 ? (grandTotalSum / totalRanked) : 0;
+            averageRow.push("", overallAverage.toFixed(isPoints ? 1 : 2), "", "");
+            tableRows.push(averageRow);
+
+            // Subject Ranks Row with tie support
+            const ranksRow = ["", "SUBJECT POSITION"];
+            const sortedSubList = [...subjectRankedList].sort((a, b) => b.avg - a.avg);
+            filteredSubjects.forEach(sub => {
+                let subRank = 1;
+                for (let i = 0; i < sortedSubList.length; i++) {
+                    if (i > 0 && sortedSubList[i].avg < sortedSubList[i - 1].avg) {
+                        subRank = i + 1;
+                    }
+                    if (sortedSubList[i].name === sub.subject_name) {
+                        ranksRow.push(subRank);
+                        break;
+                    }
+                }
+            });
+            ranksRow.push("", "", "", "");
+            tableRows.push(ranksRow);
+
+            // Distribution Analysis Data Matrix
+            const matrixHeaders = ["Level Matrix Distribution"];
+            filteredSubjects.forEach(sub => matrixHeaders.push(getSubjectShorthand(sub.subject_name)));
+            matrixHeaders.push("Total Enrolled");
+
+            const matrixRows = ratingKeys.map(key => {
+                const count = matrixDistribution[key] || 0;
+                const pct = totalRanked > 0 ? ((count / totalRanked) * 100).toFixed(1) : "0.0";
+                const r = [`${key} Level`];
+                filteredSubjects.forEach(sub => {
+                    r.push(subjectStats[sub.subject_name].dist[key] || 0);
+                });
+                r.push(`${count} (${pct}%)`);
+                return r;
+            });
+
+            return {
+                title: `${gradeLabel} - ${reportType}`,
+                gradeLabel,
+                examContext,
+                reportType,
+                headers: tableHeaders,
+                rows: tableRows,
+                matrixHeaders,
+                matrixRows
+            };
+        }
+
+        // EMBEDDED PREVIEW ENGINE
+        function openEmbeddedPdfPreview(payload) {
+            currentPdfDataPayload = payload;
+            
+            let canvasHtml = `
+                <div style="text-align: center; margin-bottom: 12px; line-height: 1.2;">
+                    <h2 style="font-size: 14px; font-weight: bold; margin: 0; text-transform: uppercase; color: #000;">${payload.gradeLabel.toUpperCase()} &bull; ${payload.examContext.toUpperCase()}</h2>
+                    <p style="font-size: 11px; font-weight: bold; margin: 3px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">CBA ASSESSMENT - ${payload.reportType}</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px;">
+                    <thead>
+                        <tr style="background-color: #0f172a; color: white;">
+                            ${payload.headers.map(h => `<th style="border: 1px solid #cbd5e1; padding: 4px; text-align: center;">${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${payload.rows.map((row, idx) => {
+                            const isFooter = idx >= payload.rows.length - 3;
+                            const bg = isFooter ? 'background-color: #f1f5f9; font-weight: bold;' : '';
+                            return `<tr style="${bg}">
+                                ${row.map((cell, cidx) => `<td style="border: 1px solid #cbd5e1; padding: 4px; text-align: ${cidx === 1 ? 'left' : 'center'};">${cell}</td>`).join('')}
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <div style="font-size: 10px; font-weight: bold; margin-top: 10px;">
+                    <div style="margin-bottom: 5px; text-decoration: underline; font-size: 11px; text-transform: uppercase; color:#0f172a">PERFORMANCE ANALYSIS LEVEL MATRIX</div>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #1e293b; color: white;">
+                                ${payload.matrixHeaders.map(h => `<th style="border: 1px solid #cbd5e1; padding: 3px; text-align: center;">${h}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${payload.matrixRows.map(row => `
+                                <tr>
+                                    ${row.map((cell, cidx) => `<td style="border: 1px solid #cbd5e1; padding: 3px; text-align: ${cidx === 0 ? 'left' : 'center'};">${cell}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            pdfRenderCanvas.innerHTML = canvasHtml;
+            pdfModal.showModal();
+        }
+
+        downloadMarksPdfBtn.addEventListener('click', () => {
+            if (printableMarksPayload) openEmbeddedPdfPreview(printableMarksPayload);
+        });
+
+        downloadPointsPdfBtn.addEventListener('click', () => {
+            if (printablePointsPayload) openEmbeddedPdfPreview(printablePointsPayload);
+        });
+
+        // HIGH-PERFORMANCE MULTI-PAGE VECTOR PDF GENERATOR
+        executePdfDownloadBtn.addEventListener('click', () => {
+            if (!currentPdfDataPayload) return alert("No active PDF payload detected to process.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'pt',
+                format: 'a4'
+            });
+
+            const payload = currentPdfDataPayload;
+            const schoolTitle = document.getElementById('school-title').innerText.trim().toUpperCase() || "BETHANIA ACADEMY";
+
+            // Print Page Header Vector Elements
+            const drawHeader = (data) => {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(13);
+                doc.setTextColor(15, 23, 42);
+                doc.text(schoolTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(51, 65, 85);
+                const titleStr = `${payload.gradeLabel.toUpperCase()} • ${payload.examContext.toUpperCase()} - ${payload.reportType}`;
+                doc.text(titleStr, doc.internal.pageSize.getWidth() / 2, 42, { align: "center" });
+
+                doc.setDrawColor(203, 213, 225);
+                doc.setLineWidth(0.75);
+                doc.line(30, 48, doc.internal.pageSize.getWidth() - 30, 48);
+            };
+
+            // Master Scores Table
+            doc.autoTable({
+                head: [payload.headers],
+                body: payload.rows,
+                startY: 55,
+                margin: { left: 30, right: 30, top: 55, bottom: 30 },
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 8,
+                    cellPadding: 3,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineColor: [203, 213, 225],
+                    lineWidth: 0.5,
+                    textColor: [15, 23, 42]
+                },
+                headStyles: {
+                    fillColor: [15, 23, 42],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 8.5
+                },
+                columnStyles: {
+                    1: { halign: 'left', cellWidth: 'auto' }
+                },
+                didParseCell: function(data) {
+                    // Apply distinct styling to Totals/Averages summary rows
+                    const totalRows = payload.rows.length;
+                    if (data.section === 'body' && data.row.index >= totalRows - 3) {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.fillColor = [241, 245, 249];
+                    }
+                },
+                didDrawPage: drawHeader
+            });
+
+            // Append Analysis Level Matrix
+            let finalY = doc.lastAutoTable.finalY + 15;
+            
+            // Check if Matrix table needs to drop to new page to prevent vertical overflow clipping
+            if (finalY + 120 > doc.internal.pageSize.getHeight()) {
+                doc.addPage();
+                finalY = 55;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
+            doc.setTextColor(15, 23, 42);
+            doc.text("PERFORMANCE ANALYSIS LEVEL MATRIX", 30, finalY);
+
+            doc.autoTable({
+                head: [payload.matrixHeaders],
+                body: payload.matrixRows,
+                startY: finalY + 6,
+                margin: { left: 30, right: 30, top: 55, bottom: 30 },
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 7.5,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineColor: [203, 213, 225],
+                    lineWidth: 0.5,
+                    textColor: [15, 23, 42]
+                },
+                headStyles: {
+                    fillColor: [30, 41, 59],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: { halign: 'left', cellWidth: 'auto' }
+                },
+                didDrawPage: drawHeader
+            });
+
+            // Save Document Standard Direct Download
+            const cleanFileName = `${payload.gradeLabel}_${payload.reportType.replace(/\s+/g, '_')}.pdf`;
+            doc.save(cleanFileName);
+        });
+
+        // ============================================================
+        // 🗓️ CREATE TIME TABLE MODULE
+        // ============================================================
+        const ttLevelSelect = document.getElementById('tt-level-select');
+        const ttPShortDur = document.getElementById('tt-p-short-dur');
+        const ttPLongDur = document.getElementById('tt-p-long-dur');
+        const ttPLunchDur = document.getElementById('tt-p-lunch-dur');
+        const ttJShortDur = document.getElementById('tt-j-short-dur');
+        const ttJLongDur = document.getElementById('tt-j-long-dur');
+        const ttJLunchDur = document.getElementById('tt-j-lunch-dur');
+        const ttJGamesDur = document.getElementById('tt-j-games-dur');
+        const ttPrimaryStructureCard = document.getElementById('tt-primary-structure-card');
+        const ttJuniorStructureCard = document.getElementById('tt-junior-structure-card');
+        const ttGradeStreamConfig = document.getElementById('tt-grade-stream-config');
+        const ttBuildGridBtn = document.getElementById('tt-build-grid-btn');
+        const ttEntryGridContainer = document.getElementById('tt-entry-grid-container');
+        const ttGenerateBtn = document.getElementById('tt-generate-btn');
+        const ttConflictsBox = document.getElementById('tt-conflicts-box');
+        const ttPreviewContainer = document.getElementById('tt-preview-container');
+        const ttDownloadPrimaryBtn = document.getElementById('tt-download-primary-btn');
+        const ttDownloadJuniorBtn = document.getElementById('tt-download-junior-btn');
+
+        const TT_GRADE_RANGES = { primary: [4, 5, 6], junior: [7, 8, 9], both: [4, 5, 6, 7, 8, 9] };
+        const TT_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+        const TT_DAY_LABELS = { MON: 'MONDAY', TUE: 'TUESDAY', WED: 'WEDNESDAY', THU: 'THURSDAY', FRI: 'FRIDAY' };
+        const TT_BLOCK_START_MIN = 8 * 60 + 20; // 08:20 AM
+        const TT_CORE_SUBJECTS = ['Mathematics', 'English'];
+        // Subjects that must never be scheduled as a day's period 1 (e.g. Creative Arts) — they can
+        // still fill any other blank slot, just never the opening lesson of the day.
+        const TT_NO_FIRST_PERIOD_SUBJECTS = ['Creative Arts and Sports', 'Creative Arts'];
+
+        // Official weekly lesson counts per subject (Upper Primary / Junior School CBC allocation sheet).
+        // Pre-fills the entry grid so admins rarely need to edit — the field stays fully editable.
+        const TT_DEFAULT_PERIODS = {
+            upper_primary: {
+                'English': 5,
+                'Kiswahili': 4,
+                'Mathematics': 5,
+                'Christian Religious Education (C.R.E)': 3,
+                'Science and Technology': 4,
+                'Agriculture and Nutrition': 4,
+                'Social Studies': 3,
+                'Creative Arts and Sports': 6,
+                'PPI': 1
+            },
+            junior_school: {
+                'English': 5,
+                'Kiswahili': 4,
+                'Mathematics': 5,
+                'Christian Religious Education (C.R.E)': 4,
+                'Social Studies': 4,
+                'Integrated Science': 5,
+                'Pre-Technical Studies': 4,
+                'Agriculture and Nutrition': 4,
+                'Creative Arts and Sports': 5
+            }
+        };
+
+        let ttStreamsMap = {};
+        let ttClasses = [];
+
+        function ttLessonDuration(grade) { return grade <= 6 ? 35 : 40; }
+        function ttLevelOfGrade(grade) { return grade <= 6 ? 'primary' : 'junior'; }
+        function ttLessonsPerDay(level) { return level === 'primary' ? 7 : 8; }
+
+        // --- Fixed CBC block structure per tier (durations only are configurable) ---
+        // NOTE: block labels are intentionally 5-letter words (BREAK / LUNCH / GAMES) — matching the
+        // 5-day week (MON-FRI) — so the preview/PDF can spell each word vertically, one letter per day,
+        // down a narrow column instead of repeating the full word in every day block. See ttRenderTierTable
+        // and ttBuildPdfForTier for the letter-per-day rendering.
+        function ttPrimaryBlockPlan() {
+            return [
+                { type: 'lesson', count: 2 },
+                { type: 'break', label: 'BREAK', minutes: parseInt(ttPShortDur.value) || 20 },
+                { type: 'lesson', count: 2 },
+                { type: 'break', label: 'BREAK', minutes: parseInt(ttPLongDur.value) || 25 },
+                { type: 'lesson', count: 2 },
+                { type: 'lunch', label: 'LUNCH', minutes: parseInt(ttPLunchDur.value) || 80 },
+                { type: 'lesson', count: 1 }
+            ];
+        }
+        function ttJuniorBlockPlan() {
+            return [
+                { type: 'lesson', count: 2 },
+                { type: 'break', label: 'BREAK', minutes: parseInt(ttJShortDur.value) || 20 },
+                { type: 'lesson', count: 2 },
+                { type: 'break', label: 'BREAK', minutes: parseInt(ttJLongDur.value) || 25 },
+                { type: 'lesson', count: 2 },
+                { type: 'lunch', label: 'LUNCH', minutes: parseInt(ttJLunchDur.value) || 85 },
+                { type: 'lesson', count: 2 },
+                { type: 'games', label: 'GAMES', minutes: parseInt(ttJGamesDur.value) || 80 }
+            ];
+        }
+
+        function ttMinutesToLabel(mins) {
+            let h = Math.floor(mins / 60);
+            const m = mins % 60;
+            const suffix = h >= 12 ? 'PM' : 'AM';
+            let h12 = h % 12;
+            if (h12 === 0) h12 = 12;
+            return `${h12}:${m.toString().padStart(2, '0')} ${suffix}`;
+        }
+
+        function ttResetDownstream() {
+            ttEntryGridContainer.classList.add('hidden');
+            ttEntryGridContainer.innerHTML = '';
+            ttGenerateBtn.classList.add('hidden');
+            ttPreviewContainer.classList.add('hidden');
+            ttPreviewContainer.innerHTML = '';
+            ttDownloadPrimaryBtn.classList.add('hidden');
+            ttDownloadJuniorBtn.classList.add('hidden');
+            ttConflictsBox.classList.add('hidden');
+            ttConflictsBox.innerHTML = '';
+            ttClasses = [];
+        }
+
+        // --- STEP 1: Render grade/stream configurator whenever level changes ---
+        ttLevelSelect.addEventListener('change', () => {
+            const level = ttLevelSelect.value;
+            const grades = TT_GRADE_RANGES[level] || [];
+            ttStreamsMap = {};
+            grades.forEach(g => ttStreamsMap[g] = []);
+
+            ttPrimaryStructureCard.classList.toggle('hidden', level === 'junior');
+            ttJuniorStructureCard.classList.toggle('hidden', level === 'primary');
+
+            ttGradeStreamConfig.innerHTML = grades.map(g => `
+                <div class="border border-slate-200 rounded-lg p-3 bg-white space-y-2" data-grade-panel="${g}">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-xs text-slate-700">Grade ${g} <span class="text-[9px] font-semibold text-slate-400 uppercase">(${ttLevelOfGrade(g)})</span></span>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <span class="text-[9px] font-semibold text-slate-500 uppercase">Has Streams</span>
+                            <input type="checkbox" class="toggle toggle-xs toggle-primary tt-stream-toggle" data-grade="${g}" />
+                        </label>
+                    </div>
+                    <div class="tt-stream-editor hidden space-y-2 pt-1.5 border-t border-slate-100" data-grade="${g}">
+                        <div class="flex gap-1.5">
+                            <input type="text" class="input input-bordered input-xs flex-1 tt-stream-input" data-grade="${g}" placeholder="e.g. North" />
+                            <button type="button" class="btn btn-xs btn-outline tt-stream-add" data-grade="${g}">+ Add</button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 tt-stream-chips" data-grade="${g}"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            ttResetDownstream();
+        });
+
+        ttGradeStreamConfig.addEventListener('change', (e) => {
+            if (e.target.classList.contains('tt-stream-toggle')) {
+                const g = e.target.getAttribute('data-grade');
+                const editor = ttGradeStreamConfig.querySelector(`.tt-stream-editor[data-grade="${g}"]`);
+                editor.classList.toggle('hidden', !e.target.checked);
+                if (!e.target.checked) ttStreamsMap[g] = [];
+                ttRenderStreamChips(g);
+            }
+        });
+
+        function ttRenderStreamChips(g) {
+            const chipBox = ttGradeStreamConfig.querySelector(`.tt-stream-chips[data-grade="${g}"]`);
+            if (!chipBox) return;
+            const list = ttStreamsMap[g] || [];
+            chipBox.innerHTML = list.map((s, i) => `
+                <span class="badge badge-sm bg-slate-800 text-white gap-1.5 font-semibold border-none">${g} ${s}
+                    <button type="button" class="tt-stream-remove font-bold" data-grade="${g}" data-idx="${i}">✕</button>
+                </span>
+            `).join('');
+        }
+
+        function ttAddStream(g) {
+            const input = ttGradeStreamConfig.querySelector(`.tt-stream-input[data-grade="${g}"]`);
+            const val = input.value.trim();
+            if (!val) return;
+            ttStreamsMap[g] = ttStreamsMap[g] || [];
+            ttStreamsMap[g].push(val);
+            input.value = '';
+            ttRenderStreamChips(g);
+        }
+
+        ttGradeStreamConfig.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tt-stream-add')) {
+                ttAddStream(e.target.getAttribute('data-grade'));
+            }
+            if (e.target.classList.contains('tt-stream-remove')) {
+                const g = e.target.getAttribute('data-grade');
+                const idx = parseInt(e.target.getAttribute('data-idx'));
+                ttStreamsMap[g].splice(idx, 1);
+                ttRenderStreamChips(g);
+            }
+        });
+
+        ttGradeStreamConfig.addEventListener('keydown', (e) => {
+            if (e.target.classList.contains('tt-stream-input') && e.key === 'Enter') {
+                e.preventDefault();
+                ttAddStream(e.target.getAttribute('data-grade'));
+            }
+        });
+
+        // --- STEP 2: Build the subject / teacher-code entry grid ---
+        function ttDefaultPeriods(subjectName, tier) {
+            const trimmed = subjectName.trim();
+            const tierDefaults = TT_DEFAULT_PERIODS[tier];
+            if (tierDefaults && tierDefaults[trimmed] !== undefined) return tierDefaults[trimmed];
+            if (trimmed.toUpperCase() === 'PPI') return 1;
+            return TT_CORE_SUBJECTS.includes(trimmed) ? 6 : 4;
+        }
+
+        ttBuildGridBtn.addEventListener('click', async () => {
+            const level = ttLevelSelect.value;
+            if (!level) return alert("Select a School Level first!");
+            const grades = TT_GRADE_RANGES[level];
+
+            ttBuildGridBtn.disabled = true;
+            ttBuildGridBtn.innerText = "Loading Subjects...";
+
+            try {
+                const { data: allSubjects, error } = await _supabase.from('subjects').select('*').order('subject_name');
+                if (error) throw error;
+
+                ttClasses = [];
+                grades.forEach(g => {
+                    const tier = getGradeTier(g);
+                    const allowed = CBC_SUBJECT_TIERS[tier] || [];
+                    const gradeSubjects = (allSubjects || []).filter(s => allowed.includes(s.subject_name.trim()));
+                    const streams = (ttStreamsMap[g] && ttStreamsMap[g].length) ? ttStreamsMap[g] : [null];
+
+                    streams.forEach(stream => {
+                        const key = stream ? `G${g}_${stream.replace(/\s+/g, '_')}` : `G${g}`;
+                        const label = stream ? `Grade ${g} ${stream}` : `Grade ${g}`;
+                        ttClasses.push({
+                            grade: g,
+                            stream,
+                            key,
+                            label,
+                            tier,
+                            level: ttLevelOfGrade(g),
+                            subjects: gradeSubjects.map(s => ({
+                                name: s.subject_name,
+                                code: '',
+                                periodsPerWeek: ttDefaultPeriods(s.subject_name, tier)
+                            }))
+                        });
+                    });
+                });
+
+                if (ttClasses.every(c => c.subjects.length === 0)) {
+                    alert("No matching subjects found in the database for these grades yet. Add subjects first under Manage Learning Areas.");
+                }
+
+                ttRenderEntryGrid();
+                ttEntryGridContainer.classList.remove('hidden');
+                ttGenerateBtn.classList.remove('hidden');
+                ttPreviewContainer.classList.add('hidden');
+                ttPreviewContainer.innerHTML = '';
+                ttConflictsBox.classList.add('hidden');
+                ttDownloadPrimaryBtn.classList.add('hidden');
+                ttDownloadJuniorBtn.classList.add('hidden');
+            } catch (err) {
+                alert("Error loading subjects: " + err.message);
+            } finally {
+                ttBuildGridBtn.disabled = false;
+                ttBuildGridBtn.innerText = "📋 Load Subjects & Build Entry Grid";
+            }
+        });
+
+        function ttRenderEntryGrid() {
+            ttEntryGridContainer.innerHTML = ttClasses.map(cls => `
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/60" data-class-card="${cls.key}">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="font-bold text-sm text-slate-900">${cls.label}</span>
+                        <span class="badge badge-ghost badge-xs uppercase font-bold">${cls.level} &bull; ${cls.subjects.length} subjects</span>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 text-[9px] font-bold uppercase text-slate-400 px-1 mb-1">
+                        <span class="col-span-5">Subject</span>
+                        <span class="col-span-4">Teacher Code</span>
+                        <span class="col-span-3">Lessons / Wk</span>
+                    </div>
+                    <div class="space-y-1.5">
+                    ${cls.subjects.map((sub, i) => `
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <span class="col-span-5 text-xs font-semibold text-slate-700">${sub.name}</span>
+                            <input type="text" class="col-span-4 input input-bordered input-xs tt-teacher-code uppercase" data-class="${cls.key}" data-idx="${i}" placeholder="e.g. JM" value="${sub.code}" />
+                            <input type="number" min="1" max="15" class="col-span-3 input input-bordered input-xs tt-periods-week" data-class="${cls.key}" data-idx="${i}" value="${sub.periodsPerWeek}" />
+                        </div>
+                    `).join('')}
+                    ${cls.subjects.length === 0 ? '<p class="text-[10px] text-slate-400 italic text-center py-2">No subjects registered for this grade yet.</p>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        ttEntryGridContainer.addEventListener('input', (e) => {
+            const key = e.target.getAttribute('data-class');
+            if (!key) return;
+            const idx = parseInt(e.target.getAttribute('data-idx'));
+            const cls = ttClasses.find(c => c.key === key);
+            if (!cls || !cls.subjects[idx]) return;
+            if (e.target.classList.contains('tt-teacher-code')) {
+                cls.subjects[idx].code = e.target.value.trim().toUpperCase();
+            } else if (e.target.classList.contains('tt-periods-week')) {
+                cls.subjects[idx].periodsPerWeek = parseInt(e.target.value) || 1;
+            }
+        });
+
+        // --- STEP 3: Build time slots (lessons + breaks) for a given grade, per fixed tier block plan ---
+        function ttBuildTimeSlots(grade) {
+            const level = ttLevelOfGrade(grade);
+            const duration = ttLessonDuration(grade);
+            const plan = level === 'primary' ? ttPrimaryBlockPlan() : ttJuniorBlockPlan();
+
+            let cursor = TT_BLOCK_START_MIN;
+            let period = 0;
+            const slots = [];
+            plan.forEach(block => {
+                if (block.type === 'lesson') {
+                    for (let i = 0; i < block.count; i++) {
+                        period++;
+                        const start = cursor;
+                        const end = start + duration;
+                        slots.push({ type: 'lesson', period, start, end });
+                        cursor = end;
+                    }
+                } else {
+                    const start = cursor;
+                    const end = start + block.minutes;
+                    slots.push({ type: block.type, start, end, label: block.label });
+                    cursor = end;
+                }
+            });
+            return slots;
+        }
+
+        // --- STEP 4: Generate schedule (greedy allocator, Maths/English balanced first) ---
+        function ttGenerateSchedule() {
+            const teacherBusy = {}; // "day-period" -> Set(code)
+            const conflicts = [];
+
+            function slotKey(day, period) { return `${day}-${period}`; }
+            function isTeacherFree(day, period, code) {
+                if (!code) return true;
+                const key = slotKey(day, period);
+                return !teacherBusy[key] || !teacherBusy[key].has(code);
+            }
+            function markTeacherBusy(day, period, code) {
+                if (!code) return;
+                const key = slotKey(day, period);
+                if (!teacherBusy[key]) teacherBusy[key] = new Set();
+                teacherBusy[key].add(code);
+            }
+
+            ttClasses.forEach(cls => {
+                const periodsPerDay = ttLessonsPerDay(cls.level);
+                const grid = {};
+                TT_DAYS.forEach(d => { grid[d] = {}; for (let p = 1; p <= periodsPerDay; p++) grid[d][p] = null; });
+
+                let workingSubjects = [...cls.subjects];
+
+                // PPI: Primary ALWAYS runs it as the first lesson on Friday, in every grade/stream — this is a
+                // fixed CBC primary rule, not optional, so it is pinned even if the subject list didn't
+                // include it or its teacher code looks busy elsewhere (a warning is logged in that case so
+                // the admin can adjust codes, but the slot is never left blank or skipped).
+                if (cls.level === 'primary') {
+                    const ppiIdx = workingSubjects.findIndex(s => s.name.trim().toUpperCase() === 'PPI');
+                    const ppiSub = ppiIdx !== -1 ? workingSubjects[ppiIdx] : { name: 'PPI', code: '', periodsPerWeek: 1 };
+                    if (ppiIdx !== -1) workingSubjects.splice(ppiIdx, 1);
+
+                    if (!isTeacherFree('FRI', 1, ppiSub.code)) {
+                        conflicts.push(`${cls.label}: PPI teacher code "${ppiSub.code || 'unassigned'}" is already teaching another class at Friday period 1 — PPI is pinned there anyway per the fixed primary rule; please double-check that code.`);
+                    }
+                    grid['FRI'][1] = { name: ppiSub.name, code: ppiSub.code };
+                    markTeacherBusy('FRI', 1, ppiSub.code);
+                } else if (cls.level === 'junior') {
+                    workingSubjects = workingSubjects.filter(s => s.name.trim().toUpperCase() !== 'PPI');
+                }
+
+                const orderedSubjects = workingSubjects.sort((a, b) => {
+                    const aCore = TT_CORE_SUBJECTS.includes(a.name) ? 0 : 1;
+                    const bCore = TT_CORE_SUBJECTS.includes(b.name) ? 0 : 1;
+                    if (aCore !== bCore) return aCore - bCore;
+                    return b.periodsPerWeek - a.periodsPerWeek;
+                });
+
+                let dayCursorOffset = 0;
+
+                orderedSubjects.forEach(sub => {
+                    const isCore = TT_CORE_SUBJECTS.includes(sub.name);
+                    const cannotStartDay = TT_NO_FIRST_PERIOD_SUBJECTS.includes(sub.name.trim());
+                    let placed = 0;
+                    let attempts = 0;
+                    const maxAttempts = periodsPerDay * TT_DAYS.length * 6;
+
+                    const earlyPeriods = [1, 2, 3].filter(p => p <= periodsPerDay);
+                    const latePeriods = [];
+                    for (let p = 1; p <= periodsPerDay; p++) if (!earlyPeriods.includes(p)) latePeriods.push(p);
+                    let periodOrder = isCore ? [...earlyPeriods, ...latePeriods] : [...latePeriods, ...earlyPeriods];
+                    // Subjects like Creative Arts can never open the day — strip period 1 from consideration.
+                    if (cannotStartDay) periodOrder = periodOrder.filter(p => p !== 1);
+
+                    while (placed < sub.periodsPerWeek && attempts < maxAttempts) {
+                        attempts++;
+                        const dayIdx = (dayCursorOffset + placed + attempts) % TT_DAYS.length;
+                        const day = TT_DAYS[dayIdx];
+
+                        const alreadyThisDay = Object.values(grid[day]).some(cell => cell && cell.name === sub.name);
+                        if (alreadyThisDay && sub.periodsPerWeek <= TT_DAYS.length) {
+                            continue;
+                        }
+
+                        let foundPeriod = null;
+                        for (const p of periodOrder) {
+                            if (grid[day][p] === null && isTeacherFree(day, p, sub.code)) {
+                                foundPeriod = p;
+                                break;
+                            }
+                        }
+
+                        if (foundPeriod) {
+                            grid[day][foundPeriod] = { name: sub.name, code: sub.code };
+                            markTeacherBusy(day, foundPeriod, sub.code);
+                            placed++;
+                            dayCursorOffset++;
+                        }
+                    }
+
+                    if (placed < sub.periodsPerWeek) {
+                        conflicts.push(`${cls.label}: only placed ${placed}/${sub.periodsPerWeek} lessons for "${sub.name}" (teacher code "${sub.code || 'unassigned'}" may be double-booked, or there aren't enough free slots — try raising Lessons Per Day or checking for shared teacher codes across classes).`);
+                    }
+                });
+
+                // --- Fill-blanks pass: the weekly lesson totals are designed to exactly fill every slot,
+                // so any gap left after the pass above is purely a teacher-code clash. Rather than leave a
+                // blank cell, hand that slot to the next best free-teacher-code subject — Maths/English are
+                // tried first, but any subject may fill in (never a subject barred from period 1, e.g.
+                // Creative Arts). This guarantees zero blank cells across the whole primary/junior table.
+                const fillPriority = [...cls.subjects]
+                    .filter(s => s.name.trim().toUpperCase() !== 'PPI')
+                    .sort((a, b) => {
+                        const aCore = TT_CORE_SUBJECTS.includes(a.name) ? 0 : 1;
+                        const bCore = TT_CORE_SUBJECTS.includes(b.name) ? 0 : 1;
+                        return aCore - bCore;
+                    });
+
+                TT_DAYS.forEach(day => {
+                    for (let p = 1; p <= periodsPerDay; p++) {
+                        if (grid[day][p] !== null) continue;
+
+                        const eligible = fillPriority.filter(s =>
+                            !(p === 1 && TT_NO_FIRST_PERIOD_SUBJECTS.includes(s.name.trim()))
+                        );
+
+                        // Prefer a subject not already used that day; fall back to any free-code subject
+                        // (even a repeat, or — as a last resort — one normally barred from period 1) rather
+                        // than leave the slot empty.
+                        let choice = eligible.find(s => isTeacherFree(day, p, s.code) &&
+                            !Object.values(grid[day]).some(cell => cell && cell.name === s.name));
+                        if (!choice) choice = eligible.find(s => isTeacherFree(day, p, s.code));
+                        if (!choice) choice = fillPriority.find(s => isTeacherFree(day, p, s.code));
+
+                        if (choice) {
+                            grid[day][p] = { name: choice.name, code: choice.code };
+                            markTeacherBusy(day, p, choice.code);
+                        } else {
+                            conflicts.push(`${cls.label}: left ${TT_DAY_LABELS[day]} period ${p} unfilled — every subject's teacher code is already busy at that exact time.`);
+                        }
+                    }
+                });
+
+                cls.grid = grid;
+                cls.timeSlots = ttBuildTimeSlots(cls.grade);
+            });
+
+            return conflicts;
+        }
+
+        // --- STEP 5: Render on-screen preview ---
+        function ttFormatCell(cell) {
+            if (!cell) return '<span class="text-slate-300">&mdash;</span>';
+            const shorthand = getSubjectShorthand(cell.name);
+            return `<div class="font-bold">${shorthand}</div><div class="text-[8px] text-slate-500">${cell.code || '&mdash;'}</div>`;
+        }
+
+        // Order the classes of a tier into flat rows: grade ascending, streams in the order added
+        function ttTierRows(level) {
+            const classesInTier = ttClasses.filter(c => c.level === level && c.grid);
+            const grades = [...new Set(classesInTier.map(c => c.grade))].sort((a, b) => a - b);
+            const rows = [];
+            grades.forEach(g => classesInTier.filter(c => c.grade === g).forEach(c => rows.push(c)));
+            return rows;
+        }
+
+        // --- STEP 5: Render on-screen preview — ONE block table per tier (Primary, Junior School) ---
+        function ttRenderTierTable(level) {
+            const gradeRows = ttTierRows(level);
+            if (!gradeRows.length) return '';
+            const numRows = gradeRows.length;
+            const slots = ttBuildTimeSlots(gradeRows[0].grade);
+
+            const headerCells = slots.map(slot => {
+                const narrowCls = slot.type !== 'lesson' ? ' w-6 max-w-[24px]' : '';
+                return `<th class="border border-slate-300 px-1 py-1 text-[8px] font-bold uppercase text-slate-500 text-center whitespace-nowrap${narrowCls}">${ttMinutesToLabel(slot.start)}<br>${ttMinutesToLabel(slot.end)}</th>`;
+            }).join('');
+
+            let bodyRows = '';
+            TT_DAYS.forEach((day, dayIdx) => {
+                gradeRows.forEach((cls, rowIdxInDay) => {
+                    bodyRows += '<tr>';
+                    if (rowIdxInDay === 0) {
+                        bodyRows += `<td rowspan="${numRows}" class="border border-slate-300 bg-slate-800 text-white px-2 py-1 text-[10px] font-bold text-center align-middle uppercase">${TT_DAY_LABELS[day]}</td>`;
+                    }
+                    bodyRows += `<td class="border border-slate-300 bg-slate-100 px-2 py-1 text-[9px] font-bold text-center align-middle whitespace-nowrap">${cls.label.toUpperCase()}</td>`;
+                    slots.forEach(slot => {
+                        if (slot.type === 'lesson') {
+                            bodyRows += `<td class="border border-slate-300 px-1 py-1 text-[10px] text-center align-middle">${ttFormatCell(cls.grid[day][slot.period])}</td>`;
+                        } else if (rowIdxInDay === 0) {
+                            // Narrow column: spell BREAK / LUNCH / GAMES vertically, one letter per day
+                            // (MON-FRI = 5 rows = 5 letters) instead of repeating the full word each day.
+                            const letter = (slot.label && slot.label.length === TT_DAYS.length) ? slot.label.charAt(dayIdx) : slot.label;
+                            bodyRows += `<td rowspan="${numRows}" class="border border-slate-300 bg-amber-50 w-6 max-w-[24px] px-0.5 py-1 text-[10px] font-black text-amber-700 text-center align-middle uppercase">${letter}</td>`;
+                        }
+                    });
+                    bodyRows += '</tr>';
+                });
+            });
+
+            const tierLabel = level === 'primary' ? 'Primary Block Time Table (Grade 4 &ndash; 6)' : 'Junior School Block Time Table (Grade 7 &ndash; 9)';
+
+            return `
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+                <div class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between flex-wrap gap-1">
+                    <span class="font-bold text-xs uppercase tracking-wide">${tierLabel}</span>
+                    <span class="text-[9px] font-semibold text-amber-400 uppercase">${ttLessonDuration(gradeRows[0].grade)} min / lesson</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th class="border border-slate-300 px-2 py-1.5 text-[9px] font-bold uppercase text-slate-500">Day</th>
+                                <th class="border border-slate-300 px-2 py-1.5 text-[9px] font-bold uppercase text-slate-500">Class</th>
+                                ${headerCells}
+                            </tr>
+                        </thead>
+                        <tbody>${bodyRows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
+
+        function ttRenderPreview() {
+            const parts = [];
+            if (ttClasses.some(c => c.level === 'primary')) parts.push(ttRenderTierTable('primary'));
+            if (ttClasses.some(c => c.level === 'junior')) parts.push(ttRenderTierTable('junior'));
+            ttPreviewContainer.innerHTML = parts.join('');
+        }
+
+        ttGenerateBtn.addEventListener('click', () => {
+            if (!ttClasses.length) return alert("Build the entry grid first!");
+
+            const missing = [];
+            ttClasses.forEach(cls => cls.subjects.forEach(s => { if (!s.code) missing.push(`${cls.label}: ${s.name}`); }));
+            if (missing.length && !confirm(`${missing.length} subject(s) have no teacher code assigned yet and will appear unassigned on the time table. Continue anyway?`)) {
+                return;
+            }
+
+            ttGenerateBtn.disabled = true;
+            ttGenerateBtn.innerText = "Generating...";
+
+            setTimeout(() => {
+                try {
+                    const conflicts = ttGenerateSchedule();
+                    ttRenderPreview();
+
+                    if (conflicts.length) {
+                        ttConflictsBox.innerHTML = `<p class="font-bold mb-1">⚠️ ${conflicts.length} Scheduling Notice(s):</p><ul class="list-disc list-inside space-y-0.5">${conflicts.map(c => `<li>${c}</li>`).join('')}</ul>`;
+                        ttConflictsBox.classList.remove('hidden');
+                    } else {
+                        ttConflictsBox.classList.add('hidden');
+                        ttConflictsBox.innerHTML = '';
+                    }
+
+                    ttPreviewContainer.classList.remove('hidden');
+
+                    const level = ttLevelSelect.value;
+                    ttDownloadPrimaryBtn.classList.toggle('hidden', level === 'junior');
+                    ttDownloadJuniorBtn.classList.toggle('hidden', level === 'primary');
+                } finally {
+                    ttGenerateBtn.disabled = false;
+                    ttGenerateBtn.innerText = "⚙️ Generate Time Table";
+                }
+            }, 30);
+        });
+
+        // --- STEP 6: Professional PDF export (vector, jsPDF autoTable) — one consolidated block table per tier ---
+        function ttBuildPdfForTier(level) {
+            const gradeRows = ttTierRows(level);
+            if (!gradeRows.length) {
+                return alert(`No ${level === 'primary' ? 'primary' : 'junior school'} classes generated yet — click Generate Time Table first.`);
+            }
+            const numRows = gradeRows.length;
+            const slots = ttBuildTimeSlots(gradeRows[0].grade);
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+            const schoolTitle = document.getElementById('school-title').innerText.trim().toUpperCase() || "BETHANIA ACADEMY";
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            const drawHeader = () => {
+                doc.setDrawColor(245, 158, 11);
+                doc.setLineWidth(1.75);
+                doc.line(30, 20, pageWidth - 30, 20);
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(15, 23, 42);
+                doc.text(schoolTitle, pageWidth / 2, 36, { align: "center" });
+
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(180, 83, 9);
+                doc.text("OFFICIAL BLOCK TIME TABLE", pageWidth / 2, 48, { align: "center" });
+
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(51, 65, 85);
+                doc.text(`${level === 'primary' ? 'PRIMARY SCHOOL (GRADE 4 - 6)' : 'JUNIOR SCHOOL (GRADE 7 - 9)'}  \u2022  ${ttLessonDuration(gradeRows[0].grade)} MIN / LESSON`, pageWidth / 2, 62, { align: "center" });
+
+                doc.setDrawColor(203, 213, 225);
+                doc.setLineWidth(0.75);
+                doc.line(30, 70, pageWidth - 30, 70);
+            };
+
+            const headRow = ["DAY", "CLASS", ...slots.map(s => `${ttMinutesToLabel(s.start)}\n${ttMinutesToLabel(s.end)}`)];
+
+            // Narrow column widths for BREAK / LUNCH / GAMES columns (index offset by DAY + CLASS columns).
+            const columnStyles = {};
+            slots.forEach((slot, i) => {
+                if (slot.type !== 'lesson') {
+                    columnStyles[i + 2] = { cellWidth: 16, fontStyle: 'bold', fillColor: [254, 243, 199], textColor: [146, 64, 14] };
+                }
+            });
+
+            const bodyRows = [];
+            TT_DAYS.forEach((day, dayIdx) => {
+                gradeRows.forEach((cls, rowIdxInDay) => {
+                    const row = [];
+                    if (rowIdxInDay === 0) {
+                        row.push({ content: TT_DAY_LABELS[day], rowSpan: numRows, styles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', valign: 'middle' } });
+                    }
+                    row.push({ content: cls.label.toUpperCase(), styles: { fillColor: [241, 245, 249], fontStyle: 'bold', valign: 'middle' } });
+                    slots.forEach(slot => {
+                        if (slot.type === 'lesson') {
+                            const cell = cls.grid[day][slot.period];
+                            row.push(cell ? `${getSubjectShorthand(cell.name)}\n(${cell.code || 'TBA'})` : '-');
+                        } else if (rowIdxInDay === 0) {
+                            // Narrow column: spell BREAK / LUNCH / GAMES vertically, one letter per day
+                            // (MON-FRI = 5 rows = 5 letters) instead of repeating the full word each day.
+                            const letter = (slot.label && slot.label.length === TT_DAYS.length) ? slot.label.charAt(dayIdx) : slot.label;
+                            row.push({ content: letter, rowSpan: numRows, styles: { fillColor: [254, 243, 199], textColor: [146, 64, 14], fontStyle: 'bold', valign: 'middle' } });
+                        }
+                    });
+                    bodyRows.push(row);
+                });
+            });
+
+            doc.autoTable({
+                head: [headRow],
+                body: bodyRows,
+                startY: 78,
+                margin: { left: 30, right: 30, top: 78, bottom: 40 },
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 7,
+                    cellPadding: 3,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineColor: [203, 213, 225],
+                    lineWidth: 0.5,
+                    textColor: [15, 23, 42],
+                    minCellHeight: 18
+                },
+                headStyles: {
+                    fillColor: [15, 23, 42],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 7.5
+                },
+                columnStyles: columnStyles,
+                didDrawPage: drawHeader
+            });
+
+            const rawFinalY = doc.lastAutoTable.finalY + 26;
+            const finalY = Math.min(rawFinalY, pageHeight - 24);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            doc.text("Prepared by: ____________________________", 30, finalY);
+            doc.text("Head Teacher's Signature: ____________________________", pageWidth - 30, finalY, { align: 'right' });
+
+            const levelLabel = level === 'primary' ? 'Primary' : 'Junior_School';
+            const fname = `${schoolTitle.replace(/\s+/g, '_')}_${levelLabel}_BlockTimeTable.pdf`;
+            doc.save(fname);
+        }
+
+        ttDownloadPrimaryBtn.addEventListener('click', () => ttBuildPdfForTier('primary'));
+        ttDownloadJuniorBtn.addEventListener('click', () => ttBuildPdfForTier('junior'));
+    </script>
+</body>
+</html>
