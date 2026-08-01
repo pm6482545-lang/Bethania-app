@@ -410,53 +410,60 @@
                 </div>
             </section>
 
-            <!-- 🗓️ BLOCK TIMETABLE GENERATOR ENGINE -->
-            <section class="card bg-white shadow-md border border-slate-200/60">
-                <div class="card-body p-5 sm:p-6">
-                    <div class="flex items-center gap-2.5 mb-2">
-                        <span class="text-xl">🗓️</span>
-                        <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Create Block Timetable Generator</h2>
-                    </div>
-                    <p class="text-xs text-slate-500">Configure grade structures, map database learning areas, and assign teacher codes to build automated block schedules[span_6](start_span)[span_6](end_span). Starting time: 08:20 AM. Primary: 35 mins | Junior: 40 mins per lesson[span_7](start_span)[span_7](end_span).</p>
+        <!-- 🗓️ BLOCK TIMETABLE GENERATOR ENGINE -->
+<section class="card bg-white shadow-md border border-slate-200/60">
+    <div class="card-body p-5 sm:p-6">
+        <div class="flex items-center gap-2.5 mb-2">
+            <span class="text-xl">🗓️</span>
+            <h2 class="card-title text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">Create Block Timetable Generator</h2>
+        </div>
+        <p class="text-xs text-slate-500">Configure grade structures, map database learning areas, and assign teacher codes across active streams to build automated block schedules. Starting time: 08:20 AM. Primary: 35 mins | Junior: 40 mins per lesson.</p>
 
-                    <div class="divider my-2"></div>
+        <div class="divider my-2"></div>
 
-                    <!-- School Tier Selection -->
-                    <div class="form-control max-w-md bg-slate-50/80 p-4 rounded-xl border border-slate-200 mb-4">
-                        <label class="label-text font-bold text-xs text-slate-600 uppercase tracking-wider mb-2 block">1. Target School Tier Scope</label>
-                        <select id="tt-tier-scope" class="select select-bordered select-sm w-full font-semibold focus:outline-none">
-                            <option value="" disabled selected>Select Scope Options...</option>
-                            <option value="primary">Primary School (Grades 4 - 6)</option>
-                            <option value="junior">Junior School (Grades 7 - 9)</option>
-                            <option value="both">Both Primary & Junior School (Grades 4 - 9)</option>
-                        </select>
-                    </div>
+        <!-- Tier Scope & Streams Configuration Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200 mb-4">
+            <div class="form-control">
+                <label class="label-text font-bold text-xs text-slate-600 uppercase tracking-wider mb-2 block">1. Target School Tier Scope</label>
+                <select id="tt-tier-scope" class="select select-bordered select-sm w-full font-semibold focus:outline-none">
+                    <option value="" disabled selected>Select Scope Options...</option>
+                    <option value="primary">Primary School (Grades 4 - 6)</option>
+                    <option value="junior">Junior School (Grades 7 - 9)</option>
+                    <option value="both">Both Primary & Junior School (Grades 4 - 9)</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <label class="label-text font-bold text-xs text-slate-600 uppercase tracking-wider mb-2 block">2. Class Streams (Comma Separated)</label>
+                <input type="text" id="tt-streams-input" placeholder="e.g. North, South (Leave blank if single stream)" class="input input-bordered input-sm w-full font-medium focus:outline-none focus:border-slate-400" />
+            </div>
+        </div>
 
-                    <!-- Dynamic Mapping Matrix Area -->
-                    <div id="tt-mapping-wrapper" class="hidden space-y-4">
-                        <div class="bg-amber-50/80 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs space-y-1">
-                            <p class="font-bold">📋 Subject & Teacher Assignment Matrix</p>
-                            <p class="text-[11px] opacity-90">Select subjects for each grade tier. Input unique staff codes (e.g., TR01, TR02) to map teacher assignments across the schedule[span_8](start_span)[span_8](end_span).</p>
-                        </div>
+        <!-- Dynamic Mapping Matrix Area -->
+        <div id="tt-mapping-wrapper" class="hidden space-y-4">
+            <div class="bg-amber-50/80 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs space-y-1">
+                <p class="font-bold">📋 Subject & Teacher Assignment Matrix</p>
+                <p class="text-[11px] opacity-90">Select subjects for each grade and stream. Input unique staff codes (e.g., TR01, TR02) to map teacher assignments across streams to avoid scheduling conflicts.</p>
+            </div>
 
-                        <div id="tt-grades-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <!-- Populated dynamically via JavaScript -->
-                        </div>
+            <div id="tt-grades-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Populated dynamically via JavaScript for Grades & Streams -->
+            </div>
 
-                        <!-- Action Controls -->
-                        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-slate-100">
-                            <button id="btn-generate-tt-matrix" class="btn btn-sm btn-neutral text-white font-bold w-full sm:w-auto shadow-sm">
-                                ⚙️ Compile Block Timetable Engine
-                            </button>
-                            
-                            <!-- Dynamic Export Button Panel -->
-                            <div id="tt-download-actions" class="flex gap-2 w-full sm:w-auto justify-end">
-                                <!-- Download buttons dynamically rendered here -->
-                            </div>
-                        </div>
-                    </div>
+            <!-- Action Controls -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-slate-100">
+                <button id="btn-generate-tt-matrix" class="btn btn-sm btn-neutral text-white font-bold w-full sm:w-auto shadow-sm">
+                    ⚙️ Compile Block Timetable Engine
+                </button>
+                
+                <!-- Dynamic Export Button Panel -->
+                <div id="tt-download-actions" class="flex gap-2 w-full sm:w-auto justify-end">
+                    <!-- Download buttons dynamically rendered here -->
                 </div>
-            </section>
+            </div>
+        </div>
+    </div>
+</section>
+
 
             <!-- THREE-COLUMN ACTION LAYOUT -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1353,42 +1360,64 @@
         });
 
         // 🗓️ TIMETABLE MATRIX GENERATION & RENDER LOGIC
-        ttTierScope.addEventListener('change', () => {
+                // Timetable Control Elements
+        const ttTierScope = document.getElementById('tt-tier-scope');
+        const ttStreamsInput = document.getElementById('tt-streams-input');
+        const ttMappingWrapper = document.getElementById('tt-mapping-wrapper');
+        const ttGradesContainer = document.getElementById('tt-grades-container');
+        const btnGenerateTtMatrix = document.getElementById('btn-generate-tt-matrix');
+        const ttDownloadActions = document.getElementById('tt-download-actions');
+
+        // Function to render dynamic Grade and Stream matrix elements
+        function renderTimetableMatrix() {
             const scope = ttTierScope.value;
             if (!scope) return;
+
+            // Parse keyed stream inputs (e.g. "North, South" -> ["North", "South"])
+            const rawStreams = ttStreamsInput.value.split(',').map(s => s.trim()).filter(Boolean);
+            const streamList = rawStreams.length > 0 ? rawStreams : [""];
 
             let targetGrades = [];
             if (scope === 'primary') targetGrades = [4, 5, 6];
             else if (scope === 'junior') targetGrades = [7, 8, 9];
             else if (scope === 'both') targetGrades = [4, 5, 6, 7, 8, 9];
 
-            ttGradesContainer.innerHTML = targetGrades.map(g => {
+            let htmlContent = "";
+
+            targetGrades.forEach(g => {
                 const tier = getGradeTier(g);
                 const allowed = CBC_SUBJECT_TIERS[tier] || [];
                 const gradeSubs = globalSubjectsCache.filter(s => allowed.includes(s.subject_name.trim()));
 
-                return `
-                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3" data-tt-grade="${g}">
-                        <div class="flex items-center justify-between border-b pb-2">
-                            <span class="font-extrabold text-xs uppercase tracking-wider text-slate-800">Grade ${g} Settings</span>
-                            <span class="badge badge-neutral text-[9px] font-bold uppercase">${tier.replace('_', ' ')}</span>
-                        </div>
-                        <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
-                            ${gradeSubs.map(sub => `
-                                <div class="flex items-center justify-between bg-white p-2 rounded border border-slate-100 text-xs">
-                                    <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700 truncate max-w-[180px]">
-                                        <input type="checkbox" class="tt-sub-check checkbox checkbox-xs checkbox-primary" data-sub-name="${sub.subject_name}" checked />
-                                        <span class="truncate">${sub.subject_name}</span>
-                                    </label>
-                                    <input type="text" placeholder="Tr Code (e.g. TR01)" class="tt-tr-code input input-bordered input-xs w-28 font-mono text-[11px]" />
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                streamList.forEach(st => {
+                    const streamLabel = st ? ` ${st}` : "";
+                    const fullGradeKey = `${g}${st ? '_' + st : ''}`;
 
-            // Update Dynamic Action Download Buttons Visibility Based on Scope Choice
+                    htmlContent += `
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3" data-tt-grade-key="${fullGradeKey}" data-grade="${g}" data-stream="${st}">
+                            <div class="flex items-center justify-between border-b pb-2">
+                                <span class="font-extrabold text-xs uppercase tracking-wider text-slate-800">Grade ${g}${streamLabel} Settings</span>
+                                <span class="badge badge-neutral text-[9px] font-bold uppercase">${tier.replace('_', ' ')}</span>
+                            </div>
+                            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                ${gradeSubs.map(sub => `
+                                    <div class="flex items-center justify-between bg-white p-2 rounded border border-slate-100 text-xs">
+                                        <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700 truncate max-w-[180px]">
+                                            <input type="checkbox" class="tt-sub-check checkbox checkbox-xs checkbox-primary" data-sub-name="${sub.subject_name}" checked />
+                                            <span class="truncate">${sub.subject_name}</span>
+                                        </label>
+                                        <input type="text" placeholder="Tr Code (e.g. TR01)" class="tt-tr-code input input-bordered input-xs w-28 font-mono text-[11px]" />
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            ttGradesContainer.innerHTML = htmlContent;
+
+            // Update Dynamic Action Download Buttons
             ttDownloadActions.innerHTML = '';
             if (scope === 'primary') {
                 ttDownloadActions.innerHTML = `<button onclick="exportTimetablePDF('primary')" id="btn-dl-primary-tt" class="btn btn-sm btn-primary text-white font-bold" disabled>📥 Download Primary Timetable</button>`;
@@ -1402,7 +1431,10 @@
             }
 
             ttMappingWrapper.classList.remove('hidden');
-        });
+        }
+
+        ttTierScope.addEventListener('change', renderTimetableMatrix);
+        ttStreamsInput.addEventListener('input', renderTimetableMatrix);
 
         // Time Increment Helper Function
         function addMinutesToTime(timeStr, minsToAdd) {
@@ -1413,17 +1445,22 @@
             return `${hh}:${mm}`;
         }
 
-        // BLOCK TIMETABLE COMPILATION ALGORITHM
+        // BLOCK TIMETABLE COMPILATION ALGORITHM (WITH STREAM HANDLING)
         btnGenerateTtMatrix.addEventListener('click', () => {
             const scope = ttTierScope.value;
             if (!scope) return alert("Select target school tier scope first!");
 
-            const gradeCards = ttGradesContainer.querySelectorAll('[data-tt-grade]');
+            const gradeCards = ttGradesContainer.querySelectorAll('[data-tt-grade-key]');
             const timetableData = {};
+            const classKeys = [];
 
-            // Extract User Keyed Mapping Data
+            // Extract Keyed Mapping Data per Grade and Stream
             gradeCards.forEach(card => {
-                const gradeNum = parseInt(card.getAttribute('data-tt-grade'));
+                const key = card.getAttribute('data-tt-grade-key');
+                const gNum = card.getAttribute('data-grade');
+                const stName = card.getAttribute('data-stream');
+                const classLabel = stName ? `Grade ${gNum} (${stName})` : `Grade ${gNum}`;
+
                 const subRows = card.querySelectorAll('.flex.items-center.justify-between');
                 const subjectList = [];
 
@@ -1438,17 +1475,24 @@
                     }
                 });
 
-                timetableData[gradeNum] = subjectList;
+                timetableData[key] = { label: classLabel, subjects: subjectList };
+                classKeys.push(key);
             });
 
             // Schedule Structural Generator Engine
             const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
             
             function buildTierTimetable(gradesArr, lessonDuration) {
+                // Filter targeted keys matching current tier grades
+                const tierClassKeys = classKeys.filter(k => {
+                    const gNum = parseInt(k.split('_')[0]);
+                    return gradesArr.includes(gNum);
+                });
+
                 const daySchedules = {};
                 days.forEach(day => {
                     daySchedules[day] = {};
-                    gradesArr.forEach(g => daySchedules[day][g] = []);
+                    tierClassKeys.forEach(k => daySchedules[day][k] = []);
                 });
 
                 const timeSlots = [];
@@ -1456,7 +1500,7 @@
 
                 // Generate 8 Standard Slots per day with Breaks
                 for (let slotIdx = 0; slotIdx < 8; slotIdx++) {
-                    if (slotIdx === 3) { // Morning Break after 3 lessons
+                    if (slotIdx === 3) { // Tea Break
                         const breakStart = currentTime;
                         const breakEnd = addMinutesToTime(breakStart, 30);
                         timeSlots.push({ isBreak: true, label: "TEA BREAK", start: breakStart, end: breakEnd });
@@ -1474,32 +1518,32 @@
                     currentTime = slotEnd;
                 }
 
-                // Populate Slots Ensuring Maths & English standard initial placement & Zero Teacher Overlaps
+                // Populate Slots & Ensure Zero Teacher Overlaps across streams
                 days.forEach(day => {
-                    const busyTeachersInSlot = {}; // Map slotIndex -> Set of busy teacher codes
+                    const busyTeachersInSlot = {};
 
                     timeSlots.forEach((slot, slotPos) => {
                         if (slot.isBreak) return;
                         busyTeachersInSlot[slotPos] = busyTeachersInSlot[slotPos] || new Set();
 
-                        gradesArr.forEach(g => {
-                            const subPool = timetableData[g] || [];
+                        tierClassKeys.forEach(k => {
+                            const subPool = timetableData[k].subjects || [];
                             if (subPool.length === 0) return;
 
                             let chosenSub = null;
 
-                            // Ensure Mathematics and English appear in early morning blocks (balanced)
+                            // Priority placement for Core subjects in early slots
                             if (slot.slotIdx === 0 || slot.slotIdx === 1) {
                                 const prioritySubject = (slot.slotIdx === 0) ? "Mathematics" : "English";
                                 chosenSub = subPool.find(s => s.name.includes(prioritySubject) && !busyTeachersInSlot[slotPos].has(s.code));
                             }
 
-                            // Fallback to conflict-free subject allocation
+                            // Conflict-free assignment fallback
                             if (!chosenSub) {
                                 chosenSub = subPool.find(s => !busyTeachersInSlot[slotPos].has(s.code));
                             }
 
-                            // Emergency Fallback if all teachers assigned
+                            // Emergency random fallback
                             if (!chosenSub) {
                                 chosenSub = subPool[Math.floor(Math.random() * subPool.length)];
                             }
@@ -1508,7 +1552,7 @@
                                 busyTeachersInSlot[slotPos].add(chosenSub.code);
                             }
 
-                            daySchedules[day][g].push({
+                            daySchedules[day][k].push({
                                 time: `${slot.start} - ${slot.end}`,
                                 subject: getSubjectShorthand(chosenSub.name),
                                 teacherCode: chosenSub.code
@@ -1517,7 +1561,7 @@
                     });
                 });
 
-                return { daySchedules, timeSlots, gradesArr, lessonDuration };
+                return { daySchedules, timeSlots, tierClassKeys, timetableData, lessonDuration };
             }
 
             if (scope === 'primary' || scope === 'both') {
@@ -1531,10 +1575,10 @@
                 if (btn) btn.disabled = false;
             }
 
-            alert("Block Timetable Compiled Successfully! Download your target tier PDF using the action buttons.");
+            alert("Block Timetable Compiled Successfully across all specified streams! Download your target tier PDF using the action buttons.");
         });
 
-        // HIGH-PERFORMANCE VECTOR PDF TIMETABLE EXPORT GENERATOR
+        // HIGH-PERFORMANCE VECTOR PDF TIMETABLE EXPORT GENERATOR (STREAM SUPPORTED)
         function exportTimetablePDF(tierKey) {
             const dataObj = compiledTimetables[tierKey];
             if (!dataObj) return alert("Please compile timetable schedule data first!");
@@ -1542,7 +1586,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
             const schoolTitle = document.getElementById('school-title').innerText.trim().toUpperCase() || "BETHANIA ACADEMY";
-            const tierLabel = tierKey === 'primary' ? "PRIMARY SCHOOL (GRADES 4-6) BLOCK TIMETABLE" : "JUNIOR SCHOOL (GRADES 7-9) BLOCK TIMETABLE";
+            const tierLabel = tierKey === 'primary' ? "PRIMARY SCHOOL BLOCK TIMETABLE" : "JUNIOR SCHOOL BLOCK TIMETABLE";
 
             // Centered Header Drawer
             const drawTtHeader = () => {
@@ -1561,9 +1605,8 @@
             };
 
             let startYPos = 55;
+            const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
 
-            // Generate Day-by-Day Block Schedule Tables
-            days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
             days.forEach((day, dIdx) => {
                 if (dIdx > 0 && startYPos + 100 > doc.internal.pageSize.getHeight()) {
                     doc.addPage();
@@ -1576,7 +1619,7 @@
                 doc.text(`DAY: ${day}`, 30, startYPos);
 
                 const tableHeaders = ["TIME SLOT"];
-                dataObj.gradesArr.forEach(g => tableHeaders.push(`GRADE ${g}`));
+                dataObj.tierClassKeys.forEach(k => tableHeaders.push(dataObj.timetableData[k].label.toUpperCase()));
 
                 const tableRows = [];
                 let lessonIdxCounter = 0;
@@ -1584,12 +1627,12 @@
                 dataObj.timeSlots.forEach(slot => {
                     if (slot.isBreak) {
                         const breakRow = [`${slot.start}-${slot.end}`];
-                        dataObj.gradesArr.forEach(() => breakRow.push(`*** ${slot.label} ***`));
+                        dataObj.tierClassKeys.forEach(() => breakRow.push(`*** ${slot.label} ***`));
                         tableRows.push(breakRow);
                     } else {
                         const row = [`${slot.start}-${slot.end}`];
-                        dataObj.gradesArr.forEach(g => {
-                            const item = dataObj.daySchedules[day][g][lessonIdxCounter];
+                        dataObj.tierClassKeys.forEach(k => {
+                            const item = dataObj.daySchedules[day][k][lessonIdxCounter];
                             row.push(item ? `${item.subject}\n[${item.teacherCode}]` : '-');
                         });
                         tableRows.push(row);
@@ -1605,7 +1648,7 @@
                     theme: 'grid',
                     styles: {
                         font: 'helvetica',
-                        fontSize: 7.5,
+                        fontSize: 7,
                         cellPadding: 3,
                         halign: 'center',
                         valign: 'middle',
@@ -1617,7 +1660,7 @@
                         fillColor: [15, 23, 42],
                         textColor: [255, 255, 255],
                         fontStyle: 'bold',
-                        fontSize: 8
+                        fontSize: 7.5
                     },
                     didParseCell: function(data) {
                         if (data.section === 'body' && data.cell.raw && String(data.cell.raw).includes('***')) {
@@ -1634,6 +1677,8 @@
             doc.save(`Bethania_Academy_${tierKey.toUpperCase()}_Timetable.pdf`);
         }
 
+            
+                            
         trackerGrade.addEventListener('change', async () => {
             trackerSubject.innerHTML = '<option value="" disabled selected>Loading...</option>';
             const selectedGrade = trackerGrade.value;
