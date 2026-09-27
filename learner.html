@@ -76,6 +76,57 @@
             <!-- ACTIVE EXAM QUICK-ACCESS BANNER (populated dynamically) -->
             <div id="active-exam-banner"></div>
 
+            <!-- ================= 📢 ANNOUNCEMENTS PANEL (PRO) ================= -->
+            <div class="card bg-white shadow-xl border border-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500"></div>
+                <div class="card-body p-4 sm:p-6 space-y-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="text-lg">📢</span> School Announcements</h3>
+                        <span class="badge badge-sm bg-slate-900 text-amber-400 font-black border-0 tracking-widest px-3">✦ PRO</span>
+                    </div>
+                    <div id="learner-ann-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                        <p class="text-xs text-slate-400 italic text-center py-4">Loading announcements...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 💰 MY FEE STATEMENT PANEL (PRO) ================= -->
+            <div class="card bg-white shadow-xl border border-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
+                <div class="card-body p-4 sm:p-6 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="text-lg">💰</span> My Fee Statement</h3>
+                        <span class="badge badge-sm bg-slate-900 text-emerald-400 font-black border-0 tracking-widest px-3">✦ PRO</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 max-w-sm">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] uppercase text-slate-500 mb-1">Year</label>
+                            <select id="mf-year" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="2026" selected>2026</option><option value="2025">2025</option><option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] uppercase text-slate-500 mb-1">Term</label>
+                            <select id="mf-term" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Term 1">Term 1</option><option value="Term 2" selected>Term 2</option><option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="mf-statement-card">
+                        <p class="text-xs text-slate-400 italic text-center py-4">Loading fee statement...</p>
+                    </div>
+                    <div id="mf-history-wrap" class="hidden space-y-1.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Payment History</span>
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="table table-xs">
+                                <thead class="bg-slate-100 uppercase text-[10px] text-slate-500"><tr><th>Date</th><th>Amount</th><th>Method</th><th>Ref</th></tr></thead>
+                                <tbody id="mf-history-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- EXAM SELECTION COMPONENT -->
             <div class="card bg-white shadow-xl border border-slate-200">
                 <div class="card-body p-4 sm:p-6 space-y-3">
@@ -155,6 +206,14 @@
         const selectYear = document.getElementById('select-year');
         const selectTerm = document.getElementById('select-term');
         const selectExam = document.getElementById('select-exam');
+
+        // PRO: Announcements + Fee Statement elements
+        const learnerAnnList = document.getElementById('learner-ann-list');
+        const mfYear = document.getElementById('mf-year');
+        const mfTerm = document.getElementById('mf-term');
+        const mfStatementCard = document.getElementById('mf-statement-card');
+        const mfHistoryWrap = document.getElementById('mf-history-wrap');
+        const mfHistoryBody = document.getElementById('mf-history-body');
 
         let activeSessionName = "Assessment";
         let activeStudent = null;
@@ -555,6 +614,9 @@
             await refreshLockoutStatus(yr, tm);
 
             await loadCohortPerformances();
+
+            fetchLearnerAnnouncements();
+            loadMyFeeStatement();
         });
 
         logoutBtn.addEventListener('click', () => {
@@ -963,6 +1025,124 @@
                 alert("An error occurred while compiling your report PDF. Check browser console logs.");
             }
         }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📢 ANNOUNCEMENTS PANEL (PRO)
+        // ══════════════════════════════════════════════════════════════════
+        function timeAgoLearner(iso) {
+            const diffMs = Date.now() - new Date(iso).getTime();
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) return "just now";
+            if (mins < 60) return `${mins}m ago`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h ago`;
+            const days = Math.floor(hrs / 24);
+            if (days < 30) return `${days}d ago`;
+            return new Date(iso).toLocaleDateString();
+        }
+
+        async function fetchLearnerAnnouncements() {
+            if (!activeStudent) return;
+            try {
+                const { data, error } = await _supabase.from('announcements')
+                    .select('*').eq('active', true).in('audience', ['all', 'learners'])
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+
+                const myGrade = parseInt(activeStudent.grade);
+                const relevant = (data || []).filter(a => a.grade === null || a.grade === undefined || parseInt(a.grade) === myGrade);
+
+                learnerAnnList.innerHTML = relevant.length > 0 ? relevant.map(a => `
+                    <div class="border ${a.priority === 'urgent' ? 'border-rose-300 bg-rose-50/60' : 'border-slate-200 bg-slate-50/60'} rounded-xl p-3.5">
+                        <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                            ${a.priority === 'urgent' ? '<span class="badge badge-xs bg-rose-600 text-white border-0 font-bold">🔴 URGENT</span>' : ''}
+                            <span class="badge badge-xs bg-slate-700 text-white border-0 font-bold">FROM ADMIN</span>
+                        </div>
+                        <p class="text-sm font-extrabold text-slate-900">${a.title}</p>
+                        <p class="text-xs text-slate-600 mt-1 whitespace-pre-wrap">${a.message}</p>
+                        <p class="text-[10px] text-slate-400 mt-1.5 font-mono">${timeAgoLearner(a.created_at)}</p>
+                    </div>
+                `).join('') : '<p class="text-xs text-slate-400 italic text-center py-4">No announcements right now.</p>';
+            } catch (err) {
+                learnerAnnList.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4">Announcements are not set up yet.</p>';
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 💰 MY FEE STATEMENT PANEL (PRO)
+        // ══════════════════════════════════════════════════════════════════
+        function fmtKESLearner(n) {
+            return "KES " + (Number(n) || 0).toLocaleString('en-KE', { maximumFractionDigits: 2 });
+        }
+
+        async function loadMyFeeStatement() {
+            if (!activeStudent) return;
+            const year = parseInt(mfYear.value);
+            const term = mfTerm.value;
+            const grade = parseInt(activeStudent.grade);
+
+            mfStatementCard.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4">Loading fee statement...</p>';
+            mfHistoryWrap.classList.add('hidden');
+
+            try {
+                const { data: structures, error: structErr } = await _supabase.from('fee_structures')
+                    .select('*').eq('year', year).eq('term', term).eq('grade', grade).limit(1);
+                if (structErr) throw structErr;
+
+                const { data: payments, error: payErr } = await _supabase.from('fee_payments')
+                    .select('*').eq('student_id', activeStudent.id).eq('year', year).eq('term', term)
+                    .order('paid_at', { ascending: false });
+                if (payErr) throw payErr;
+
+                const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+                const structure = structures && structures.length > 0 ? structures[0] : null;
+
+                if (!structure) {
+                    mfStatementCard.innerHTML = `
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+                            <p class="text-xs text-slate-500">No fee structure has been published for ${term} ${year} yet.</p>
+                            ${totalPaid > 0 ? `<p class="text-xs text-emerald-700 font-bold mt-2">You have ${fmtKESLearner(totalPaid)} recorded in payments for this term.</p>` : ''}
+                        </div>`;
+                } else {
+                    const balance = structure.term_amount - totalPaid;
+                    const monthly = structure.term_amount / (structure.months_in_term || 3);
+                    const monthsCovered = Math.min(Math.floor(totalPaid / monthly + 1e-9), structure.months_in_term || 3);
+                    const pct = Math.min(100, Math.round((totalPaid / structure.term_amount) * 100));
+
+                    let monthChips = '';
+                    for (let i = 1; i <= (structure.months_in_term || 3); i++) {
+                        const covered = i <= monthsCovered;
+                        monthChips += `<span class="badge badge-sm ${covered ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'} border-0 font-bold">Month ${i} ${covered ? '✓' : ''}</span>`;
+                    }
+
+                    mfStatementCard.innerHTML = `
+                        <div class="bg-white border-2 ${balance > 0 ? 'border-rose-200' : 'border-emerald-200'} rounded-2xl p-4">
+                            <div class="flex flex-col sm:flex-row justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-400 font-bold">${term} ${year} Balance</p>
+                                    <p class="text-2xl font-black ${balance > 0 ? 'text-rose-600' : 'text-emerald-600'}">${fmtKESLearner(Math.max(balance, 0))} <span class="text-xs font-bold text-slate-400">${balance > 0 ? 'due' : '— fully paid'}</span></p>
+                                </div>
+                                <div class="text-right text-xs text-slate-500">
+                                    <p>Term Fee: <strong class="text-slate-800">${fmtKESLearner(structure.term_amount)}</strong></p>
+                                    <p>Paid So Far: <strong class="text-emerald-700">${fmtKESLearner(totalPaid)}</strong></p>
+                                </div>
+                            </div>
+                            <progress class="progress ${balance > 0 ? 'progress-warning' : 'progress-success'} w-full mt-3" value="${pct}" max="100"></progress>
+                            <div class="flex flex-wrap gap-1.5 mt-3">${monthChips}</div>
+                        </div>`;
+                }
+
+                mfHistoryWrap.classList.remove('hidden');
+                mfHistoryBody.innerHTML = (payments && payments.length > 0)
+                    ? payments.map(p => `<tr><td class="font-mono">${new Date(p.paid_at).toLocaleDateString()}</td><td class="font-bold text-emerald-700">${fmtKESLearner(p.amount)}</td><td>${p.method || '-'}</td><td class="font-mono text-slate-400">${p.reference || '-'}</td></tr>`).join('')
+                    : '<tr><td colspan="4" class="text-center text-xs text-slate-400 italic py-3">No payments recorded yet.</td></tr>';
+            } catch (err) {
+                mfStatementCard.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-4">Fee statements are not set up yet. Ask the school office.</p>`;
+            }
+        }
+
+        mfYear.addEventListener('change', loadMyFeeStatement);
+        mfTerm.addEventListener('change', loadMyFeeStatement);
     </script>
 </body>
 </html>
