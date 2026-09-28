@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bethania Academy - Student Report Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Upgraded PDF Compilation & Rendering Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
+    <style>
+        body { background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%); }
+        .ln-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:8px 4px 10px; color:#64748b; position:relative; transition:all .2s ease; }
+        .ln-btn.active { color:#0f172a; }
+        .ln-btn.active::before { content:''; position:absolute; top:0; left:25%; right:25%; height:3px; border-radius:0 0 4px 4px; background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+        .ln-btn.active .ln-ico { transform:translateY(-1px) scale(1.12); }
+        .ln-ico { font-size:20px; line-height:1; transition:transform .2s ease; }
+        .file-chip { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+    <!-- LOGIN PANEL -->
+    <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen px-4 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        <div class="card w-full max-w-md bg-white shadow-2xl border border-slate-100">
+            <div class="card-body p-6 sm:p-8 text-center space-y-4">
+                <div class="avatar bg-white p-1 rounded-full ring-4 ring-amber-400/30 mx-auto w-16 h-16 flex items-center justify-center overflow-hidden">
+                    <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" class="rounded-full" onerror="this.src='https://placehold.co/100x100?text=BA'"/>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black uppercase text-slate-900 tracking-wider">Bethania Academy</h1>
+                    <p class="text-[10px] text-slate-500 tracking-widest font-bold uppercase">Motto: "Determination is Nobility"</p>
+                </div>
+                <div class="divider my-1"></div>
+                <div class="form-control w-full text-left">
+                    <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Enter Unique Student Login ID</label>
+                    <input type="text" id="student-id-input" placeholder="e.g. AA1234" class="input input-bordered input-md w-full font-mono text-center text-lg uppercase tracking-widest font-bold focus:outline-none" />
+                </div>
+                <button id="login-btn" class="btn btn-neutral btn-md w-full text-white font-bold uppercase tracking-wider">🔓 Access Assessment Records</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT DASHBOARD -->
+    <div id="dashboard-screen" class="hidden">
+        <!-- Header -->
+        <div class="navbar bg-slate-900 text-white shadow-xl px-4 sm:px-6 border-b-2 border-amber-500 sticky top-0 z-40">
+            <div class="flex-1">
+                <div class="flex items-center gap-3">
+                    <div class="avatar bg-white p-0.5 rounded-full ring-2 ring-amber-400/50">
+                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
+                            <img src="https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg" alt="Logo" onerror="this.src='https://placehold.co/100x100?text=BA'"/>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-xs sm:text-sm font-black uppercase text-amber-400 tracking-wider">Bethania Academy</h1>
+                        <p class="text-[9px] text-slate-400 uppercase tracking-widest">Determination is Nobility</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-none">
+                <button id="logout-btn" class="btn btn-ghost btn-xs text-amber-400 font-bold uppercase">Sign Out</button>
+            </div>
+        </div>
+
+        <main class="container mx-auto p-4 max-w-4xl pb-28">
+            <section id="lp-home" class="space-y-6">
+            <!-- Profile Banner Card -->
+            <div class="card bg-gradient-to-r from-slate-900 to-slate-850 text-white shadow-xl border border-slate-800">
+                <div class="card-body p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <span class="badge bg-amber-400 text-slate-950 font-black text-[10px] uppercase mb-1" id="active-term-badge">Loading...</span>
+                        <h2 class="text-2xl font-black text-left" id="student-name">...</h2>
+                        <p class="text-xs text-slate-300 mt-1 font-medium text-left">Grade Level: <span id="student-grade" class="font-bold text-amber-400">...</span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] block font-mono text-slate-400 uppercase">Authenticated ID</span>
+                        <span class="text-lg font-black font-mono text-white bg-slate-800 px-3 py-1 rounded-md border border-slate-700" id="student-badge-id">...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="active-exam-banner"></div>
+            <!-- ================= 📢 ANNOUNCEMENTS PANEL (PRO) ================= -->
+            <div class="card bg-white shadow-xl border border-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500"></div>
+                <div class="card-body p-4 sm:p-6 space-y-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="text-lg">📢</span> School Announcements</h3>
+                        <span class="badge badge-sm bg-slate-900 text-amber-400 font-black border-0 tracking-widest px-3">✦ PRO</span>
+                    </div>
+                    <div id="learner-ann-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                        <p class="text-xs text-slate-400 italic text-center py-4">Loading announcements...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT ASSIGNMENTS PREVIEW -->
+            <div class="card bg-white shadow-xl border border-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
+                <div class="card-body p-4 sm:p-6 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="text-lg">📚</span> Latest Assignments</h3>
+                        <button onclick="switchLearnerTab('assign')" class="btn btn-xs btn-ghost text-emerald-700 font-extrabold">View all →</button>
+                    </div>
+                    <div id="la-recent" class="space-y-2">
+                        <p class="text-xs text-slate-400 italic text-center py-3">Loading assignments...</p>
+                    </div>
+                </div>
+            </div>
+            </section>
+
+            <section id="lp-results" class="space-y-6 hidden">
+            <!-- EXAM SELECTION COMPONENT -->
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6 space-y-3">
+                    <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide">🔍 Select Target Report Parameters</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="form-control w-full">
+                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Target Year</label>
+                            <select id="select-year" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
+                                <option value="2026" selected>2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Target Term</label>
+                            <select id="select-term" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2" selected>Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label-text font-bold text-[11px] uppercase text-slate-500 mb-1">Exam Category</label>
+                            <select id="select-exam" class="select select-bordered select-sm w-full font-medium text-xs focus:outline-none">
+                                <option value="Opener Exam">Opener Exam</option>
+                                <option value="Mid-Term Exam" selected>Mid-Term Exam</option>
+                                <option value="End-Term Exam">End-Term Exam</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DYNAMIC REPORT SLIPS PANEL -->
+            <div class="card bg-white shadow-xl border border-slate-200">
+                <div class="card-body p-4 sm:p-6 space-y-4">
+                    <h3 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase">📄 Available Assessment Report Slips</h3>
+                    <p class="text-xs text-slate-500">Below are your authorized evaluation documents. Your grade curriculum determines the report framework available for generation.</p>
+                    
+                    <div class="divider my-1"></div>
+
+                    <!-- REPORT GENERATION CARD CONTAINER -->
+                    <div id="slips-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Loading State -->
+                        <div class="col-span-2 text-center py-8">
+                            <span class="loading loading-spinner loading-md text-primary"></span>
+                            <p class="text-xs text-slate-400 mt-2 font-medium">Processing records and computing evaluation metrics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </section>
+
+            <section id="lp-assign" class="space-y-6 hidden">
+            <div class="card bg-white shadow-xl border border-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
+                <div class="card-body p-4 sm:p-6 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="text-lg">📚</span> My Assignments</h3>
+                        <span class="badge badge-sm bg-slate-900 text-emerald-400 font-black border-0 tracking-widest px-3">✦ PRO</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Work shared by your teachers. Tap a file to open or download it.</p>
+                    <div id="la-filters" class="flex flex-wrap gap-1.5"></div>
+                    <div id="la-list" class="space-y-3">
+                        <p class="text-xs text-slate-400 italic text-center py-6">Loading assignments...</p>
+                    </div>
+                </div>
+            </div>
+            </section>
+
+            <section id="lp-fees" class="space-y-6 hidden">
+            <!-- ================= 💰 MY FEE STATEMENT PANEL (PRO) ================= -->
+            <div class="card bg-white shadow-xl border border-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
+                <div class="card-body p-4 sm:p-6 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="text-lg">💰</span> My Fee Statement</h3>
+                        <span class="badge badge-sm bg-slate-900 text-emerald-400 font-black border-0 tracking-widest px-3">✦ PRO</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 max-w-sm">
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] uppercase text-slate-500 mb-1">Year</label>
+                            <select id="mf-year" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="2026" selected>2026</option><option value="2025">2025</option><option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label-text font-bold text-[10px] uppercase text-slate-500 mb-1">Term</label>
+                            <select id="mf-term" class="select select-bordered select-sm w-full focus:outline-none">
+                                <option value="Term 1">Term 1</option><option value="Term 2" selected>Term 2</option><option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="mf-statement-card">
+                        <p class="text-xs text-slate-400 italic text-center py-4">Loading fee statement...</p>
+                    </div>
+                    <div id="mf-history-wrap" class="hidden space-y-1.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Payment History</span>
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="table table-xs">
+                                <thead class="bg-slate-100 uppercase text-[10px] text-slate-500"><tr><th>Date</th><th>Amount</th><th>Method</th><th>Ref</th></tr></thead>
+                                <tbody id="mf-history-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            </section>
+        </main>
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_20px_rgba(15,23,42,0.08)]">
+            <div class="max-w-4xl mx-auto grid grid-cols-4">
+                <button id="ln-home" class="ln-btn active" onclick="switchLearnerTab('home')">
+                    <span class="ln-ico">🏠</span><span class="text-[10px] font-extrabold">Home</span>
+                </button>
+                <button id="ln-results" class="ln-btn" onclick="switchLearnerTab('results')">
+                    <span class="ln-ico">📊</span><span class="text-[10px] font-extrabold">My Results</span>
+                </button>
+                <button id="ln-assign" class="ln-btn" onclick="switchLearnerTab('assign')">
+                    <span class="ln-ico">📚</span><span class="text-[10px] font-extrabold">Assignments</span>
+                    <span id="ln-assign-dot" class="hidden absolute top-1.5 right-[22%] w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                </button>
+                <button id="ln-fees" class="ln-btn" onclick="switchLearnerTab('fees')">
+                    <span class="ln-ico">💰</span><span class="text-[10px] font-extrabold">Fees</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        // Map html2canvas-pro's global variable
+        window.html2canvasPro = window.html2canvas;
+
+        // Supabase Init
+        const SUPABASE_URL = "https://avspdkeozxuxzbmegqwl.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_K9s_MVcCe1wtUNUO1YgRbA_QtoBZYRR";
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // State Elements
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const idInput = document.getElementById('student-id-input');
+
+        const labelTerm = document.getElementById('active-term-badge');
+        const labelName = document.getElementById('student-name');
+        const labelGrade = document.getElementById('student-grade');
+        const labelIdBadge = document.getElementById('student-badge-id');
+        const slipsContainer = document.getElementById('slips-container');
+
+        const selectYear = document.getElementById('select-year');
+        const selectTerm = document.getElementById('select-term');
+        const selectExam = document.getElementById('select-exam');
+
+        // PRO: Announcements + Fee Statement elements
+        const learnerAnnList = document.getElementById('learner-ann-list');
+        const mfYear = document.getElementById('mf-year');
+        const mfTerm = document.getElementById('mf-term');
+        const mfStatementCard = document.getElementById('mf-statement-card');
+        const mfHistoryWrap = document.getElementById('mf-history-wrap');
+        const mfHistoryBody = document.getElementById('mf-history-body');
+
+        let activeSessionName = "Assessment";
+        let activeStudent = null;
+        let globalSubjects = [];
+        let globalPapers = [];
+        let allStudentsInCohort = [];
+        let cohortMarks = [];
+        let isCurrentSessionLocked = false;
+        let allExamSessions = [];   // Every row from exam_sessions (deployed cycles), newest first
+        let activeSessionRow = null; // The exam_sessions row currently flagged is_active = true
+
+        // Schema Cache matching admin.html's architecture
+        let dbSchemaCache = {
+            examColumn: 'test_name',
+            scoreColumn: 'raw_score'
+        };
+
+        // Official CBC Subject Tiers
+        const CBC_SUBJECT_TIERS = {
+            pre_primary: [
+                "Language Activities",
+                "Mathematical Activities",
+                "Environmental Activities",
+                "Creative Arts",
+                "Religious Education Activities",
+                "Reading"
+            ],
+            lower_primary: [
+                "Language Activities", "Mathematical Activities", "Environmental Activities",
+                "Creative Arts", "Religious Education Activities", "Kiswahili Language Activities"
+            ],
+            upper_primary: [
+                "English", "Kiswahili", "Mathematics", "Science and Technology",
+                "Agriculture and Nutrition", "Creative Arts and Sports", "Social Studies", 
+                "Christian Religious Education (C.R.E)"
+            ],
+            junior_school: [
+                "English", "Kiswahili", "Mathematics", "Integrated Science",
+                "Pre-Technical Studies", "Social Studies", "Agriculture and Nutrition",
+                "Creative Arts and Sports", "Christian Religious Education (C.R.E)"
+            ]
+        };
+
+        // Subject Alias Mapper (ensures "Psychomotor" marks dynamically map to "Creative Arts")
+        function isSubjectMatch(dbSubjectName, targetSubjectName) {
+            if (!dbSubjectName || !targetSubjectName) return false;
+            const db = dbSubjectName.trim().toLowerCase();
+            const target = targetSubjectName.trim().toLowerCase();
+            
+            if (db === target) return true;
+            
+            const creativePsychomotor = [
+                "creative arts", 
+                "psychomotor", 
+                "psychomotor activities", 
+                "creative arts activities", 
+                "creative arts & sports", 
+                "creative arts and sports"
+            ];
+
+            if (creativePsychomotor.includes(db) && creativePsychomotor.includes(target)) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function getGradeTier(grade) {
+            const g = parseInt(grade);
+            if (g <= 0) return "pre_primary";
+            if (g >= 1 && g <= 3) return "lower_primary";
+            if (g >= 4 && g <= 6) return "upper_primary";
+            return "junior_school";
+        }
+
+        // Schema Sniffing dynamically aligns with administrative databases
+        async function detectMarksSchema() {
+            try {
+                const { data, error } = await _supabase.from('marks_entry').select('*').limit(1);
+                if (data && data.length > 0) {
+                    const row = data[0];
+                    if ('exam_name' in row) dbSchemaCache.examColumn = 'exam_name';
+                    else if ('exam_session' in row) dbSchemaCache.examColumn = 'exam_session';
+                    else dbSchemaCache.examColumn = 'test_name';
+
+                    if ('score' in row) dbSchemaCache.scoreColumn = 'score';
+                    else if ('marks' in row) dbSchemaCache.scoreColumn = 'marks';
+                    else dbSchemaCache.scoreColumn = 'raw_score';
+                }
+            } catch (err) {
+                console.warn("Schema sniffing failed. Defaulting to standard columns.", err);
+            }
+        }
+
+        // Helper to format values: strips trailing decimals if it rounds to a whole integer
+        function formatVal(val, decimals = 2) {
+            if (val === null || val === undefined || isNaN(val)) return "-";
+            let num = parseFloat(val);
+            
+            num = parseFloat(num.toFixed(4));
+            
+            if (Math.abs(num - Math.round(num)) < 0.00001) {
+                return Math.round(num).toString();
+            }
+            return num.toFixed(decimals);
+        }
+
+        // Point system explicitly tied to the exact 8 sub-tiers
+        function convertScoreToPoints(score, max) {
+            const pct = (score / max) * 100;
+            if (pct >= 90) return 8; 
+            if (pct >= 75) return 7; 
+            if (pct >= 58) return 6; 
+            if (pct >= 40) return 5; 
+            if (pct >= 30) return 4; 
+            if (pct >= 20) return 3; 
+            if (pct >= 10) return 2; 
+            return 1;                
+        }
+
+        // Competency Grading System Logic
+        function getCompetencyLevel(val, type, tier = "junior_school") {
+            let pct = val;
+
+            if (tier === "junior_school") {
+                if (type === 'points') {
+                    if (val >= 7.5) return { text: "EE1", label: "Exceeding Expectations 1" };
+                    if (val >= 6.5) return { text: "EE2", label: "Exceeding Expectations 2" };
+                    if (val >= 5.5) return { text: "ME1", label: "Meeting Expectations 1" };
+                    if (val >= 4.5) return { text: "ME2", label: "Meeting Expectations 2" };
+                    if (val >= 3.5) return { text: "AE1", label: "Approaching Expectations 1" };
+                    if (val >= 2.5) return { text: "AE2", label: "Approaching Expectations 2" };
+                    if (val >= 1.5) return { text: "BE1", label: "Below Expectations 1" };
+                    return { text: "BE2", label: "Below Expectations 2" };
+                } else {
+                    if (pct >= 90) return { text: "EE1", label: "Exceeding Expectations 1" };
+                    if (pct >= 75) return { text: "EE2", label: "Exceeding Expectations 2" };
+                    if (pct >= 58) return { text: "ME1", label: "Meeting Expectations 1" };
+                    if (pct >= 40) return { text: "ME2", label: "Meeting Expectations 2" };
+                    if (pct >= 30) return { text: "AE1", label: "Approaching Expectations 1" };
+                    if (pct >= 20) return { text: "AE2", label: "Approaching Expectations 2" };
+                    if (pct >= 10) return { text: "BE1", label: "Below Expectations 1" };
+                    return { text: "BE2", label: "Below Expectations 2" };
+                }
+            } else {
+                // Primary and Below Grading Scale
+                if (pct >= 80) return { text: "EE", label: "Exceeding Expectations" };
+                if (pct >= 50) return { text: "ME", label: "Meeting Expectations" };
+                if (pct >= 30) return { text: "AE", label: "Approaching Expectations" };
+                return { text: "BE", label: "Below Expectations" };
+            }
+        }
+
+        // Fetch Global Session Context (pulls EVERY deployed cycle, not just the latest one,
+        // so Opener/Mid/End Term + any "Other" exams deployed on admin can be listed for the learner)
+        async function fetchSessionContext() {
+            const { data: sessions } = await _supabase.from('exam_sessions').select('*').order('created_at', { ascending: false });
+            allExamSessions = sessions || [];
+            activeSessionRow = allExamSessions.find(s => s.is_active) || null;
+            if (activeSessionRow) {
+                activeSessionName = activeSessionRow.exam_name;
+            }
+            labelTerm.innerText = `Active Cycle: ${activeSessionName}`;
+        }
+
+        // Splits a stored exam_name like "2026 Term 2 KJSEA PREDICTION SERIES ONE"
+        // into { year: "2026", term: "Term 2", rest: "KJSEA PREDICTION SERIES ONE" }
+        function parseSessionName(name) {
+            if (!name) return null;
+            const m = name.match(/^(\d{4})\s+(Term\s\d)\s+(.+)$/);
+            if (!m) return null;
+            return { year: m[1], term: m[2], rest: m[3] };
+        }
+
+        // Rebuilds the "Exam Category" dropdown for the chosen Year + Term:
+        // always offers Opener / Mid Term / End Term, then appends any "Other" exam
+        // deployed on admin for that Year + Term + the learner's grade, shown under its own name.
+        function populateExamOptions(yr, tm) {
+            const prevValue = selectExam.value;
+
+            const mainOptions = [
+                { value: 'Opener Exam', label: '📘 Opener Exam' },
+                { value: 'Mid Term Exam', label: '📗 Mid Term Exam' },
+                { value: 'End Term Exam', label: '📕 End Term Exam' }
+            ];
+
+            const studentGrade = activeStudent ? parseInt(activeStudent.grade) : null;
+            const prefix = `${yr} ${tm} `;
+
+            const otherSessions = (allExamSessions || []).filter(s => {
+                if (s.category !== 'other') return false;
+                if (!s.exam_name || !s.exam_name.startsWith(prefix)) return false;
+                if (Array.isArray(s.target_grades) && studentGrade !== null) {
+                    return s.target_grades.includes(studentGrade);
+                }
+                return true;
+            });
+
+            let optionsHtml = mainOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+            if (otherSessions.length > 0) {
+                optionsHtml += `<optgroup label="Other Deployed Exams">`;
+                otherSessions.forEach(s => {
+                    const displayName = s.exam_name.slice(prefix.length);
+                    const safeName = displayName.replace(/"/g, '&quot;');
+                    optionsHtml += `<option value="${safeName}">🌟 ${displayName}</option>`;
+                });
+                optionsHtml += `</optgroup>`;
+            }
+
+            selectExam.innerHTML = optionsHtml;
+
+            const optionValues = Array.from(selectExam.options).map(o => o.value);
+            if (optionValues.includes(prevValue)) {
+                selectExam.value = prevValue;
+            } else if (optionValues.includes('Mid Term Exam')) {
+                selectExam.value = 'Mid Term Exam';
+            }
+        }
+
+        // Shared fee-lockout check, reused by login, dropdown changes, and the active-exam shortcut
+        async function refreshLockoutStatus(yr, tm) {
+            isCurrentSessionLocked = false;
+            try {
+                const { data: lockRows } = await _supabase.from('fee_lockouts')
+                    .select('*')
+                    .or(`student_id.eq.${activeStudent.login_id},student_id.eq.${activeStudent.id}`)
+                    .eq('restricted', true);
+
+                if (lockRows && lockRows.length > 0) {
+                    const lockedMatch = lockRows.some(r => {
+                        const rowYear = r.year || (r.exam_context ? r.exam_context.split(' ')[0] : '');
+                        const rowTerm = r.term || (r.exam_context && r.exam_context.includes('Term') ? r.exam_context.match(/Term \d+/)?.[0] : '');
+
+                        return (rowYear == yr && rowTerm == tm) || r.exam_context === activeSessionName;
+                    });
+                    if (lockedMatch) isCurrentSessionLocked = true;
+                }
+            } catch (e) {
+                console.warn("Restriction verification architecture fault:", e);
+            }
+        }
+
+        // Syncs the Year / Term / Exam Category selectors to whatever is currently the
+        // active (is_active = true) deployed exam, so it's the FIRST thing the learner sees —
+        // ready for direct download — without them having to pick filters manually.
+        function applyActiveSessionToSelectors() {
+            populateExamOptions(selectYear.value, selectTerm.value);
+
+            if (activeSessionRow) {
+                const parsed = parseSessionName(activeSessionRow.exam_name);
+                if (parsed) {
+                    const yearOk = Array.from(selectYear.options).some(o => o.value === parsed.year);
+                    const termOk = Array.from(selectTerm.options).some(o => o.value === parsed.term);
+
+                    if (yearOk) selectYear.value = parsed.year;
+                    if (termOk) selectTerm.value = parsed.term;
+
+                    // Rebuild options for the (possibly new) year/term so the active exam's own name is listed
+                    populateExamOptions(selectYear.value, selectTerm.value);
+
+                    const restOk = Array.from(selectExam.options).some(o => o.value === parsed.rest);
+                    if (restOk) selectExam.value = parsed.rest;
+                }
+            }
+
+            activeSessionName = `${selectYear.value} ${selectTerm.value} ${selectExam.value}`;
+            renderActiveExamBanner();
+        }
+
+        // Renders the "Currently Active" quick-access card above the filters
+        function renderActiveExamBanner() {
+            const banner = document.getElementById('active-exam-banner');
+            if (!banner) return;
+
+            if (!activeSessionRow || !activeStudent) {
+                banner.innerHTML = '';
+                return;
+            }
+
+            // If it's an "Other" exam scoped to specific grades, only show the banner
+            // to learners actually in one of those grades
+            if (activeSessionRow.category === 'other' && Array.isArray(activeSessionRow.target_grades)) {
+                const studentGrade = parseInt(activeStudent.grade);
+                if (!activeSessionRow.target_grades.includes(studentGrade)) {
+                    banner.innerHTML = '';
+                    return;
+                }
+            }
+
+            banner.innerHTML = `
+                <div class="card bg-gradient-to-r from-amber-400 to-amber-500 shadow-xl border border-amber-300">
+                    <div class="card-body p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <span class="badge bg-slate-900 text-amber-400 font-black text-[10px] uppercase mb-1">🎯 Currently Active</span>
+                            <h3 class="text-lg font-black text-slate-950">${activeSessionRow.exam_name}</h3>
+                            <p class="text-xs text-slate-800 font-medium mt-0.5">This is loaded below and ready for direct download.</p>
+                        </div>
+                        <button id="active-exam-download-btn" class="btn btn-neutral btn-sm sm:btn-md text-white font-bold uppercase tracking-wide shadow-md whitespace-nowrap">
+                            ⚡ Jump To My Results
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('active-exam-download-btn').addEventListener('click', downloadActiveExamNow);
+        }
+
+        // "Direct download" shortcut: re-syncs filters to the active exam (in case the
+        // learner had wandered off to a different term) and reloads/scrolls to the slips
+        async function downloadActiveExamNow() {
+            if (!activeSessionRow || !activeStudent) return;
+
+            slipsContainer.innerHTML = `
+                <div class="col-span-2 text-center py-8">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <p class="text-xs text-slate-400 mt-2 font-medium">Loading your active exam results...</p>
+                </div>
+            `;
+
+            applyActiveSessionToSelectors();
+
+            const yr = selectYear.value;
+            const tm = selectTerm.value;
+            await refreshLockoutStatus(yr, tm);
+            await loadCohortPerformances();
+
+            document.getElementById('slips-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Dropdown Parameter Change Handler
+        async function handleParameterSync() {
+            if(!activeStudent) return;
+            
+            slipsContainer.innerHTML = `
+                <div class="col-span-2 text-center py-8">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <p class="text-xs text-slate-400 mt-2 font-medium">Re-compiling historical parameters and data architectures...</p>
+                </div>
+            `;
+
+            const yr = selectYear.value;
+            const tm = selectTerm.value;
+            const ex = selectExam.value;
+            
+            activeSessionName = `${yr} ${tm} ${ex}`;
+
+            await refreshLockoutStatus(yr, tm);
+
+            await loadCohortPerformances();
+        }
+
+        selectYear.addEventListener('change', () => {
+            populateExamOptions(selectYear.value, selectTerm.value);
+            handleParameterSync();
+        });
+        selectTerm.addEventListener('change', () => {
+            populateExamOptions(selectYear.value, selectTerm.value);
+            handleParameterSync();
+        });
+        selectExam.addEventListener('change', handleParameterSync);
+
+        // Login Handler
+        loginBtn.addEventListener('click', async () => {
+            const enteredId = idInput.value.trim().toUpperCase();
+            if(!enteredId) return alert("Please specify your Student Login ID!");
+
+            loginBtn.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Authenticating...`;
+            loginBtn.disabled = true;
+
+            await detectMarksSchema();
+
+            const { data: students, error } = await _supabase.from('students').select('*').eq('login_id', enteredId).limit(1);
+            
+            if (error || !students || students.length === 0) {
+                alert("Unauthorized or Invalid Student ID. Please contact your class teacher!");
+                loginBtn.innerHTML = `🔓 Access Assessment Records`;
+                loginBtn.disabled = false;
+                return;
+            }
+
+            activeStudent = students[0];
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
+
+            labelName.innerText = activeStudent.name;
+            labelGrade.innerText = activeStudent.grade <= 0 ? (activeStudent.grade === -2 ? "PP1" : "PP2") : `Grade ${activeStudent.grade}`;
+            labelIdBadge.innerText = activeStudent.login_id;
+
+            await fetchSessionContext();
+
+            // Sync the Year/Term/Exam filters to the currently active deployed exam so it
+            // loads first, ready for direct download, without the learner picking anything.
+            applyActiveSessionToSelectors();
+
+            const yr = selectYear.value;
+            const tm = selectTerm.value;
+            await refreshLockoutStatus(yr, tm);
+
+            await loadCohortPerformances();
+
+            fetchLearnerAnnouncements();
+            loadMyFeeStatement();
+            fetchLearnerAssignments();
+            switchLearnerTab('home');
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            activeStudent = null;
+            idInput.value = "";
+            isCurrentSessionLocked = false;
+            loginScreen.classList.remove('hidden');
+            dashboardScreen.classList.add('hidden');
+            loginBtn.innerHTML = `🔓 Access Assessment Records`;
+            loginBtn.disabled = false;
+        });
+
+        // Pull Cohort Data dynamically
+        async function loadCohortPerformances() {
+            const grade = activeStudent.grade;
+            const tier = getGradeTier(grade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+
+            const gradeInt = parseInt(grade);
+            const gradeStr = grade.toString();
+            const { data: classmates } = await _supabase.from('students')
+                .select('*')
+                .or(`grade.eq.${gradeInt},grade.eq."${gradeStr}"`);
+            allStudentsInCohort = classmates || [];
+
+            const { data: dbSubjects } = await _supabase.from('subjects').select('*');
+            
+            // Includes alias checking so Psychomotor DB records match Creative Arts
+            const validSubjects = (dbSubjects || []).filter(s => 
+                allowed.some(allowedSub => isSubjectMatch(s.subject_name, allowedSub))
+            );
+
+            globalSubjects = dbSubjects || [];
+            const validSubjectIds = validSubjects.map(s => s.id);
+
+            const { data: dbPapers } = await _supabase.from('subject_papers').select('*').in('subject_id', validSubjectIds);
+            globalPapers = dbPapers || [];
+
+            const classmateIds = allStudentsInCohort.map(c => c.id);
+            
+            let altSessionName1 = activeSessionName.replace("Mid-Term Exam", "Mid Term Exam").replace("Opener Exam", "Opener Exam").replace("End-Term Exam", "End Term Exam");
+            let altSessionName2 = activeSessionName.replace("Mid-Term Exam", "Mid Term 2");
+
+            const { data: marks } = await _supabase.from('marks_entry')
+                .select('*')
+                .or(`${dbSchemaCache.examColumn}.eq."${activeSessionName}",${dbSchemaCache.examColumn}.eq."${altSessionName1}",${dbSchemaCache.examColumn}.eq."${altSessionName2}"`)
+                .in('student_id', classmateIds);
+            
+            cohortMarks = marks || [];
+
+            buildAvailableSlips(validSubjects, tier);
+        }
+
+        // Calculate rankings and display options
+        function buildAvailableSlips(subjects, tier) {
+            const isJuniorSchool = (tier === "junior_school");
+
+            const markRankings = calculateRankings(subjects, false, tier);
+            const myMarkRecord = markRankings.find(r => r.id === activeStudent.id);
+
+            let html = "";
+
+            if (!myMarkRecord || myMarkRecord.totals === 0) {
+                slipsContainer.innerHTML = `
+                    <div class="col-span-2 text-center py-8 bg-slate-100 rounded-xl border border-dashed border-slate-300">
+                        <p class="text-xs text-slate-500 font-bold">⚠️ No evaluation data architecture records found matching "${activeSessionName}".</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Please select an alternate target year, term, or schedule from the filters above.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (isJuniorSchool) {
+                html += `
+                    <div class="border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col justify-between h-full">
+                        <div>
+                            <span class="badge badge-neutral text-[10px] font-bold uppercase mb-2">Slip 1 of 2</span>
+                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Performance Summary Slip</h4>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Contains details of raw marks scored per subject paper, accumulated percentage scores, and rank based on raw marks.</p>
+                        </div>
+                        <div class="mt-6">
+                            ${isCurrentSessionLocked ? 
+                                `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
+                                `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm w-full font-bold">📄 Download Raw Marks Slip</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+
+                html += `
+                    <div class="border border-amber-200 rounded-xl p-5 bg-amber-50/50 flex flex-col justify-between h-full">
+                        <div>
+                            <span class="badge badge-warning text-slate-950 text-[10px] font-black uppercase mb-2">Slip 2 of 2</span>
+                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Competency Points Slip</h4>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Features converted points on the CBC 8-Point scale, total points accumulated, overall points average, and rating.</p>
+                        </div>
+                        <div class="mt-6">
+                            ${isCurrentSessionLocked ? 
+                                `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200"><p>🔒 Access Restricted: Please clear outstanding account balances with school administration to download.</p></div>` :
+                                `<button onclick="generatePDFSlip('points')" class="btn btn-warning btn-sm w-full font-bold text-slate-950">📄 Download Competency Points Slip</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="col-span-2 border border-slate-200 rounded-xl p-5 bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <span class="badge badge-neutral text-[10px] font-bold uppercase">Standard Issue Slip</span>
+                            <h4 class="text-base font-extrabold text-slate-900 uppercase">Primary School Evaluation Slip</h4>
+                            <p class="text-xs text-slate-500 max-w-lg">Displays standard raw scores, totals, subject performance percentages, average scores, ratings, and positions.</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                            ${isCurrentSessionLocked ? 
+                                `<div class="alert alert-error text-left rounded-lg text-xs p-2.5 font-medium border border-rose-200 w-full"><p>🔒 Access Restricted: Outstanding balances active.</p></div>` :
+                                `<button onclick="generatePDFSlip('marks')" class="btn btn-neutral btn-sm md:btn-md font-bold text-white w-full sm:w-auto">📄 Download Performance Slip</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+
+            slipsContainer.innerHTML = html;
+        }
+
+        // Calculation Engine with Dynamic Alias Mapping
+        function calculateRankings(subjects, convertToPoints, tier) {
+            const list = allStudentsInCohort.map(stud => {
+                let totals = 0;
+                let count = 0;
+                let subjectBreakdown = {};
+
+                subjects.forEach(sub => {
+                    const matchingDbSubjectIds = globalSubjects
+                        .filter(s => isSubjectMatch(s.subject_name, sub.subject_name))
+                        .map(s => s.id);
+
+                    if (sub.id && !matchingDbSubjectIds.includes(sub.id)) {
+                        matchingDbSubjectIds.push(sub.id);
+                    }
+
+                    const papers = globalPapers.filter(p => matchingDbSubjectIds.includes(p.subject_id));
+                    let rawSum = 0;
+                    let maxSum = 0;
+                    let studentHasScore = false;
+
+                    if (papers.length > 0) {
+                        papers.forEach(p => {
+                            const scoreObj = cohortMarks.find(m => m.student_id === stud.id && m.paper_id === p.id);
+                            if (scoreObj) {
+                                const val = parseFloat(scoreObj[dbSchemaCache.scoreColumn]);
+                                if (!isNaN(val)) {
+                                    rawSum += val;
+                                    studentHasScore = true;
+                                }
+                            }
+                            maxSum += parseFloat(p.max_marks || 100);
+                        });
+                    }
+
+                    const directScoreObj = cohortMarks.find(m => 
+                        m.student_id === stud.id && 
+                        matchingDbSubjectIds.includes(m.subject_id) && 
+                        (!m.paper_id || m.paper_id === null)
+                    );
+
+                    if (directScoreObj) {
+                        const val = parseFloat(directScoreObj[dbSchemaCache.scoreColumn]);
+                        if (!isNaN(val)) {
+                            rawSum = val;
+                            maxSum = 100;
+                            studentHasScore = true;
+                        }
+                    }
+
+                    if (studentHasScore) {
+                        if (convertToPoints) {
+                            const pts = convertScoreToPoints(rawSum, maxSum);
+                            totals += pts;
+                            subjectBreakdown[sub.subject_name] = { score: pts, max: 8, label: `${formatVal(pts, 1)} Pts` };
+                        } else {
+                            const pct = (rawSum / maxSum) * 100;
+                            totals += pct;
+                            subjectBreakdown[sub.subject_name] = { score: rawSum, max: maxSum, label: `${formatVal(pct, 2)}%` };
+                        }
+                        count++;
+                    } else {
+                        subjectBreakdown[sub.subject_name] = { score: 0, max: 0, label: "-" };
+                    }
+                });
+
+                const average = count > 0 ? (totals / count) : 0;
+                return {
+                    id: stud.id,
+                    name: stud.name,
+                    subjectBreakdown,
+                    totals: parseFloat(totals.toFixed(4)), 
+                    average,
+                    rating: getCompetencyLevel(average, convertToPoints ? 'points' : 'marks', tier)
+                };
+            });
+
+            list.sort((a, b) => b.totals - a.totals);
+            
+            let runningRank = 1;
+            list.forEach((entry, idx) => {
+                if (idx > 0 && list[idx].totals < list[idx - 1].totals) {
+                    runningRank = idx + 1;
+                }
+                entry.position = runningRank;
+            });
+
+            return list;
+        }
+
+        // Advanced Portrait PDF Compiler
+        async function generatePDFSlip(type) {
+            const grade = activeStudent.grade;
+            const tier = getGradeTier(grade);
+            const allowed = CBC_SUBJECT_TIERS[tier];
+            const isJuniorPoints = (type === 'points');
+
+            const logoUrl = "https://avspdkeozxuxzbmegqwl.supabase.co/storage/v1/object/public/Images/bethania.jpg";
+
+            try {
+                const staticSubjects = allowed.map((subjectName, index) => {
+                    const foundSubject = globalSubjects.find(s => isSubjectMatch(s.subject_name, subjectName));
+                    return {
+                        id: foundSubject ? foundSubject.id : index + 999,
+                        subject_name: subjectName
+                    };
+                });
+
+                const rankings = calculateRankings(staticSubjects, isJuniorPoints, tier);
+                const me = rankings.find(r => r.id === activeStudent.id);
+
+                if (!me) {
+                    alert("Could not locate matching student record in current memory session.");
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: 'a4'
+                });
+
+                const offscreenContainer = document.createElement('div');
+                offscreenContainer.style.position = 'absolute';
+                offscreenContainer.style.left = '-9999px';
+                offscreenContainer.style.width = '720px'; 
+                offscreenContainer.style.backgroundColor = '#ffffff';
+                document.body.appendChild(offscreenContainer);
+
+                const page = document.createElement('div');
+                page.style.padding = '40px 35px';
+                page.style.color = '#000000';
+                page.style.position = 'relative';
+                page.style.minHeight = '980px';
+                page.style.fontFamily = "system-ui, -apple-system, sans-serif";
+                page.style.boxSizing = 'border-box';
+
+                page.innerHTML = `
+                    <!-- Premium Double Border -->
+                    <div style="border: 4px double #0f172a; padding: 25px; border-radius: 6px; min-height: 900px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative;">
+                        
+                        <!-- Background Watermark Layer -->
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 340px; height: 340px; opacity: 0.05; pointer-events: none; background: url('${logoUrl}') no-repeat center center; background-size: contain; z-index: 0;"></div>
+                        
+                        <div style="position: relative; z-index: 1;">
+                            <!-- School Executive Header with Dual Logos -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #f59e0b; padding-bottom: 15px; margin-bottom: 20px;">
+                                <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                                <div style="text-align: center; flex: 1; padding: 0 10px;">
+                                    <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Times New Roman', serif;">BETHANIA ACADEMY</h1>
+                                    <p style="font-size: 10px; color: #f59e0b; margin: 3px 0 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;">Motto: "Determination is Nobility"</p>
+                                    <!-- Official Contact Details Block -->
+                                    <p style="font-size: 9px; color: #475569; margin: 4px 0 0; font-weight: 600;">
+                                        P.O. BOX 96066 - 80100 MOMBASA KENYA &nbsp;|&nbsp; Tel: +254 711 638 425 / +254 728 870 061
+                                    </p>
+                                    <p style="font-size: 9px; color: #1e40af; margin: 2px 0 0; font-weight: bold; font-family: monospace;">
+                                        fpfkbethacademy@gmail.com
+                                    </p>
+                                </div>
+                                <img src="${logoUrl}" alt="Logo" style="width: 55px; height: 55px; border-radius: 50%;" />
+                            </div>
+
+                            <!-- Bio Information Matrix -->
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 22px;">
+                                <tr>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 18%;">LEARNER NAME:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-transform: uppercase; text-align: left; font-size: 12px; border-bottom: 1px solid #e2e8f0;">${me.name}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; width: 15%; text-align: right;">GRADE:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; width: 18%; border-bottom: 1px solid #e2e8f0;">${grade <= 0 ? (grade === -2 ? "PP1" : "PP2") : 'Grade ' + grade}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold;">STUDENT ID:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; font-family: monospace; text-align: left; border-bottom: 1px solid #e2e8f0;">${activeStudent.login_id}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; text-align: right;">CURRICULUM:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">CBC Framework</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold;">ACADEMIC CYCLE:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #1e40af; text-align: left; border-bottom: 1px solid #e2e8f0;">${activeSessionName}</td>
+                                    <td style="padding: 5px 0; color: #64748b; font-weight: bold; text-align: right;">REPORT TYPE:</td>
+                                    <td style="padding: 5px 0; font-weight: 800; color: #0f172a; text-align: right; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">${isJuniorPoints ? 'Competency Slip' : 'Academic Marks'}</td>
+                                </tr>
+                            </table>
+
+                            <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; color: #0f172a; border-left: 3px solid #f59e0b; padding-left: 8px; text-align: left;">
+                                ${isJuniorPoints ? 'Competency Point Evaluation (8-Point scale)' : 'Raw Assessment Performance Records'}
+                            </h3>
+
+                            <!-- Subject Performance Table -->
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
+                                <thead>
+                                    <tr style="background-color: #0f172a; color: #ffffff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">
+                                        <th style="padding: 7px 10px; text-align: left; border: 1px solid #0f172a;">Learning Area / Component</th>
+                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #0f172a; width: 140px;">Score / Scale Output</th>
+                                        <th style="padding: 7px 10px; text-align: center; border: 1px solid #0f172a; width: 120px;">Evaluation Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${staticSubjects.map(sub => {
+                                        const record = me.subjectBreakdown[sub.subject_name];
+                                        let compText = "-";
+                                        if(record && record.label !== "-") {
+                                            const ptsVal = isJuniorPoints ? record.score : (record.score / record.max) * 100;
+                                            compText = getCompetencyLevel(ptsVal, isJuniorPoints ? 'points' : 'marks', tier).text;
+                                        }
+                                        return `
+                                            <tr>
+                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: bold; color: #334155; text-align: left;">${sub.subject_name}</td>
+                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; font-family: monospace; font-weight: bold; color: #0f172a;">${record ? record.label : '-'}</td>
+                                                <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; color: #1e293b;">${compText}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer Block containing Scores & Official Stamp Area -->
+                        <div>
+                            <!-- Overall Metrics Row -->
+                            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                                <div style="text-align: left;">
+                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cumulative Total</span>
+                                    <strong style="font-size: 15px; color: #0f172a;">${formatVal(me.totals, isJuniorPoints ? 1 : 2)}${isJuniorPoints ? ' Points' : ' Marks'}</strong>
+                                </div>
+                                <div style="text-align: center;">
+                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Calculated Mean</span>
+                                    <strong style="font-size: 15px; color: #1e40af;">${formatVal(me.average, isJuniorPoints ? 1 : 0)}${isJuniorPoints ? ' Pts' : '%'}</strong>
+                                </div>
+                                <div style="text-align: center;">
+                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Cohort Position</span>
+                                    <strong style="font-size: 15px; color: #0f172a;">Position ${me.position} of ${rankings.length}</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 8px; text-transform: uppercase; color: #64748b; display: block; font-weight: bold;">Evaluation Rating</span>
+                                    <span style="display: inline-block; margin-top: 3px; padding: 3px 6px; font-weight: 800; border-radius: 4px; font-size: 9px; background-color: #e0f2fe; color: #0369a1; text-transform: uppercase;">
+                                        ${me.rating.text} - ${me.rating.label}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Footer & Official Stamp Area -->
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                                <div style="text-align: center; width: 160px;">
+                                    <div style="height: 35px;"></div>
+                                    <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">Class Teacher Signature</div>
+                                </div>
+                                <div style="text-align: center; width: 160px;">
+                                    <div style="height: 35px; line-height: 35px; color: #cbd5e1; font-style: italic; font-weight: bold; font-size: 8px; letter-spacing: 1px;">OFFICIAL SEAL</div>
+                                    <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">School Stamp</div>
+                                </div>
+                                <div style="text-align: center; width: 160px;">
+                                    <div style="height: 35px;"></div>
+                                    <div style="border-top: 1px solid #94a3b8; font-weight: bold; color: #475569; padding-top: 4px;">Headteacher Signature</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+
+                offscreenContainer.appendChild(page);
+
+                const canvas = await html2canvasPro(page, {
+                    scale: 2, 
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                doc.addImage(imgData, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+                document.body.removeChild(offscreenContainer);
+
+                const filename = `BA_Grade_${grade}_Report_${me.name.replace(/\s+/g, '_')}_(${type}).pdf`;
+                doc.save(filename);
+
+            } catch (criticalErr) {
+                console.error("Compilation process exception caught:", criticalErr);
+                alert("An error occurred while compiling your report PDF. Check browser console logs.");
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📢 ANNOUNCEMENTS PANEL (PRO)
+        // ══════════════════════════════════════════════════════════════════
+        function timeAgoLearner(iso) {
+            const diffMs = Date.now() - new Date(iso).getTime();
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) return "just now";
+            if (mins < 60) return `${mins}m ago`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h ago`;
+            const days = Math.floor(hrs / 24);
+            if (days < 30) return `${days}d ago`;
+            return new Date(iso).toLocaleDateString();
+        }
+
+        async function fetchLearnerAnnouncements() {
+            if (!activeStudent) return;
+            try {
+                const { data, error } = await _supabase.from('announcements')
+                    .select('*').eq('active', true).in('audience', ['all', 'learners'])
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+
+                const myGrade = parseInt(activeStudent.grade);
+                const relevant = (data || []).filter(a => a.grade === null || a.grade === undefined || parseInt(a.grade) === myGrade);
+
+                learnerAnnList.innerHTML = relevant.length > 0 ? relevant.map(a => `
+                    <div class="border ${a.priority === 'urgent' ? 'border-rose-300 bg-rose-50/60' : 'border-slate-200 bg-slate-50/60'} rounded-xl p-3.5">
+                        <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                            ${a.priority === 'urgent' ? '<span class="badge badge-xs bg-rose-600 text-white border-0 font-bold">🔴 URGENT</span>' : ''}
+                            <span class="badge badge-xs bg-slate-700 text-white border-0 font-bold">FROM ADMIN</span>
+                        </div>
+                        <p class="text-sm font-extrabold text-slate-900">${a.title}</p>
+                        <p class="text-xs text-slate-600 mt-1 whitespace-pre-wrap">${a.message}</p>
+                        <p class="text-[10px] text-slate-400 mt-1.5 font-mono">${timeAgoLearner(a.created_at)}</p>
+                    </div>
+                `).join('') : '<p class="text-xs text-slate-400 italic text-center py-4">No announcements right now.</p>';
+            } catch (err) {
+                learnerAnnList.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4">Announcements are not set up yet.</p>';
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 💰 MY FEE STATEMENT PANEL (PRO)
+        // ══════════════════════════════════════════════════════════════════
+        function fmtKESLearner(n) {
+            return "KES " + (Number(n) || 0).toLocaleString('en-KE', { maximumFractionDigits: 2 });
+        }
+
+        async function loadMyFeeStatement() {
+            if (!activeStudent) return;
+            const year = parseInt(mfYear.value);
+            const term = mfTerm.value;
+            const grade = parseInt(activeStudent.grade);
+
+            mfStatementCard.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4">Loading fee statement...</p>';
+            mfHistoryWrap.classList.add('hidden');
+
+            try {
+                const { data: structures, error: structErr } = await _supabase.from('fee_structures')
+                    .select('*').eq('year', year).eq('term', term).eq('grade', grade).limit(1);
+                if (structErr) throw structErr;
+
+                const { data: payments, error: payErr } = await _supabase.from('fee_payments')
+                    .select('*').eq('student_id', activeStudent.id).eq('year', year).eq('term', term)
+                    .order('paid_at', { ascending: false });
+                if (payErr) throw payErr;
+
+                const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+                const structure = structures && structures.length > 0 ? structures[0] : null;
+
+                if (!structure) {
+                    mfStatementCard.innerHTML = `
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+                            <p class="text-xs text-slate-500">No fee structure has been published for ${term} ${year} yet.</p>
+                            ${totalPaid > 0 ? `<p class="text-xs text-emerald-700 font-bold mt-2">You have ${fmtKESLearner(totalPaid)} recorded in payments for this term.</p>` : ''}
+                        </div>`;
+                } else {
+                    const balance = structure.term_amount - totalPaid;
+                    const monthly = structure.term_amount / (structure.months_in_term || 3);
+                    const monthsCovered = Math.min(Math.floor(totalPaid / monthly + 1e-9), structure.months_in_term || 3);
+                    const pct = Math.min(100, Math.round((totalPaid / structure.term_amount) * 100));
+
+                    let monthChips = '';
+                    for (let i = 1; i <= (structure.months_in_term || 3); i++) {
+                        const covered = i <= monthsCovered;
+                        monthChips += `<span class="badge badge-sm ${covered ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'} border-0 font-bold">Month ${i} ${covered ? '✓' : ''}</span>`;
+                    }
+
+                    mfStatementCard.innerHTML = `
+                        <div class="bg-white border-2 ${balance > 0 ? 'border-rose-200' : 'border-emerald-200'} rounded-2xl p-4">
+                            <div class="flex flex-col sm:flex-row justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-400 font-bold">${term} ${year} Balance</p>
+                                    <p class="text-2xl font-black ${balance > 0 ? 'text-rose-600' : 'text-emerald-600'}">${fmtKESLearner(Math.max(balance, 0))} <span class="text-xs font-bold text-slate-400">${balance > 0 ? 'due' : '— fully paid'}</span></p>
+                                </div>
+                                <div class="text-right text-xs text-slate-500">
+                                    <p>Term Fee: <strong class="text-slate-800">${fmtKESLearner(structure.term_amount)}</strong></p>
+                                    <p>Paid So Far: <strong class="text-emerald-700">${fmtKESLearner(totalPaid)}</strong></p>
+                                </div>
+                            </div>
+                            <progress class="progress ${balance > 0 ? 'progress-warning' : 'progress-success'} w-full mt-3" value="${pct}" max="100"></progress>
+                            <div class="flex flex-wrap gap-1.5 mt-3">${monthChips}</div>
+                        </div>`;
+                }
+
+                mfHistoryWrap.classList.remove('hidden');
+                mfHistoryBody.innerHTML = (payments && payments.length > 0)
+                    ? payments.map(p => `<tr><td class="font-mono">${new Date(p.paid_at).toLocaleDateString()}</td><td class="font-bold text-emerald-700">${fmtKESLearner(p.amount)}</td><td>${p.method || '-'}</td><td class="font-mono text-slate-400">${p.reference || '-'}</td></tr>`).join('')
+                    : '<tr><td colspan="4" class="text-center text-xs text-slate-400 italic py-3">No payments recorded yet.</td></tr>';
+            } catch (err) {
+                mfStatementCard.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-4">Fee statements are not set up yet. Ask the school office.</p>`;
+            }
+        }
+
+        mfYear.addEventListener('change', loadMyFeeStatement);
+        mfTerm.addEventListener('change', loadMyFeeStatement);
+        // ══════════════════════════════════════════════════════════════════
+        // 🧭 TAB NAVIGATION
+        // ══════════════════════════════════════════════════════════════════
+        function switchLearnerTab(name) {
+            ['home', 'results', 'assign', 'fees'].forEach(t => {
+                const panel = document.getElementById('lp-' + t);
+                const btn = document.getElementById('ln-' + (t === 'assign' ? 'assign' : t));
+                if (panel) panel.classList.toggle('hidden', t !== name);
+                if (btn) btn.classList.toggle('active', t === name);
+            });
+            if (name === 'assign') {
+                document.getElementById('ln-assign-dot').classList.add('hidden');
+                if (learnerAssignments.length > 0) localStorage.setItem('learner_asg_seen_' + (activeStudent ? activeStudent.id : ''), new Date().toISOString());
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📚 ASSIGNMENTS (PRO)
+        // ══════════════════════════════════════════════════════════════════
+        let learnerAssignments = [];
+        let asgSubjectFilter = 'All';
+
+        function escHtmlL(str) {
+            return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function dueBadge(due) {
+            if (!due) return '';
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const d = new Date(due + 'T00:00:00');
+            const diff = Math.round((d - today) / 86400000);
+            if (diff < 0) return `<span class="badge badge-xs bg-rose-600 text-white border-0 font-bold">Overdue · ${escHtmlL(due)}</span>`;
+            if (diff === 0) return '<span class="badge badge-xs bg-amber-500 text-white border-0 font-bold">Due today</span>';
+            if (diff <= 3) return `<span class="badge badge-xs bg-amber-500 text-white border-0 font-bold">Due in ${diff} day${diff > 1 ? 's' : ''}</span>`;
+            return `<span class="badge badge-xs bg-slate-600 text-white border-0 font-bold">Due ${escHtmlL(due)}</span>`;
+        }
+
+        function renderAssignmentCard(a) {
+            const files = Array.isArray(a.files) ? a.files : [];
+            const images = files.filter(f => (f.type || '').startsWith('image/'));
+            const pdfs = files.filter(f => !(f.type || '').startsWith('image/'));
+            return `
+            <div class="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm">
+                <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
+                    <span class="badge badge-xs bg-emerald-600 text-white border-0 font-bold">${escHtmlL(a.subject_name)}</span>
+                    ${dueBadge(a.due_date)}
+                </div>
+                <p class="text-sm font-extrabold text-slate-900">${escHtmlL(a.title)}</p>
+                ${a.instructions ? `<p class="text-xs text-slate-600 mt-1 whitespace-pre-wrap">${escHtmlL(a.instructions)}</p>` : ''}
+                ${images.length ? `<div class="flex flex-wrap gap-2 mt-3">${images.map(f => `<a href="${escHtmlL(f.url)}" target="_blank" rel="noopener" title="${escHtmlL(f.name)}"><img src="${escHtmlL(f.url)}" alt="${escHtmlL(f.name)}" loading="lazy" class="h-24 w-24 object-cover rounded-xl border border-slate-200" /></a>`).join('')}</div>` : ''}
+                ${pdfs.length ? `<div class="space-y-1.5 mt-3">${pdfs.map(f => `
+                    <a href="${escHtmlL(f.url)}" target="_blank" rel="noopener" class="file-chip hover:border-emerald-400">
+                        <span class="text-xl">📄</span>
+                        <span class="flex-1 min-w-0 text-xs font-bold text-slate-800 truncate">${escHtmlL(f.name)}</span>
+                        <span class="text-[10px] font-extrabold text-emerald-700">OPEN ↗</span>
+                    </a>`).join('')}</div>` : ''}
+                <p class="text-[10px] text-slate-400 mt-3 font-mono">${a.teacher_name ? 'By ' + escHtmlL(a.teacher_name) + ' · ' : ''}${timeAgoLearner(a.created_at)}</p>
+            </div>`;
+        }
+
+        function renderLearnerAssignments() {
+            const listEl = document.getElementById('la-list');
+            const filtersEl = document.getElementById('la-filters');
+            const recentEl = document.getElementById('la-recent');
+
+            if (learnerAssignments.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-6">No assignments have been shared with your class yet.</p>';
+                filtersEl.innerHTML = '';
+                recentEl.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-3">No assignments yet.</p>';
+                return;
+            }
+
+            const subjects = ['All', ...Array.from(new Set(learnerAssignments.map(a => a.subject_name)))];
+            filtersEl.innerHTML = subjects.map(sub => `
+                <button onclick="setAsgFilter('${escHtmlL(sub).replace(/'/g, '&#39;')}')" class="btn btn-xs rounded-full font-bold ${sub === asgSubjectFilter ? 'bg-slate-900 text-white border-0' : 'bg-white text-slate-600 border border-slate-300'}">${escHtmlL(sub)}</button>
+            `).join('');
+
+            const shown = asgSubjectFilter === 'All' ? learnerAssignments : learnerAssignments.filter(a => a.subject_name === asgSubjectFilter);
+            listEl.innerHTML = shown.map(renderAssignmentCard).join('');
+
+            recentEl.innerHTML = learnerAssignments.slice(0, 3).map(a => `
+                <button onclick="switchLearnerTab('assign')" class="w-full text-left border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50/70 hover:bg-emerald-50 transition">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="badge badge-xs bg-emerald-600 text-white border-0 font-bold">${escHtmlL(a.subject_name)}</span>
+                        ${dueBadge(a.due_date)}
+                    </div>
+                    <p class="text-xs font-extrabold text-slate-900 mt-1">${escHtmlL(a.title)}</p>
+                </button>
+            `).join('');
+        }
+
+        function setAsgFilter(sub) {
+            asgSubjectFilter = sub;
+            renderLearnerAssignments();
+        }
+
+        async function fetchLearnerAssignments() {
+            if (!activeStudent) return;
+            try {
+                const { data, error } = await _supabase.from('class_assignments')
+                    .select('*').eq('grade', parseInt(activeStudent.grade)).order('created_at', { ascending: false });
+                if (error) throw error;
+                learnerAssignments = data || [];
+                asgSubjectFilter = 'All';
+                renderLearnerAssignments();
+
+                const seenKey = 'learner_asg_seen_' + activeStudent.id;
+                const lastSeen = localStorage.getItem(seenKey);
+                if (learnerAssignments.length > 0 && (!lastSeen || new Date(learnerAssignments[0].created_at) > new Date(lastSeen))) {
+                    document.getElementById('ln-assign-dot').classList.remove('hidden');
+                }
+            } catch (err) {
+                const msg = '<p class="text-xs text-slate-400 italic text-center py-4">Assignments are not available yet.</p>';
+                document.getElementById('la-list').innerHTML = msg;
+                document.getElementById('la-recent').innerHTML = msg;
+            }
+        }
+    </script>
+</body>
+</html>
