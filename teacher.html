@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&family=JetBrains+Mono:wght=400;500;700&display=swap" rel="stylesheet">
@@ -18,6 +20,12 @@
         .font-code {
             font-family: 'JetBrains Mono', monospace;
         }
+        body { background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%); }
+        .card { transition: box-shadow .25s ease; }
+        .tab-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:8px 4px; border-radius:14px; transition:all .2s ease; position:relative; }
+        .file-chip { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
+        .drop-zone { border:2px dashed #cbd5e1; border-radius:16px; background:#f8fafc; transition:all .2s ease; }
+        .drop-zone:hover { border-color:#f59e0b; background:#fffbeb; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
@@ -78,42 +86,51 @@
 
         <main class="container mx-auto p-4 sm:p-6 max-w-5xl space-y-6 flex-grow">
 
-            <div class="grid grid-cols-3 gap-3 max-w-lg mx-auto bg-slate-100 p-2 rounded-2xl border border-slate-200 shadow-inner">
-                <button id="tab-roster" class="btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200">
-                    <span class="text-base sm:text-lg">👤</span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-tight hidden sm:inline">Student Roster</span>
+            <nav class="grid grid-cols-5 gap-1 sm:gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-lg sticky top-[68px] z-40">
+                <button id="tab-roster" class="tab-btn bg-slate-900 text-white shadow-md">
+                    <span class="text-xl leading-none">👥</span>
+                    <span class="text-[10px] sm:text-xs font-extrabold tracking-tight">Students</span>
                 </button>
-                <button id="tab-marks" class="btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200">
-                    <span class="text-base sm:text-lg text-emerald-600">📝</span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-tight hidden sm:inline">Marks Entry</span>
+                <button id="tab-marks" class="tab-btn bg-white text-slate-600 hover:bg-slate-100">
+                    <span class="text-xl leading-none">📝</span>
+                    <span class="text-[10px] sm:text-xs font-extrabold tracking-tight">Marks</span>
                 </button>
-                <button id="tab-announcements" class="btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200 relative">
-                    <span class="text-base sm:text-lg text-amber-500">📢</span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-tight hidden sm:inline">Announcements</span>
-                    <span id="ann-unread-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                <button id="tab-results" class="tab-btn bg-white text-slate-600 hover:bg-slate-100">
+                    <span class="text-xl leading-none">📊</span>
+                    <span class="text-[10px] sm:text-xs font-extrabold tracking-tight">Results</span>
                 </button>
-            </div>
+                <button id="tab-assignments" class="tab-btn bg-white text-slate-600 hover:bg-slate-100">
+                    <span class="text-xl leading-none">📚</span>
+                    <span class="text-[10px] sm:text-xs font-extrabold tracking-tight">Assignments</span>
+                </button>
+                <button id="tab-announcements" class="tab-btn bg-white text-slate-600 hover:bg-slate-100">
+                    <span class="text-xl leading-none">📢</span>
+                    <span class="text-[10px] sm:text-xs font-extrabold tracking-tight">Notices</span>
+                    <span id="ann-unread-dot" class="hidden absolute top-1 right-3 w-3 h-3 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                </button>
+            </nav>
 
-            <!-- ================= DEDICATED COUNTDOWN TIMER BANNER ================= -->
-            <div id="countdown-banner-container" class="hidden max-w-2xl mx-auto w-full">
-                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-amber-400 shadow-xl rounded-2xl p-4 text-center space-y-2">
-                    <div class="text-[11px] sm:text-xs text-amber-400 tracking-widest uppercase font-extrabold flex items-center justify-center gap-1.5">
-                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        CBA Submission Window Closing In:
+            <div class="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-4 sm:p-5 shadow-lg border border-slate-700 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Welcome back</p>
+                    <h2 id="teacher-welcome-name" class="text-lg sm:text-2xl font-black leading-tight truncate">Teacher</h2>
+                    <p id="teacher-welcome-date" class="text-[11px] text-slate-300 mt-0.5"></p>
+                </div>
+                <div class="flex gap-4 text-right shrink-0">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Learners</p>
+                        <p id="teacher-stat-learners" class="text-2xl font-black text-amber-400 leading-none mt-1">0</p>
                     </div>
-                    <div id="countdown-timer-display" class="font-code text-xl sm:text-3xl font-black tracking-wider text-white select-none drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]">
-                        00d 00h:00m:00s
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Assignments</p>
+                        <p id="teacher-stat-assignments" class="text-2xl font-black text-emerald-400 leading-none mt-1">0</p>
                     </div>
                 </div>
             </div>
 
-            <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
-                <span class="text-xl">⚠️</span>
-                <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
-            </div>
-
             <div id="screen-roster" class="space-y-6">
-                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-amber-400 to-amber-500"></div>
                     <div class="card-body p-4 sm:p-8">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
                             <div>
@@ -241,7 +258,8 @@
                     </div>
                 </div>
 
-                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-amber-400 to-amber-500"></div>
                     <div class="card-body p-4 sm:p-8">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                             <div class="flex flex-wrap items-center gap-3">
@@ -320,7 +338,27 @@
 
             <!-- ================= MARKS ENTRY SCREEN ================= -->
             <div id="screen-marks" class="space-y-6 hidden">
-                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl">
+            <!-- ================= DEDICATED COUNTDOWN TIMER BANNER ================= -->
+            <div id="countdown-banner-container" class="hidden max-w-2xl mx-auto w-full">
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-amber-400 shadow-xl rounded-2xl p-4 text-center space-y-2">
+                    <div class="text-[11px] sm:text-xs text-amber-400 tracking-widest uppercase font-extrabold flex items-center justify-center gap-1.5">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        CBA Submission Window Closing In:
+                    </div>
+                    <div id="countdown-timer-display" class="font-code text-xl sm:text-3xl font-black tracking-wider text-white select-none drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]">
+                        00d 00h:00m:00s
+                    </div>
+                </div>
+            </div>
+
+            <div id="portal-lock-alert" class="alert alert-error bg-rose-50 border-2 border-rose-200 shadow-lg hidden rounded-2xl py-4 px-5 text-xs sm:text-sm font-bold text-rose-800 flex items-center gap-3">
+                <span class="text-xl">⚠️</span>
+                <span>Portal Locked: The current CBA submission window is closed. Please contact the administrator to request marks adjustments.</span>
+            </div>
+
+
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-amber-400 to-amber-500"></div>
                     <div class="card-body p-4 sm:p-8">
                         <div class="flex items-center gap-2.5 mb-2">
                             <span class="text-2xl">📝</span>
@@ -373,6 +411,167 @@
                             <button id="save-marks-btn" class="btn btn-success text-white font-extrabold px-10 shadow-lg w-full sm:w-auto rounded-xl hover:bg-emerald-600 transition border-none" disabled>
                                 💾 Save All Marks
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= RESULTS DOWNLOAD SCREEN (PRO, READ-ONLY) ================= -->
+            <div id="screen-results" class="space-y-6 hidden">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-sky-400 via-indigo-500 to-violet-600"></div>
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-2xl">📊</span>
+                                <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Download Compiled Results</h2>
+                            </div>
+                            <span class="badge badge-sm bg-slate-900 text-sky-300 font-black border-0 tracking-widest px-3">🔒 VIEW ONLY</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-5">Pick a grade and exam, then compile the finished master ledger as a PDF. This is a read-only report — marks cannot be edited from here.</p>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-[11px] text-slate-700 mb-1">Year</label>
+                                <select id="res-year" class="select select-bordered select-sm w-full rounded-lg font-bold focus:outline-none">
+                                    <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-bold text-[11px] text-slate-700 mb-1">Term</label>
+                                <select id="res-term" class="select select-bordered select-sm w-full rounded-lg font-bold focus:outline-none">
+                                    <option value="Term 1">Term 1</option><option value="Term 2" selected>Term 2</option><option value="Term 3">Term 3</option>
+                                </select>
+                            </div>
+                            <div class="form-control col-span-2 sm:col-span-1">
+                                <label class="label-text font-bold text-[11px] text-slate-700 mb-1">Exam</label>
+                                <select id="res-series" class="select select-bordered select-sm w-full rounded-lg font-bold focus:outline-none">
+                                    <option value="Opener Exam">Opener Exam</option>
+                                    <option value="Mid-Term Exam" selected>Mid-Term Exam</option>
+                                    <option value="End-Term Exam">End-Term Exam</option>
+                                </select>
+                            </div>
+                            <div class="form-control col-span-2 sm:col-span-1">
+                                <label class="label-text font-bold text-[11px] text-slate-700 mb-1">Grade</label>
+                                <select id="res-grade" class="select select-bordered select-sm w-full rounded-lg font-bold focus:outline-none">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="res-layout-wrap" class="hidden mt-3 form-control max-w-xs">
+                            <label class="label-text font-bold text-[11px] text-slate-700 mb-1">Ledger Layout (Junior School)</label>
+                            <select id="res-layout" class="select select-bordered select-sm w-full rounded-lg font-bold focus:outline-none">
+                                <option value="marks" selected>Raw Marks Ledger</option>
+                                <option value="points">Points Ledger</option>
+                            </select>
+                        </div>
+
+                        <button id="res-compile-btn" class="btn btn-neutral text-white font-extrabold w-full mt-5 rounded-xl shadow-lg border-none">📊 Compile Results</button>
+                    </div>
+                </div>
+
+                <div id="res-output" class="hidden card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
+                    <div class="card-body p-4 sm:p-8 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h3 id="res-out-title" class="text-sm sm:text-base font-extrabold text-slate-900 uppercase"></h3>
+                                <p id="res-out-sub" class="text-[11px] text-slate-500 font-bold uppercase tracking-wide"></p>
+                            </div>
+                            <button id="res-download-btn" class="btn btn-success text-white font-extrabold rounded-xl shadow-lg border-none">⬇️ Download PDF</button>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="table table-xs w-full text-slate-700">
+                                <thead id="res-table-head" class="bg-slate-900 text-white text-[10px] uppercase"></thead>
+                                <tbody id="res-table-body" class="text-xs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ASSIGNMENTS SCREEN (PRO) ================= -->
+            <div id="screen-assignments" class="space-y-6 hidden">
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-2xl">📚</span>
+                                <h2 class="card-title text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight">Upload Assignment</h2>
+                            </div>
+                            <span class="badge badge-sm bg-slate-900 text-emerald-400 font-black border-0 tracking-widest px-3">✦ PRO</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-5">Choose the class and subject, attach one or more PDFs or images, and it appears instantly on the learners' portal.</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">1. Class / Grade</label>
+                                <select id="asg-grade" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none">
+                                    <option value="" disabled selected>Choose Grade...</option>
+                                    <option value="-2">PP1</option><option value="-1">PP2</option>
+                                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                    <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">2. Subject</label>
+                                <select id="asg-subject" class="select select-bordered select-sm w-full font-bold rounded-lg focus:outline-none" disabled>
+                                    <option value="" disabled selected>Pick Grade First</option>
+                                </select>
+                            </div>
+                            <div class="form-control sm:col-span-2">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">3. Assignment Title</label>
+                                <input type="text" id="asg-title" placeholder="e.g. Fractions Homework - Week 5" class="input input-bordered input-sm w-full rounded-lg focus:outline-none" />
+                            </div>
+                            <div class="form-control sm:col-span-2">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Instructions <span class="font-medium text-slate-400">(optional)</span></label>
+                                <textarea id="asg-instructions" rows="2" placeholder="Any notes for the learners..." class="textarea textarea-bordered textarea-sm w-full rounded-lg focus:outline-none"></textarea>
+                            </div>
+                            <div class="form-control">
+                                <label class="label-text font-bold text-xs text-slate-700 mb-1.5">Due Date <span class="font-medium text-slate-400">(optional)</span></label>
+                                <input type="date" id="asg-due" class="input input-bordered input-sm w-full rounded-lg focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="mt-5">
+                            <label class="label-text font-bold text-xs text-slate-700 mb-1.5 block">4. Attach Files <span class="font-medium text-slate-400">(PDF or images, up to 10 MB each — add as many as you need)</span></label>
+                            <label for="asg-files" class="drop-zone flex flex-col items-center justify-center text-center p-6 cursor-pointer">
+                                <span class="text-3xl">📎</span>
+                                <span class="text-sm font-extrabold text-slate-700 mt-1">Tap to choose PDFs or images</span>
+                                <span class="text-[11px] text-slate-400">You can select several at once, or tap again to add more</span>
+                            </label>
+                            <input type="file" id="asg-files" accept="application/pdf,image/*" multiple class="hidden" />
+                            <div id="asg-file-list" class="mt-3 space-y-2"></div>
+                        </div>
+
+                        <div id="asg-progress" class="hidden mt-4">
+                            <p id="asg-progress-text" class="text-xs font-bold text-slate-600 mb-1">Uploading...</p>
+                            <progress id="asg-progress-bar" class="progress progress-success w-full" value="0" max="100"></progress>
+                        </div>
+
+                        <button id="asg-upload-btn" class="btn btn-success text-white font-extrabold w-full mt-5 rounded-xl shadow-lg border-none">📤 Publish Assignment to Learners</button>
+                    </div>
+                </div>
+
+                <div class="card bg-white shadow-xl border border-slate-200 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-amber-400 to-amber-500"></div>
+                    <div class="card-body p-4 sm:p-8">
+                        <div class="flex items-center gap-2.5 mb-1">
+                            <span class="text-xl">🗂️</span>
+                            <h2 class="card-title text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">My Published Assignments</h2>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Everything you have shared with learners. Delete an item to remove it from their portal.</p>
+                        <div id="asg-my-list" class="space-y-3">
+                            <p class="text-xs text-slate-400 italic text-center py-6">Loading your assignments...</p>
                         </div>
                     </div>
                 </div>
@@ -435,6 +634,10 @@
         const screenAnnouncements = document.getElementById('screen-announcements');
         const teacherAnnList = document.getElementById('teacher-ann-list');
         const annUnreadDot = document.getElementById('ann-unread-dot');
+        const tabAssignments = document.getElementById('tab-assignments');
+        const tabResults = document.getElementById('tab-results');
+        const screenResults = document.getElementById('screen-results');
+        const screenAssignments = document.getElementById('screen-assignments');
         const activeSessionBanner = document.getElementById('active-session-banner');
         const portalLockAlert = document.getElementById('portal-lock-alert');
         
@@ -607,16 +810,18 @@
             await pullActiveCycleState();
             await loadStudentRoster();
             await fetchSubjects();
+            populateTeacherWelcome();
+            loadMyAssignments();
             pingAnnouncementBadge();
         }
 
         // Navigation toggles
-        const ACTIVE_TAB_CLS = "btn btn-md border-0 bg-slate-900 text-white hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200";
-        const INACTIVE_TAB_CLS = "btn btn-md border-0 bg-white text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-2 transition duration-200 relative";
+        const ACTIVE_TAB_CLS = "tab-btn bg-slate-900 text-white shadow-md";
+        const INACTIVE_TAB_CLS = "tab-btn bg-white text-slate-600 hover:bg-slate-100";
 
         function showTeacherScreen(screen) {
-            [screenRoster, screenMarks, screenAnnouncements].forEach(s => s.classList.add('hidden'));
-            [tabRoster, tabMarks, tabAnnouncements].forEach(t => t.className = INACTIVE_TAB_CLS);
+            [screenRoster, screenMarks, screenResults, screenAssignments, screenAnnouncements].forEach(s => s.classList.add('hidden'));
+            [tabRoster, tabMarks, tabResults, tabAssignments, tabAnnouncements].forEach(t => t.className = INACTIVE_TAB_CLS);
             screen.classList.remove('hidden');
         }
 
@@ -628,6 +833,18 @@
         tabMarks.addEventListener('click', () => {
             showTeacherScreen(screenMarks);
             tabMarks.className = ACTIVE_TAB_CLS;
+        });
+
+        tabResults.addEventListener('click', () => {
+            showTeacherScreen(screenResults);
+            tabResults.className = ACTIVE_TAB_CLS;
+            loadResultsData();
+        });
+
+        tabAssignments.addEventListener('click', () => {
+            showTeacherScreen(screenAssignments);
+            tabAssignments.className = ACTIVE_TAB_CLS;
+            loadMyAssignments();
         });
 
         tabAnnouncements.addEventListener('click', () => {
@@ -1168,9 +1385,242 @@
             renderTable(localStudentsCache.filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase())));
         });
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            await checkActiveSession();
+
+        // ══════════════════════════════════════════════════════════════════
+        // 👋 WELCOME HERO
+        // ══════════════════════════════════════════════════════════════════
+        function getActiveTeacher() {
+            try { return JSON.parse(sessionStorage.getItem('activeTeacher') || 'null'); } catch (e) { return null; }
+        }
+
+        function populateTeacherWelcome() {
+            const t = getActiveTeacher();
+            document.getElementById('teacher-welcome-name').innerText = t && t.name ? t.name : 'Teacher';
+            document.getElementById('teacher-welcome-date').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('teacher-stat-learners').innerText = localStudentsCache.length;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📚 ASSIGNMENTS (PRO) - upload PDFs / images to learners
+        // ══════════════════════════════════════════════════════════════════
+        const ASSIGN_BUCKET = 'class-assignments';
+        const ASSIGN_MAX_MB = 10;
+        let pendingAssignFiles = [];
+
+        const asgGrade = document.getElementById('asg-grade');
+        const asgSubject = document.getElementById('asg-subject');
+        const asgTitle = document.getElementById('asg-title');
+        const asgInstructions = document.getElementById('asg-instructions');
+        const asgDue = document.getElementById('asg-due');
+        const asgFiles = document.getElementById('asg-files');
+        const asgFileList = document.getElementById('asg-file-list');
+        const asgProgress = document.getElementById('asg-progress');
+        const asgProgressText = document.getElementById('asg-progress-text');
+        const asgProgressBar = document.getElementById('asg-progress-bar');
+        const asgUploadBtn = document.getElementById('asg-upload-btn');
+        const asgMyList = document.getElementById('asg-my-list');
+
+        function escHtml(str) {
+            return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function fmtSize(bytes) {
+            if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        asgGrade.addEventListener('change', () => {
+            const subjects = CBC_SUBJECT_TIERS[getGradeTier(asgGrade.value)] || [];
+            asgSubject.innerHTML = '<option value="" disabled selected>Select Subject...</option>' +
+                subjects.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+            asgSubject.disabled = false;
         });
-    </script>
-</body>
-</html>
+
+        asgFiles.addEventListener('change', () => {
+            const incoming = Array.from(asgFiles.files || []);
+            incoming.forEach(f => {
+                const okType = f.type === 'application/pdf' || f.type.startsWith('image/');
+                if (!okType) return alert(`"${f.name}" skipped — only PDF or image files are allowed.`);
+                if (f.size > ASSIGN_MAX_MB * 1024 * 1024) return alert(`"${f.name}" skipped — it is larger than ${ASSIGN_MAX_MB} MB.`);
+                pendingAssignFiles.push(f);
+            });
+            asgFiles.value = '';
+            renderPendingAssignFiles();
+        });
+
+        function renderPendingAssignFiles() {
+            if (pendingAssignFiles.length === 0) { asgFileList.innerHTML = ''; return; }
+            asgFileList.innerHTML = pendingAssignFiles.map((f, i) => `
+                <div class="file-chip">
+                    <span class="text-xl">${f.type === 'application/pdf' ? '📄' : '🖼️'}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-slate-800 truncate">${escHtml(f.name)}</p>
+                        <p class="text-[10px] text-slate-400">${fmtSize(f.size)}</p>
+                    </div>
+                    <button type="button" onclick="removePendingAssignFile(${i})" class="btn btn-ghost btn-xs text-rose-600 font-bold">✕ Remove</button>
+                </div>
+            `).join('') + `<p class="text-[11px] font-bold text-emerald-700">${pendingAssignFiles.length} file(s) ready to upload</p>`;
+        }
+
+        function removePendingAssignFile(i) {
+            pendingAssignFiles.splice(i, 1);
+            renderPendingAssignFiles();
+        }
+
+        asgUploadBtn.addEventListener('click', async () => {
+            const teacher = getActiveTeacher();
+            const grade = parseInt(asgGrade.value);
+            const subject = asgSubject.value;
+            const title = asgTitle.value.trim();
+
+            if (isNaN(grade)) return alert('Please choose a grade.');
+            if (!subject) return alert('Please choose a subject.');
+            if (!title) return alert('Please give the assignment a title.');
+            if (pendingAssignFiles.length === 0) return alert('Please attach at least one PDF or image.');
+
+            asgUploadBtn.disabled = true;
+            asgProgress.classList.remove('hidden');
+            const uploaded = [];
+
+            try {
+                for (let i = 0; i < pendingAssignFiles.length; i++) {
+                    const f = pendingAssignFiles[i];
+                    asgProgressText.innerText = `Uploading file ${i + 1} of ${pendingAssignFiles.length}: ${f.name}`;
+                    asgProgressBar.value = Math.round((i / pendingAssignFiles.length) * 100);
+                    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                    const path = `grade_${grade}/${Date.now()}_${i}_${safe}`;
+                    const { error: upErr } = await _supabase.storage.from(ASSIGN_BUCKET).upload(path, f, { contentType: f.type, upsert: false });
+                    if (upErr) throw upErr;
+                    const { data: urlData } = _supabase.storage.from(ASSIGN_BUCKET).getPublicUrl(path);
+                    uploaded.push({ name: f.name, path, url: urlData.publicUrl, type: f.type, size: f.size });
+                }
+
+                asgProgressText.innerText = 'Publishing to learners...';
+                asgProgressBar.value = 95;
+                const { error: insErr } = await _supabase.from('class_assignments').insert([{
+                    grade,
+                    subject_name: subject,
+                    title,
+                    instructions: asgInstructions.value.trim() || null,
+                    due_date: asgDue.value || null,
+                    teacher_id: teacher ? String(teacher.id) : null,
+                    teacher_name: teacher ? teacher.name : null,
+                    files: uploaded
+                }]);
+                if (insErr) throw insErr;
+
+                asgProgressBar.value = 100;
+                alert(`✅ Assignment published to ${gradeMap[String(grade)]} — ${subject}. Learners can now see it.`);
+                asgTitle.value = ''; asgInstructions.value = ''; asgDue.value = '';
+                pendingAssignFiles = [];
+                renderPendingAssignFiles();
+                loadMyAssignments();
+            } catch (err) {
+                console.error('Assignment upload failed:', err);
+                if (uploaded.length > 0) {
+                    try { await _supabase.storage.from(ASSIGN_BUCKET).remove(uploaded.map(u => u.path)); } catch (e) { /* best effort cleanup */ }
+                }
+                const msg = (err && err.message) ? err.message : String(err);
+                alert('❌ Upload failed: ' + msg + '\n\nIf this says the bucket or table was not found, ask the administrator to run the Assignments setup SQL in Supabase.');
+            } finally {
+                asgUploadBtn.disabled = false;
+                asgProgress.classList.add('hidden');
+                asgProgressBar.value = 0;
+            }
+        });
+
+        async function loadMyAssignments() {
+            const teacher = getActiveTeacher();
+            if (!teacher) return;
+            try {
+                const { data, error } = await _supabase.from('class_assignments')
+                    .select('*').eq('teacher_id', String(teacher.id)).order('created_at', { ascending: false });
+                if (error) throw error;
+                const list = data || [];
+                document.getElementById('teacher-stat-assignments').innerText = list.length;
+
+                if (list.length === 0) {
+                    asgMyList.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-6">You have not published any assignments yet.</p>';
+                    return;
+                }
+                asgMyList.innerHTML = list.map(a => {
+                    const files = Array.isArray(a.files) ? a.files : [];
+                    return `
+                    <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/60">
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    <span class="badge badge-xs bg-slate-800 text-white border-0 font-bold">${escHtml(gradeMap[String(a.grade)] || a.grade)}</span>
+                                    <span class="badge badge-xs bg-emerald-600 text-white border-0 font-bold">${escHtml(a.subject_name)}</span>
+                                    ${a.due_date ? `<span class="badge badge-xs bg-amber-500 text-white border-0 font-bold">Due ${escHtml(a.due_date)}</span>` : ''}
+                                </div>
+                                <p class="text-sm font-extrabold text-slate-900">${escHtml(a.title)}</p>
+                                ${a.instructions ? `<p class="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">${escHtml(a.instructions)}</p>` : ''}
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    ${files.map(f => `<a href="${escHtml(f.url)}" target="_blank" rel="noopener" class="badge badge-sm bg-white border border-slate-300 text-slate-700 font-bold gap-1">${f.type === 'application/pdf' ? '📄' : '🖼️'} ${escHtml(f.name)}</a>`).join('')}
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-2 font-mono">Posted ${timeAgoTeacher(a.created_at)} · ${files.length} file(s)</p>
+                            </div>
+                            <button onclick="deleteMyAssignment('${a.id}')" class="btn btn-ghost btn-xs text-rose-600 font-bold shrink-0">🗑️ Delete</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                asgMyList.innerHTML = '<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">Assignments are not set up yet. Ask the administrator to run the Assignments setup SQL in Supabase.</p>';
+            }
+        }
+
+        async function deleteMyAssignment(id) {
+            if (!confirm('Delete this assignment and all its files? Learners will no longer see it.')) return;
+            try {
+                const { data: rows } = await _supabase.from('class_assignments').select('files').eq('id', id).limit(1);
+                const files = rows && rows[0] && Array.isArray(rows[0].files) ? rows[0].files : [];
+                if (files.length > 0) {
+                    await _supabase.storage.from(ASSIGN_BUCKET).remove(files.map(f => f.path));
+                }
+                const { error } = await _supabase.from('class_assignments').delete().eq('id', id);
+                if (error) throw error;
+                loadMyAssignments();
+            } catch (err) {
+                alert('Failed to delete: ' + err.message);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📊 COMPILED RESULTS DOWNLOAD (PRO, READ-ONLY)
+        // ══════════════════════════════════════════════════════════════════
+        const SUBJECT_SHORTHANDS = {
+            "Language Activities": "LAN", "Mathematical Activities": "MAT", "Environmental Activities": "ENV",
+            "Creative Arts": "ART", "Religious Education Activities": "REA", "Reading": "RED",
+            "Indigenous Language Activities": "IND", "Kiswahili Language Activities": "KIS",
+            "English": "ENG", "Kiswahili": "KIS", "Mathematics": "MAT", "Science and Technology": "SCI",
+            "Agriculture and Nutrition": "AGR", "Creative Arts and Sports": "CAS", "Social Studies": "SST",
+            "Christian Religious Education (C.R.E)": "CRE", "Islamic Religious Education (I.R.E)": "IRE",
+            "Hindu Religious Education (H.R.E)": "HRE", "Integrated Science": "INT",
+            "Pre-Technical Studies": "PRE", "PPI": "PPI"
+        };
+        function getSubjectShorthand(name) {
+            const t = (name || '').trim();
+            return SUBJECT_SHORTHANDS[t] || t.substring(0, 3).toUpperCase();
+        }
+        function getGradeLabelRes(grade) {
+            const v = parseInt(grade);
+            if (v === -2) return 'PP1';
+            if (v === -1) return 'PP2';
+            return 'Grade ' + v;
+        }
+        function convertScoreToPoints(score, max) {
+            const pct = (score / max) * 100;
+            if (pct >= 90) return 8; if (pct >= 75) return 7; if (pct >= 58) return 6; if (pct >= 40) return 5;
+            if (pct >= 30) return 4; if (pct >= 20) return 3; if (pct >= 10) return 2; return 1;
+        }
+        function getPointsRating(avg) {
+            if (avg >= 7.5) return 'EE1'; if (avg >= 6.5) return 'EE2'; if (avg >= 5.5) return 'ME1'; if (avg >= 4.5) return 'ME2';
+            if (avg >= 3.5) return 'AE1'; if (avg >= 2.5) return 'AE2'; if (avg >= 1.5) return 'BE1'; return 'BE2';
+        }
+        function getMarksRating(pct, tier) {
+            if (tier === 'pre_primary' || tier === 'lower_primary' || tier === 'upper_primary') {
+                if (pct >= 80) return 'EE'; if (pct >= 50) return 'ME'; if (pct >= 30) return 'AE'; return 'BE';
+            }
+            if (pct >= 90) return 'EE1'; if (pct >= 75) return 'EE2'; if (pct >= 58) return 'ME1'; if (pct >= 40) return 'ME2';
+            if (pct >= 30) return 'AE1'; if (pct >= 20) return
